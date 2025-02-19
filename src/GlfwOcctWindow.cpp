@@ -1,17 +1,17 @@
 // MIT License
-// 
+//
 // Copyright(c) 2023 Shing Liu
-// 
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files(the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
 // to use, copy, modify, merge, publish, distribute, sublicense, and / or sell
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions :
-// 
+//
 // The above copyright notice and this permission notice shall be included in all
 // copies or substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 // FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.IN NO EVENT SHALL THE
@@ -22,16 +22,16 @@
 
 #include "GlfwOcctWindow.h"
 
-#if defined (__APPLE__)
-    #undef Handle // avoid name collisions in macOS headers
-    #define GLFW_EXPOSE_NATIVE_COCOA
-    #define GLFW_EXPOSE_NATIVE_NSGL
-#elif defined (_WIN32)
-    #define GLFW_EXPOSE_NATIVE_WIN32
-    #define GLFW_EXPOSE_NATIVE_WGL
+#if defined(__APPLE__)
+#undef Handle  // avoid name collisions in macOS headers
+#define GLFW_EXPOSE_NATIVE_COCOA
+#define GLFW_EXPOSE_NATIVE_NSGL
+#elif defined(_WIN32)
+#define GLFW_EXPOSE_NATIVE_WIN32
+#define GLFW_EXPOSE_NATIVE_WGL
 #else
-    #define GLFW_EXPOSE_NATIVE_X11
-    #define GLFW_EXPOSE_NATIVE_GLX
+#define GLFW_EXPOSE_NATIVE_X11
+#define GLFW_EXPOSE_NATIVE_GLX
 #endif
 
 #include <GLFW/glfw3.h>
@@ -42,14 +42,13 @@
 // Purpose  :
 // ================================================================
 GlfwOcctWindow::GlfwOcctWindow(int theWidth, int theHeight, const TCollection_AsciiString& theTitle)
-    : myGlfwWindow(glfwCreateWindow(theWidth, theHeight, theTitle.ToCString(), NULL, NULL)),
-    myXLeft(0),
-    myYTop(0),
-    myXRight(0),
-    myYBottom(0)
+    : myGlfwWindow(glfwCreateWindow(theWidth, theHeight, theTitle.ToCString(), NULL, NULL))
+    , myXLeft(0)
+    , myYTop(0)
+    , myXRight(0)
+    , myYBottom(0)
 {
-    if (myGlfwWindow != nullptr)
-    {
+    if (myGlfwWindow != nullptr) {
         int aWidth = 0, aHeight = 0;
         glfwGetWindowPos(myGlfwWindow, &myXLeft, &myYTop);
         glfwGetWindowSize(myGlfwWindow, &aWidth, &aHeight);
@@ -68,8 +67,7 @@ GlfwOcctWindow::GlfwOcctWindow(int theWidth, int theHeight, const TCollection_As
 // ================================================================
 void GlfwOcctWindow::Close()
 {
-    if (myGlfwWindow != nullptr)
-    {
+    if (myGlfwWindow != nullptr) {
         glfwDestroyWindow(myGlfwWindow);
         myGlfwWindow = nullptr;
     }
@@ -81,9 +79,9 @@ void GlfwOcctWindow::Close()
 // ================================================================
 Aspect_Drawable GlfwOcctWindow::NativeHandle() const
 {
-#if defined (__APPLE__)
+#if defined(__APPLE__)
     return (Aspect_Drawable)glfwGetCocoaWindow(myGlfwWindow);
-#elif defined (_WIN32)
+#elif defined(_WIN32)
     return (Aspect_Drawable)glfwGetWin32Window(myGlfwWindow);
 #else
     return (Aspect_Drawable)glfwGetX11Window(myGlfwWindow);
@@ -96,9 +94,9 @@ Aspect_Drawable GlfwOcctWindow::NativeHandle() const
 // ================================================================
 Aspect_RenderingContext GlfwOcctWindow::NativeGlContext() const
 {
-#if defined (__APPLE__)
+#if defined(__APPLE__)
     return (NSOpenGLContext*)glfwGetNSGLContext(myGlfwWindow);
-#elif defined (_WIN32)
+#elif defined(_WIN32)
     return glfwGetWGLContext(myGlfwWindow);
 #else
     return glfwGetGLXContext(myGlfwWindow);
@@ -138,8 +136,7 @@ void GlfwOcctWindow::Unmap() const
 // ================================================================
 Aspect_TypeOfResize GlfwOcctWindow::DoResize()
 {
-    if (glfwGetWindowAttrib(myGlfwWindow, GLFW_VISIBLE) == 1)
-    {
+    if (glfwGetWindowAttrib(myGlfwWindow, GLFW_VISIBLE) == 1) {
         int anXPos = 0, anYPos = 0, aWidth = 0, aHeight = 0;
         glfwGetWindowPos(myGlfwWindow, &anXPos, &anYPos);
         glfwGetWindowSize(myGlfwWindow, &aWidth, &aHeight);
