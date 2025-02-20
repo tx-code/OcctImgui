@@ -1,5 +1,4 @@
-#ifndef _ModelControlGui_Header
-#define _ModelControlGui_Header
+#pragma once
 
 #include <AIS_InteractiveContext.hxx>
 #include <AIS_Shape.hxx>
@@ -25,5 +24,3 @@ public:
 private:
     ModelTreeGui& myModelTree;
 };
-
-#endif

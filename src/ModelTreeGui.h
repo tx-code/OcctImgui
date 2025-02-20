@@ -1,5 +1,4 @@
-#ifndef _ModelTreeGui_Header
-#define _ModelTreeGui_Header
+#pragma once
 
 #include <AIS_InteractiveContext.hxx>
 #include <AIS_Shape.hxx>
@@ -44,5 +43,3 @@ private:
     bool myIsVisible;
     std::map<Handle(AIS_Shape), Standard_Integer> myDisplayModes;
 };
-
-#endif

@@ -20,8 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef _GlfwOcctView_Header
-#define _GlfwOcctView_Header
+#pragma once
 
 #include "GlfwOcctWindow.h"
 #include "ModelControlGui.h"
@@ -138,5 +137,3 @@ private:
     ModelTreeGui myModelTree;
     ModelControlGui myModelControl;
 };
-
-#endif  // _GlfwOcctView_Header

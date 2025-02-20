@@ -20,8 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef _GlfwOcctWindow_Header
-#define _GlfwOcctWindow_Header
+#pragma once
 
 #include <Aspect_DisplayConnection.hxx>
 #include <Aspect_RenderingContext.hxx>
@@ -133,5 +132,3 @@ protected:
     Standard_Integer myXRight;
     Standard_Integer myYBottom;
 };
-
-#endif  // _GlfwOcctWindow_Header
