@@ -349,7 +349,10 @@ void GlfwOcctView::loadStepFile(const char* theFileName, bool doFitAll)
         return;
     }
 
-    // Clean up all existing shapes
+    // 清理现有形状前，清理显示模式记录
+    myModelTree.ClearDisplayModes();
+
+    // 清理现有形状
     for (const auto& shape : myShapes) {
         myContext->Remove(shape, true);
     }
