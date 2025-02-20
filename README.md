@@ -2,6 +2,8 @@
 
 OpenCASCADE + GLFW + IMGUI Sample.
 
+See [CHANGELOG.md](CHANGELOG.md) for detailed changes and improvements.
+
 ## Changes
 
 This fork includes several modifications from the original repository:
