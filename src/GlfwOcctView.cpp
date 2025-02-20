@@ -22,10 +22,12 @@
 
 #include "GlfwOcctView.h"
 
+#include "ModelTreeGui.h"
 #include <AIS_Shape.hxx>
 #include <AIS_ViewCube.hxx>
 #include <Aspect_DisplayConnection.hxx>
 #include <Aspect_Handle.hxx>
+#include <BRepBndLib.hxx>
 #include <BRepPrimAPI_MakeBox.hxx>
 #include <BRepPrimAPI_MakeCone.hxx>
 #include <DE_Wrapper.hxx>
@@ -35,6 +37,7 @@
 #include <OpenGl_GraphicDriver.hxx>
 #include <STEPCAFControl_ConfigurationNode.hxx>
 #include <TopAbs_ShapeEnum.hxx>
+#include <TopExp_Explorer.hxx>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 #include <iostream>
@@ -230,7 +233,7 @@ void GlfwOcctView::renderGui()
     // Model Control Window
     ImGui::Begin("Model Control");
 
-    if (ImGui::Button("Import STEP Model", ImVec2(200, 0))) {
+    if (ImGui::Button("Import STEP Model")) {
         NFD_Init();
 
         nfdu8char_t* aPath;
@@ -252,7 +255,15 @@ void GlfwOcctView::renderGui()
         NFD_Quit();
     }
 
+    // 添加显示/隐藏模型树的按钮
+    if (ImGui::Button("Toggle Model Tree")) {
+        myModelTree.IsVisible() = !myModelTree.IsVisible();
+    }
+
     ImGui::End();
+
+    // 在单独窗口中显示模型树
+    myModelTree.Show(myContext, myShapes);
 
     ImGui::Render();
 
@@ -346,7 +357,7 @@ void GlfwOcctView::loadStepFile(const char* theFileName, bool doFitAll)
 
     // Display the new shape
     Handle(AIS_Shape) aShape = new AIS_Shape(aShRes);
-    myContext->Display(aShape, AIS_Shaded, 0, Standard_True);
+    myContext->Display(aShape, AIS_Shaded, 0, true);
     myShapes.push_back(aShape);
 
     if (doFitAll) {

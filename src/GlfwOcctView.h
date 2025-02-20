@@ -24,12 +24,12 @@
 #define _GlfwOcctView_Header
 
 #include "GlfwOcctWindow.h"
+#include "ModelTreeGui.h"
 
 #include <AIS_InteractiveContext.hxx>
 #include <AIS_Shape.hxx>
 #include <AIS_ViewController.hxx>
 #include <V3d_View.hxx>
-
 
 #include <vector>
 
@@ -134,6 +134,9 @@ private:
 
     // AIS shapes container
     std::vector<Handle(AIS_Shape)> myShapes;
+
+    // My other components
+    ModelTreeGui myModelTree;
 };
 
 #endif  // _GlfwOcctView_Header
