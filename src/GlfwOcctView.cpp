@@ -47,7 +47,7 @@
 namespace
 {
 //! Convert GLFW mouse button into Aspect_VKeyMouse.
-static Aspect_VKeyMouse mouseButtonFromGlfw(int theButton)
+Aspect_VKeyMouse mouseButtonFromGlfw(int theButton)
 {
     switch (theButton) {
         case GLFW_MOUSE_BUTTON_LEFT:
@@ -61,7 +61,7 @@ static Aspect_VKeyMouse mouseButtonFromGlfw(int theButton)
 }
 
 //! Convert GLFW key modifiers into Aspect_VKeyFlags.
-static Aspect_VKeyFlags keyFlagsFromGlfw(int theFlags)
+Aspect_VKeyFlags keyFlagsFromGlfw(int theFlags)
 {
     Aspect_VKeyFlags aFlags = Aspect_VKeyFlags_NONE;
     if ((theFlags & GLFW_MOD_SHIFT) != 0) {
@@ -85,6 +85,7 @@ static Aspect_VKeyFlags keyFlagsFromGlfw(int theFlags)
 // Purpose  :
 // ================================================================
 GlfwOcctView::GlfwOcctView()
+    : myModelControl(myModelTree)
 {}
 
 // ================================================================
@@ -142,7 +143,7 @@ void GlfwOcctView::initWindow(int theWidth, int theHeight, const char* theTitle)
 {
     glfwSetErrorCallback(GlfwOcctView::errorCallback);
     glfwInit();
-    const bool toAskCoreProfile = true;
+    constexpr bool toAskCoreProfile = true;
     if (toAskCoreProfile) {
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -230,39 +231,10 @@ void GlfwOcctView::renderGui()
 
     ImGui::ShowDemoWindow();
 
-    // Model Control Window
-    ImGui::Begin("Model Control");
+    // Show Model Control window
+    myModelControl.Show(myContext, myShapes, myView);
 
-    if (ImGui::Button("Import STEP Model")) {
-        NFD_Init();
-
-        nfdu8char_t* aPath;
-        nfdu8filteritem_t filters[] = {{"STEP file", "stp,step"}};
-        nfdopendialogu8args_t args = {0};
-        args.filterList = filters;
-        args.filterCount = 1;
-        auto aResult = NFD_OpenDialogU8_With(&aPath, &args);
-        if (aResult == NFD_OKAY) {
-            // Load the step file
-            loadStepFile(aPath, true);
-            NFD_FreePathU8(aPath);
-        }
-        else if (aResult != NFD_CANCEL) {
-            Message::DefaultMessenger()->Send(TCollection_AsciiString("Error: ") + NFD_GetError(),
-                                              Message_Fail);
-        }
-
-        NFD_Quit();
-    }
-
-    // 添加显示/隐藏模型树的按钮
-    if (ImGui::Button("Toggle Model Tree")) {
-        myModelTree.IsVisible() = !myModelTree.IsVisible();
-    }
-
-    ImGui::End();
-
-    // 在单独窗口中显示模型树
+    // Show Model Tree window
     myModelTree.Show(myContext, myShapes);
 
     ImGui::Render();
@@ -321,53 +293,6 @@ void GlfwOcctView::handleViewRedraw(const Handle(AIS_InteractiveContext) & theCt
 {
     AIS_ViewController::handleViewRedraw(theCtx, theView);
     myToWaitEvents = !myToAskNextFrame;
-}
-
-void GlfwOcctView::loadStepFile(const char* theFileName, bool doFitAll)
-{
-    // Getting a DE session
-    Handle(DE_Wrapper) aOneTimeSession = DE_Wrapper::GlobalWrapper()->Copy();
-
-    // Loading configuration resources
-    TCollection_AsciiString aString = "global.priority.STEP :   OCC DTK\n"
-                                      "global.general.length.unit : 1\n"
-                                      "provider.STEP.OCC.read.precision.val : 0.\n";
-    Standard_Boolean aIsRecursive = Standard_True;
-    if (!aOneTimeSession->Load(aString, aIsRecursive)) {
-        Message::SendFail() << "Error: configuration is incorrect";
-        return;
-    }
-
-    // Registering providers
-    auto aNode = new STEPCAFControl_ConfigurationNode;
-    aOneTimeSession->Bind(aNode);
-
-    // Transfer of CAD models
-    TopoDS_Shape aShRes;
-    if (!aOneTimeSession->Read(theFileName, aShRes)) {
-        Message::SendFail() << "Error: Can't read file from " << theFileName << "\n";
-        return;
-    }
-
-    // 清理现有形状前，清理显示模式记录
-    myModelTree.ClearDisplayModes();
-
-    // 清理现有形状
-    for (const auto& shape : myShapes) {
-        myContext->Remove(shape, true);
-    }
-    myShapes.clear();
-
-    // Display the new shape
-    Handle(AIS_Shape) aShape = new AIS_Shape(aShRes);
-    myContext->Display(aShape, AIS_Shaded, 0, true);
-    myShapes.push_back(aShape);
-
-    if (doFitAll) {
-        myView->FitAll();
-        myView->ZFitAll();
-        myView->Redraw();
-    }
 }
 
 // ================================================================

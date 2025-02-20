@@ -29,6 +29,7 @@ add_executable(OcctImgui
     src/GlfwOcctView.cpp
     src/GlfwOcctWindow.cpp
     src/ModelTreeGui.cpp
+    src/ModelControlGui.cpp
     src/main.cpp)
 
 target_include_directories(OcctImgui

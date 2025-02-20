@@ -24,6 +24,7 @@
 #define _GlfwOcctView_Header
 
 #include "GlfwOcctWindow.h"
+#include "ModelControlGui.h"
 #include "ModelTreeGui.h"
 
 #include <AIS_InteractiveContext.hxx>
@@ -41,12 +42,10 @@ public:
     GlfwOcctView();
 
     //! Destructor.
-    ~GlfwOcctView();
+    ~GlfwOcctView() override;
 
     //! Main application entry point.
     void run();
-
-    void loadStepFile(const char* theFileName, bool doFitAll = true);
 
 private:
     //! Create GLFW window.
@@ -123,7 +122,7 @@ private:
     //! Mouse move callback.
     static void onMouseMoveCallback(GLFWwindow* theWin, double thePosX, double thePosY)
     {
-        toView(theWin)->onMouseMove((int)thePosX, (int)thePosY);
+        toView(theWin)->onMouseMove(static_cast<int>(thePosX), static_cast<int>(thePosY));
     }
 
 private:
@@ -137,6 +136,7 @@ private:
 
     // My other components
     ModelTreeGui myModelTree;
+    ModelControlGui myModelControl;
 };
 
 #endif  // _GlfwOcctView_Header
