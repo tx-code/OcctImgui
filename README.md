@@ -4,19 +4,6 @@ OpenCASCADE + GLFW + IMGUI Sample.
 
 See [CHANGELOG.md](CHANGELOG.md) for detailed changes and improvements.
 
-## Changes
-
-This fork includes several modifications from the original repository:
-
-1. Updated build configurations and dependencies
-2. Added support for STEP model meshing functionality
-3. Integrated Netgen meshing library
-4. Modified CMake configuration to use newer versions of dependencies
-5. Enhanced integration between OpenCASCADE and ImGui for mesh visualization
-6. Removed Hello ImGui dependency in favor of direct GLFW + ImGui integration
-
-The main goal of these changes is to demonstrate STEP model meshing capabilities using OpenCASCADE and Netgen, with an interactive ImGui-based interface for visualization and control.
-
 ![occt imgui](occt-imgui.png "opencascade imgui")
 
 <https://tracker.dev.opencascade.org/view.php?id=33485>
