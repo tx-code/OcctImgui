@@ -231,7 +231,6 @@ void GlfwOcctView::renderGui()
     ImGui::Begin("Model Control");
 
     if (ImGui::Button("Import STEP Model", ImVec2(200, 0))) {
-        // TODO: Implement model loading
         NFD_Init();
 
         nfdu8char_t* aPath;

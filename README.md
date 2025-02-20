@@ -11,6 +11,7 @@ This fork includes several modifications from the original repository:
 3. Integrated Netgen meshing library
 4. Modified CMake configuration to use newer versions of dependencies
 5. Enhanced integration between OpenCASCADE and ImGui for mesh visualization
+6. Removed Hello ImGui dependency in favor of direct GLFW + ImGui integration
 
 The main goal of these changes is to demonstrate STEP model meshing capabilities using OpenCASCADE and Netgen, with an interactive ImGui-based interface for visualization and control.
 
@@ -52,6 +53,14 @@ GLFW natively supports Windows, macOS and Linux and other Unix-like systems. On 
 GLFW is licensed under the zlib/libpng license.
 
 ## Build
+
+Dependencies:
+
+- OpenCASCADE (>= v7.8.1)
+- GLFW
+- ImGui
+- NFD (Native File Dialog)
+- Netgen
 
 Use VCPKG to manage 3rd-party libraries (OpenCASCADE, netgen...)
 
