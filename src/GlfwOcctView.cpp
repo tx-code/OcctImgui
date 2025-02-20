@@ -22,24 +22,24 @@
 
 #include "GlfwOcctView.h"
 
-#include "imgui_impl_glfw.h"
-#include "imgui_impl_opengl3.h"
-
 #include <AIS_Shape.hxx>
 #include <AIS_ViewCube.hxx>
 #include <Aspect_DisplayConnection.hxx>
 #include <Aspect_Handle.hxx>
 #include <BRepPrimAPI_MakeBox.hxx>
 #include <BRepPrimAPI_MakeCone.hxx>
+#include <DE_Wrapper.hxx>
+#include <GLFW/glfw3.h>
 #include <Message.hxx>
 #include <Message_Messenger.hxx>
 #include <OpenGl_GraphicDriver.hxx>
+#include <STEPCAFControl_ConfigurationNode.hxx>
 #include <TopAbs_ShapeEnum.hxx>
-
-
+#include <imgui_impl_glfw.h>
+#include <imgui_impl_opengl3.h>
 #include <iostream>
+#include <nfd.h>
 
-#include <GLFW/glfw3.h>
 
 namespace
 {
@@ -227,13 +227,32 @@ void GlfwOcctView::renderGui()
 
     ImGui::ShowDemoWindow();
 
-    // Hello IMGUI.
-    ImGui::Begin("Hello");
-    ImGui::Text("Hello ImGui!");
-    ImGui::Text("Hello OpenCASCADE!");
-    ImGui::Button("OK");
-    ImGui::SameLine();
-    ImGui::Button("Cancel");
+    // Model Control Window
+    ImGui::Begin("Model Control");
+
+    if (ImGui::Button("Import STEP Model", ImVec2(200, 0))) {
+        // TODO: Implement model loading
+        NFD_Init();
+
+        nfdu8char_t* aPath;
+        nfdu8filteritem_t filters[] = {{"STEP file", "stp,step"}};
+        nfdopendialogu8args_t args = {0};
+        args.filterList = filters;
+        args.filterCount = 1;
+        auto aResult = NFD_OpenDialogU8_With(&aPath, &args);
+        if (aResult == NFD_OKAY) {
+            // Load the step file
+            loadStepFile(aPath, true);
+            NFD_FreePathU8(aPath);
+        }
+        else if (aResult != NFD_CANCEL) {
+            Message::DefaultMessenger()->Send(TCollection_AsciiString("Error: ") + NFD_GetError(),
+                                              Message_Fail);
+        }
+
+        NFD_Quit();
+    }
+
     ImGui::End();
 
     ImGui::Render();
@@ -259,9 +278,12 @@ void GlfwOcctView::initDemoScene()
     anAxis.SetLocation(gp_Pnt(0.0, 0.0, 0.0));
     Handle(AIS_Shape) aBox = new AIS_Shape(BRepPrimAPI_MakeBox(anAxis, 50, 50, 50).Shape());
     myContext->Display(aBox, AIS_Shaded, 0, false);
+    myShapes.push_back(aBox);
+
     anAxis.SetLocation(gp_Pnt(25.0, 125.0, 0.0));
     Handle(AIS_Shape) aCone = new AIS_Shape(BRepPrimAPI_MakeCone(anAxis, 25, 0, 50).Shape());
     myContext->Display(aCone, AIS_Shaded, 0, false);
+    myShapes.push_back(aCone);
 
     TCollection_AsciiString aGlInfo;
     {
@@ -289,6 +311,50 @@ void GlfwOcctView::handleViewRedraw(const Handle(AIS_InteractiveContext) & theCt
 {
     AIS_ViewController::handleViewRedraw(theCtx, theView);
     myToWaitEvents = !myToAskNextFrame;
+}
+
+void GlfwOcctView::loadStepFile(const char* theFileName, bool doFitAll)
+{
+    // Getting a DE session
+    Handle(DE_Wrapper) aOneTimeSession = DE_Wrapper::GlobalWrapper()->Copy();
+
+    // Loading configuration resources
+    TCollection_AsciiString aString = "global.priority.STEP :   OCC DTK\n"
+                                      "global.general.length.unit : 1\n"
+                                      "provider.STEP.OCC.read.precision.val : 0.\n";
+    Standard_Boolean aIsRecursive = Standard_True;
+    if (!aOneTimeSession->Load(aString, aIsRecursive)) {
+        Message::SendFail() << "Error: configuration is incorrect";
+        return;
+    }
+
+    // Registering providers
+    auto aNode = new STEPCAFControl_ConfigurationNode;
+    aOneTimeSession->Bind(aNode);
+
+    // Transfer of CAD models
+    TopoDS_Shape aShRes;
+    if (!aOneTimeSession->Read(theFileName, aShRes)) {
+        Message::SendFail() << "Error: Can't read file from " << theFileName << "\n";
+        return;
+    }
+
+    // Clean up all existing shapes
+    for (const auto& shape : myShapes) {
+        myContext->Remove(shape, true);
+    }
+    myShapes.clear();
+
+    // Display the new shape
+    Handle(AIS_Shape) aShape = new AIS_Shape(aShRes);
+    myContext->Display(aShape, AIS_Shaded, 0, Standard_True);
+    myShapes.push_back(aShape);
+
+    if (doFitAll) {
+        myView->FitAll();
+        myView->ZFitAll();
+        myView->Redraw();
+    }
 }
 
 // ================================================================

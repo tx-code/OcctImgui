@@ -26,8 +26,12 @@
 #include "GlfwOcctWindow.h"
 
 #include <AIS_InteractiveContext.hxx>
+#include <AIS_Shape.hxx>
 #include <AIS_ViewController.hxx>
 #include <V3d_View.hxx>
+
+
+#include <vector>
 
 //! Sample class creating 3D Viewer within GLFW window.
 class GlfwOcctView: protected AIS_ViewController
@@ -41,6 +45,8 @@ public:
 
     //! Main application entry point.
     void run();
+
+    void loadStepFile(const char* theFileName, bool doFitAll = true);
 
 private:
     //! Create GLFW window.
@@ -125,6 +131,9 @@ private:
     Handle(V3d_View) myView;
     Handle(AIS_InteractiveContext) myContext;
     bool myToWaitEvents = true;
+
+    // AIS shapes container
+    std::vector<Handle(AIS_Shape)> myShapes;
 };
 
 #endif  // _GlfwOcctView_Header

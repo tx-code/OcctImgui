@@ -19,8 +19,9 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib/${CMAKE_BUILD_TYPE})
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib/${CMAKE_BUILD_TYPE})
 
 # Include directories
+find_package(nfd CONFIG REQUIRED)
 find_package(imgui REQUIRED)
-find_package(OpenCASCADE REQUIRED)
+find_package(OpenCASCADE 7.8.1 REQUIRED)
 find_package(Netgen CONFIG REQUIRED)
 
 # Add executable target
@@ -49,9 +50,12 @@ target_link_libraries(OcctImgui
     TKService
     TKOpenGl
     TKV3d
+    TKDE
+    TKDESTEP
     nglib
     ngcore
     imgui::imgui
+    nfd::nfd
 )
 
 target_compile_options(OcctImgui PRIVATE
