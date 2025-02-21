@@ -1,14 +1,13 @@
 #pragma once
 
 #include "IShapeImporter.h"
-#include <DE_Wrapper.hxx>
 
 class MeshImporter: public IShapeImporter
 {
 public:
     bool Import(const char* filePath,
                 const Handle(AIS_InteractiveContext) & context,
-                std::vector<Handle(AIS_Shape)>& shapes,
+                std::vector<Handle(AIS_InteractiveObject)>& objects,
                 const Handle(V3d_View) & view) override;
 
     std::string GetFileExtensions() const override
@@ -19,7 +18,4 @@ public:
     {
         return "Mesh file";
     }
-
-private:
-    bool ConfigureSession(Handle(DE_Wrapper) & session, const std::string& ext);
 };

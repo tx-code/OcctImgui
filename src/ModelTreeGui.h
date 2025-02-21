@@ -1,6 +1,7 @@
 #pragma once
 
 #include <AIS_InteractiveContext.hxx>
+#include <AIS_InteractiveObject.hxx>
 #include <AIS_Shape.hxx>
 #include <map>
 #include <vector>
@@ -13,7 +14,7 @@ public:
     {}
 
     void Show(const Handle(AIS_InteractiveContext) & theContext,
-              std::vector<Handle(AIS_Shape)>& theShapes);
+              std::vector<Handle(AIS_InteractiveObject)>& theObjects);
 
     bool& IsVisible()
     {
@@ -27,19 +28,19 @@ public:
     }
 
 private:
-    void ShowShapeNode(const Handle(AIS_InteractiveContext) & theContext,
-                       const Handle(AIS_Shape) & theShape,
-                       size_t theIndex);
+    void ShowObjectNode(const Handle(AIS_InteractiveContext) & theContext,
+                        const Handle(AIS_InteractiveObject) & theObject,
+                        size_t theIndex);
 
-    void ShowShapeProperties(const Handle(AIS_InteractiveContext) & theContext,
-                             const Handle(AIS_Shape) & theShape);
+    void ShowObjectProperties(const Handle(AIS_InteractiveContext) & theContext,
+                              const Handle(AIS_InteractiveObject) & theObject);
 
-    void ShowShapeVisibility(const Handle(AIS_InteractiveContext) & theContext,
-                             const Handle(AIS_Shape) & theShape);
+    void ShowObjectVisibility(const Handle(AIS_InteractiveContext) & theContext,
+                              const Handle(AIS_InteractiveObject) & theObject);
 
     void ShowDisplayMode(const Handle(AIS_InteractiveContext) & theContext,
-                         const Handle(AIS_Shape) & theShape);
+                         const Handle(AIS_InteractiveObject) & theObject);
 
     bool myIsVisible;
-    std::map<Handle(AIS_Shape), Standard_Integer> myDisplayModes;
+    std::map<Handle(AIS_InteractiveObject), Standard_Integer> myDisplayModes;
 };

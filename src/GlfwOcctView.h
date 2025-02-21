@@ -130,8 +130,8 @@ private:
     Handle(AIS_InteractiveContext) myContext;
     bool myToWaitEvents = true;
 
-    // AIS shapes container
-    std::vector<Handle(AIS_Shape)> myShapes;
+    // AIS objects container
+    std::vector<Handle(AIS_InteractiveObject)> myObjects;
 
     // My other components
     ModelTreeGui myModelTree;

@@ -3,6 +3,8 @@
 #include "importers/MeshImporter.h"
 #include "importers/StepImporter.h"
 
+#include <MeshVS_Mesh.hxx>
+#include <MeshVS_SelectionModeFlags.hxx>
 #include <StdSelect_BRepOwner.hxx>
 #include <TopExp.hxx>
 #include <TopTools_IndexedMapOfShape.hxx>
@@ -14,7 +16,6 @@
 
 ModelControlGui::ModelControlGui(ModelTreeGui& theModelTree)
     : myModelTree(theModelTree)
-    , myCurrentSelectionMode(0)
 {
     // register all importers
     RegisterImporter(std::make_shared<StepImporter>());
@@ -22,14 +23,14 @@ ModelControlGui::ModelControlGui(ModelTreeGui& theModelTree)
 }
 
 void ModelControlGui::Show(const Handle(AIS_InteractiveContext) & context,
-                           std::vector<Handle(AIS_Shape)>& shapes,
+                           std::vector<Handle(AIS_InteractiveObject)>& objects,
                            const Handle(V3d_View) & view)
 {
     ImGui::Begin("Model Control");
     ImGui::SeparatorText("General");
 
     if (ImGui::Button("Import Model")) {
-        ImportFile(context, shapes, view);
+        ImportFile(context, objects, view);
     }
 
     if (ImGui::Button("Toggle Model Tree")) {
@@ -37,34 +38,121 @@ void ModelControlGui::Show(const Handle(AIS_InteractiveContext) & context,
     }
 
     ImGui::SeparatorText("Selection");
-
-    // Selection Mode ComboBox
-    static const char* items[] = {"Neutral", "Vertex", "Edge", "Wire", "Face", "Shell", "Solid"};
-    int previousMode = myCurrentSelectionMode;
-
-    if (ImGui::Combo("Selection Mode", &myCurrentSelectionMode, items, IM_ARRAYSIZE(items))) {
-        if (previousMode != myCurrentSelectionMode) {
-            UpdateSelectionMode(context);
-        }
-    }
-
+    ShowSelectionControls(context, objects);
     ShowSelectionInfo(context);
 
     ImGui::End();
 }
 
+void ModelControlGui::ShowSelectionControls(const Handle(AIS_InteractiveContext) & context,
+                                            std::vector<Handle(AIS_InteractiveObject)>& objects)
+{
+    bool hasTopoShapes = false;
+    bool hasMeshes = false;
+
+    // 检查是否存在不同类型的对象
+    for (const auto& obj : objects) {
+        if (obj->DynamicType() == STANDARD_TYPE(AIS_Shape)) {
+            hasTopoShapes = true;
+        }
+        else if (obj->DynamicType() == STANDARD_TYPE(MeshVS_Mesh)) {
+            hasMeshes = true;
+        }
+    }
+
+    // TopoShape选择模式
+    if (hasTopoShapes) {
+        ImGui::Text("CAD Model Selection Mode:");
+        static const char* topoItems[] =
+            {"Neutral", "Vertex", "Edge", "Wire", "Face", "Shell", "Solid"};
+        int previousMode = mySelectionModes.topoShapeMode;
+
+        if (ImGui::Combo("##TopoMode",
+                         &mySelectionModes.topoShapeMode,
+                         topoItems,
+                         IM_ARRAYSIZE(topoItems))) {
+            if (previousMode != mySelectionModes.topoShapeMode) {
+                for (const auto& obj : objects) {
+                    if (obj->DynamicType() == STANDARD_TYPE(AIS_Shape)) {
+                        UpdateSelectionMode(context, obj);
+                    }
+                }
+            }
+        }
+    }
+
+    // Mesh选择模式
+    if (hasMeshes) {
+        ImGui::Text("Mesh Selection Mode:");
+        static const char* meshItems[] = {"Neutral"};
+        int previousMode = mySelectionModes.meshMode;
+
+        if (ImGui::Combo("##MeshMode",
+                         &mySelectionModes.meshMode,
+                         meshItems,
+                         IM_ARRAYSIZE(meshItems))) {
+            if (previousMode != mySelectionModes.meshMode) {
+                for (const auto& obj : objects) {
+                    if (obj->DynamicType() == STANDARD_TYPE(MeshVS_Mesh)) {
+                        UpdateSelectionMode(context, obj);
+                    }
+                }
+            }
+        }
+    }
+}
+
+void ModelControlGui::UpdateSelectionMode(const Handle(AIS_InteractiveContext) & context,
+                                          const Handle(AIS_InteractiveObject) & object)
+{
+    context->ClearSelected(Standard_False);
+    context->Deactivate(object);
+
+    if (object->DynamicType() == STANDARD_TYPE(AIS_Shape)) {
+        switch (mySelectionModes.topoShapeMode) {
+            case 0:  // Neutral
+                context->Activate(object, AIS_Shape::SelectionMode(TopAbs_SHAPE));
+                break;
+            case 1:  // Vertex
+                context->Activate(object, AIS_Shape::SelectionMode(TopAbs_VERTEX));
+                break;
+            case 2:  // Edge
+                context->Activate(object, AIS_Shape::SelectionMode(TopAbs_EDGE));
+                break;
+            case 3:  // Wire
+                context->Activate(object, AIS_Shape::SelectionMode(TopAbs_WIRE));
+                break;
+            case 4:  // Face
+                context->Activate(object, AIS_Shape::SelectionMode(TopAbs_FACE));
+                break;
+            case 5:  // Shell
+                context->Activate(object, AIS_Shape::SelectionMode(TopAbs_SHELL));
+                break;
+            case 6:  // Solid
+                context->Activate(object, AIS_Shape::SelectionMode(TopAbs_SOLID));
+                break;
+        }
+    }
+    else if (object->DynamicType() == STANDARD_TYPE(MeshVS_Mesh)) {
+        auto mesh = Handle(MeshVS_Mesh)::DownCast(object);
+        switch (mySelectionModes.meshMode) {
+            case 0:  // Neutral
+            default:
+                context->Activate(object, MeshVS_SMF_Mesh);
+                break;
+        }
+    }
+}
+
 void ModelControlGui::ImportFile(const Handle(AIS_InteractiveContext) & context,
-                                 std::vector<Handle(AIS_Shape)>& shapes,
+                                 std::vector<Handle(AIS_InteractiveObject)>& objects,
                                  const Handle(V3d_View) & view)
 {
     NFD_Init();
 
-    // 构建文件过滤器
     std::vector<nfdu8filteritem_t> filters;
-    // 保存字符串以确保其生命周期
     std::vector<std::string> names, specs;
 
-    // 首先添加所有格式的过滤器
     names.push_back("All Supported Formats");
     specs.push_back("");
     for (const auto& importer : myImporters) {
@@ -74,13 +162,11 @@ void ModelControlGui::ImportFile(const Handle(AIS_InteractiveContext) & context,
         specs.back() += importer->GetFileExtensions();
     }
 
-    // 然后为每种格式添加单独的过滤器
     for (const auto& importer : myImporters) {
         names.push_back(importer->GetImporterName());
         specs.push_back(importer->GetFileExtensions());
     }
 
-    // 构建过滤器列表
     for (size_t i = 0; i < names.size(); ++i) {
         filters.push_back({names[i].c_str(), specs[i].c_str()});
     }
@@ -95,57 +181,20 @@ void ModelControlGui::ImportFile(const Handle(AIS_InteractiveContext) & context,
 
         for (const auto& importer : myImporters) {
             if (importer->GetFileExtensions().find(ext) != std::string::npos) {
-                // 清理现有形状
                 myModelTree.ClearDisplayModes();
-                for (const auto& shape : shapes) {
-                    context->Remove(shape, true);
+                for (const auto& obj : objects) {
+                    context->Remove(obj, true);
                 }
-                shapes.clear();
+                objects.clear();
 
-                // 导入新形状
-                importer->Import(outPath, context, shapes, view);
+                importer->Import(outPath, context, objects, view);
                 break;
             }
         }
-
         NFD_FreePathU8(outPath);
     }
 
     NFD_Quit();
-}
-
-void ModelControlGui::UpdateSelectionMode(const Handle(AIS_InteractiveContext) & theContext)
-{
-    // Clear previous selection
-    theContext->ClearSelected(Standard_False);
-
-    // Deactivate previous selection mode
-    theContext->Deactivate();
-
-    // Activate new selection mode
-    switch (myCurrentSelectionMode) {
-        case 0:  // Neutral - shape selection
-            theContext->Activate(AIS_Shape::SelectionMode(TopAbs_SHAPE));
-            break;
-        case 1:  // Vertex
-            theContext->Activate(AIS_Shape::SelectionMode(TopAbs_VERTEX));
-            break;
-        case 2:  // Edge
-            theContext->Activate(AIS_Shape::SelectionMode(TopAbs_EDGE));
-            break;
-        case 3:  // Wire
-            theContext->Activate(AIS_Shape::SelectionMode(TopAbs_WIRE));
-            break;
-        case 4:  // Face
-            theContext->Activate(AIS_Shape::SelectionMode(TopAbs_FACE));
-            break;
-        case 5:  // Shell
-            theContext->Activate(AIS_Shape::SelectionMode(TopAbs_SHELL));
-            break;
-        case 6:  // Solid
-            theContext->Activate(AIS_Shape::SelectionMode(TopAbs_SOLID));
-            break;
-    }
 }
 
 std::string ModelControlGui::GetShapeTypeString(TopAbs_ShapeEnum theType) const

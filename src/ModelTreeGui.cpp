@@ -1,13 +1,14 @@
 ﻿#include "ModelTreeGui.h"
 #include <BRepBndLib.hxx>
 #include <Bnd_Box.hxx>
-#include <Quantity_Color.hxx>
+#include <MeshVS_DataSource.hxx>
+#include <MeshVS_Mesh.hxx>
 #include <TopExp_Explorer.hxx>
 #include <imgui.h>
 
 
 void ModelTreeGui::Show(const Handle(AIS_InteractiveContext) & theContext,
-                        std::vector<Handle(AIS_Shape)>& theShapes)
+                        std::vector<Handle(AIS_InteractiveObject)>& theObjects)
 {
     if (!myIsVisible) {
         return;
@@ -15,9 +16,22 @@ void ModelTreeGui::Show(const Handle(AIS_InteractiveContext) & theContext,
 
     ImGui::Begin("Model Tree", &myIsVisible);
 
-    if (ImGui::TreeNode("Shapes in Scene")) {
-        for (size_t i = 0; i < theShapes.size(); i++) {
-            ShowShapeNode(theContext, theShapes[i], i);
+    // CAD Models tree node
+    if (ImGui::TreeNode("TopoShapes")) {
+        for (size_t i = 0; i < theObjects.size(); i++) {
+            if (theObjects[i]->DynamicType() == STANDARD_TYPE(AIS_Shape)) {
+                ShowObjectNode(theContext, theObjects[i], i);
+            }
+        }
+        ImGui::TreePop();
+    }
+
+    // Meshes tree node
+    if (ImGui::TreeNode("Meshes")) {
+        for (size_t i = 0; i < theObjects.size(); i++) {
+            if (theObjects[i]->DynamicType() == STANDARD_TYPE(MeshVS_Mesh)) {
+                ShowObjectNode(theContext, theObjects[i], i);
+            }
         }
         ImGui::TreePop();
     }
@@ -25,107 +39,105 @@ void ModelTreeGui::Show(const Handle(AIS_InteractiveContext) & theContext,
     ImGui::End();
 }
 
-void ModelTreeGui::ShowShapeNode(const Handle(AIS_InteractiveContext) & theContext,
-                                 const Handle(AIS_Shape) & theShape,
-                                 size_t theIndex)
+void ModelTreeGui::ShowObjectNode(const Handle(AIS_InteractiveContext) & theContext,
+                                  const Handle(AIS_InteractiveObject) & theObject,
+                                  size_t theIndex)
 {
-    // 创建唯一的标签
     TCollection_AsciiString label;
-    label += "Shape ";
+    label += "Object ";
     label += static_cast<Standard_Integer>(theIndex);
 
-    // 获取形状类型
-    TopAbs_ShapeEnum shapeType = theShape->Shape().ShapeType();
-    switch (shapeType) {
-        case TopAbs_COMPOUND:
-            label += " (Compound)";
-            break;
-        case TopAbs_COMPSOLID:
-            label += " (CompSolid)";
-            break;
-        case TopAbs_SOLID:
-            label += " (Solid)";
-            break;
-        case TopAbs_SHELL:
-            label += " (Shell)";
-            break;
-        case TopAbs_FACE:
-            label += " (Face)";
-            break;
-        case TopAbs_WIRE:
-            label += " (Wire)";
-            break;
-        case TopAbs_EDGE:
-            label += " (Edge)";
-            break;
-        case TopAbs_VERTEX:
-            label += " (Vertex)";
-            break;
-        default:
-            label += " (Other)";
-            break;
+    // 根据对象类型添加不同的标签
+    if (theObject->DynamicType() == STANDARD_TYPE(AIS_Shape)) {
+        auto shape = Handle(AIS_Shape)::DownCast(theObject);
+        switch (shape->Shape().ShapeType()) {
+            case TopAbs_COMPOUND:
+                label += " (Compound)";
+                break;
+            case TopAbs_COMPSOLID:
+                label += " (CompSolid)";
+                break;
+            case TopAbs_SOLID:
+                label += " (Solid)";
+                break;
+            case TopAbs_SHELL:
+                label += " (Shell)";
+                break;
+            case TopAbs_FACE:
+                label += " (Face)";
+                break;
+            case TopAbs_WIRE:
+                label += " (Wire)";
+                break;
+            case TopAbs_EDGE:
+                label += " (Edge)";
+                break;
+            case TopAbs_VERTEX:
+                label += " (Vertex)";
+                break;
+            default:
+                label += " (Other)";
+                break;
+        }
+    }
+    else if (theObject->DynamicType() == STANDARD_TYPE(MeshVS_Mesh)) {
+        label += " (Mesh)";
     }
 
     ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_DefaultOpen;
-
-    // 如果形状被选中，添加选中标记
-    if (theContext->IsSelected(theShape)) {
+    if (theContext->IsSelected(theObject)) {
         flags |= ImGuiTreeNodeFlags_Selected;
     }
 
     if (ImGui::TreeNodeEx(label.ToCString(), flags)) {
-        // 处理选择
         if (ImGui::IsItemClicked()) {
             if (ImGui::GetIO().KeyCtrl) {
-                // Ctrl+点击 多选
-                theContext->AddOrRemoveSelected(theShape, true);
+                theContext->AddOrRemoveSelected(theObject, true);
             }
             else {
-                // 单击 单选
                 theContext->ClearSelected(false);
-                theContext->AddOrRemoveSelected(theShape, true);
+                theContext->AddOrRemoveSelected(theObject, true);
             }
         }
 
-        // 显示形状属性
-        ShowShapeProperties(theContext, theShape);
-
-        // 显示可见性控制
-        ShowShapeVisibility(theContext, theShape);
-
-        // 显示模式控制
-        ShowDisplayMode(theContext, theShape);
+        ShowObjectProperties(theContext, theObject);
+        ShowObjectVisibility(theContext, theObject);
+        ShowDisplayMode(theContext, theObject);
 
         ImGui::TreePop();
     }
 }
 
-void ModelTreeGui::ShowShapeProperties(const Handle(AIS_InteractiveContext) & theContext,
-                                       const Handle(AIS_Shape) & theShape)
+void ModelTreeGui::ShowObjectProperties(const Handle(AIS_InteractiveContext) & theContext,
+                                        const Handle(AIS_InteractiveObject) & theObject)
 {
-    // 获取形状的拓扑信息
-    TopExp_Explorer faceExp(theShape->Shape(), TopAbs_FACE);
-    TopExp_Explorer edgeExp(theShape->Shape(), TopAbs_EDGE);
-    TopExp_Explorer vertExp(theShape->Shape(), TopAbs_VERTEX);
-    int nFaces = 0, nEdges = 0, nVertices = 0;
-    for (; faceExp.More(); faceExp.Next())
-        nFaces++;
-    for (; edgeExp.More(); edgeExp.Next())
-        nEdges++;
-    for (; vertExp.More(); vertExp.Next())
-        nVertices++;
+    if (!ImGui::TreeNode("Properties")) {
+        return;
+    }
 
-    // 获取包围盒
-    Bnd_Box bbox;
-    BRepBndLib::Add(theShape->Shape(), bbox);
-    Standard_Real xmin, ymin, zmin, xmax, ymax, zmax;
-    bbox.Get(xmin, ymin, zmin, xmax, ymax, zmax);
+    if (theObject->DynamicType() == STANDARD_TYPE(AIS_Shape)) {
+        auto shape = Handle(AIS_Shape)::DownCast(theObject);
+        // 显示形状特有的属性
+        TopExp_Explorer faceExp(shape->Shape(), TopAbs_FACE);
+        TopExp_Explorer edgeExp(shape->Shape(), TopAbs_EDGE);
+        TopExp_Explorer vertExp(shape->Shape(), TopAbs_VERTEX);
+        int nFaces = 0, nEdges = 0, nVertices = 0;
+        for (; faceExp.More(); faceExp.Next())
+            nFaces++;
+        for (; edgeExp.More(); edgeExp.Next())
+            nEdges++;
+        for (; vertExp.More(); vertExp.Next())
+            nVertices++;
 
-    if (ImGui::TreeNode("Properties")) {
         ImGui::Text("Topology:");
         ImGui::Text("  Faces: %d", nFaces);
         ImGui::Text("  Edges: %d", nEdges);
         ImGui::Text("  Vertices: %d", nVertices);
+
+        Bnd_Box bbox;
+        BRepBndLib::Add(shape->Shape(), bbox);
+        Standard_Real xmin, ymin, zmin, xmax, ymax, zmax;
+        bbox.Get(xmin, ymin, zmin, xmax, ymax, zmax);
 
         ImGui::Text("Dimensions:");
         ImGui::Text("  Size: %.2f x %.2f x %.2f", xmax - xmin, ymax - ymin, zmax - zmin);
@@ -133,45 +145,93 @@ void ModelTreeGui::ShowShapeProperties(const Handle(AIS_InteractiveContext) & th
                     (xmax + xmin) / 2,
                     (ymax + ymin) / 2,
                     (zmax + zmin) / 2);
-        ImGui::TreePop();
     }
+    else if (theObject->DynamicType() == STANDARD_TYPE(MeshVS_Mesh)) {
+        auto mesh = Handle(MeshVS_Mesh)::DownCast(theObject);
+        auto dataSource = Handle(MeshVS_DataSource)::DownCast(mesh->GetDataSource());
+
+        ImGui::Text("Mesh Statistics:");
+        ImGui::Text("  Nodes: %d", dataSource->GetAllNodes().Extent());
+        ImGui::Text("  Elements: %d", dataSource->GetAllElements().Extent());
+
+        // 获取包围盒
+        Bnd_Box bbox;
+        mesh->BoundingBox(bbox);
+        Standard_Real xmin, ymin, zmin, xmax, ymax, zmax;
+        bbox.Get(xmin, ymin, zmin, xmax, ymax, zmax);
+
+        ImGui::Text("Dimensions:");
+        ImGui::Text("  Size: %.2f x %.2f x %.2f", xmax - xmin, ymax - ymin, zmax - zmin);
+        ImGui::Text("  Center: (%.2f, %.2f, %.2f)",
+                    (xmax + xmin) / 2,
+                    (ymax + ymin) / 2,
+                    (zmax + zmin) / 2);
+    }
+
+    ImGui::TreePop();
 }
 
-void ModelTreeGui::ShowShapeVisibility(const Handle(AIS_InteractiveContext) & theContext,
-                                       const Handle(AIS_Shape) & theShape)
+void ModelTreeGui::ShowObjectVisibility(const Handle(AIS_InteractiveContext) & theContext,
+                                        const Handle(AIS_InteractiveObject) & theObject)
 {
-    bool isVisible = theContext->IsDisplayed(theShape);
+    bool isVisible = theContext->IsDisplayed(theObject);
 
     if (ImGui::Checkbox("Visible", &isVisible)) {
         if (isVisible) {
-            // 使用保存的显示模式显示形状
-            theContext->Display(theShape, myDisplayModes[theShape], 0, true);
+            // 使用保存的显示模式显示对象
+            theContext->Display(theObject, myDisplayModes[theObject], 0, true);
         }
         else {
-            theContext->Erase(theShape, true);
+            theContext->Erase(theObject, true);
         }
     }
 }
 
 void ModelTreeGui::ShowDisplayMode(const Handle(AIS_InteractiveContext) & theContext,
-                                   const Handle(AIS_Shape) & theShape)
+                                   const Handle(AIS_InteractiveObject) & theObject)
 {
-    const char* modes[] = {"Wireframe", "Shaded"};
+    if (theObject->DynamicType() == STANDARD_TYPE(AIS_Shape)) {
+        const char* modes[] = {"Wireframe", "Shaded"};
+        if (myDisplayModes.find(theObject) == myDisplayModes.end()) {
+            myDisplayModes[theObject] = AIS_Shaded;
+        }
 
-    // 如果是新形状，设置默认显示模式为 Shaded
-    if (myDisplayModes.find(theShape) == myDisplayModes.end()) {
-        myDisplayModes[theShape] = AIS_Shaded;
+        int currentMode = myDisplayModes[theObject] == AIS_WireFrame ? 0 : 1;
+        if (ImGui::Combo("Display Mode", &currentMode, modes, IM_ARRAYSIZE(modes))) {
+            Standard_Integer newMode = (currentMode == 0) ? AIS_WireFrame : AIS_Shaded;
+            myDisplayModes[theObject] = newMode;
+            if (theContext->IsDisplayed(theObject)) {
+                theContext->SetDisplayMode(theObject, newMode, Standard_True);
+            }
+        }
     }
+    else if (theObject->DynamicType() == STANDARD_TYPE(MeshVS_Mesh)) {
+        const char* modes[] = {"Wireframe", "Shaded"};
+        if (myDisplayModes.find(theObject) == myDisplayModes.end()) {
+            myDisplayModes[theObject] = MeshVS_DMF_WireFrame | MeshVS_DMF_Shading;
+        }
 
-    int currentMode = myDisplayModes[theShape] == AIS_WireFrame ? 0 : 1;
+        int currentMode;
+        if (myDisplayModes[theObject] == MeshVS_DMF_WireFrame)
+            currentMode = 0;
+        else if (myDisplayModes[theObject] == MeshVS_DMF_Shading)
+            currentMode = 1;
 
-    // 显示模式下拉菜单
-    if (ImGui::Combo("Display Mode", &currentMode, modes, IM_ARRAYSIZE(modes))) {
-        Standard_Integer newMode = (currentMode == 0) ? AIS_WireFrame : AIS_Shaded;
-        myDisplayModes[theShape] = newMode;
-
-        if (theContext->IsDisplayed(theShape)) {
-            theContext->SetDisplayMode(theShape, newMode, Standard_True);
+        if (ImGui::Combo("Display Mode", &currentMode, modes, IM_ARRAYSIZE(modes))) {
+            Standard_Integer newMode;
+            switch (currentMode) {
+                case 0:
+                    newMode = MeshVS_DMF_WireFrame;
+                    break;
+                case 1:
+                default:
+                    newMode = MeshVS_DMF_Shading;
+                    break;
+            }
+            myDisplayModes[theObject] = newMode;
+            if (theContext->IsDisplayed(theObject)) {
+                theContext->SetDisplayMode(theObject, newMode, Standard_True);
+            }
         }
     }
 }

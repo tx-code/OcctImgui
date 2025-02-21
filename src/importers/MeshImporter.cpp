@@ -1,59 +1,63 @@
 ﻿#include "MeshImporter.h"
-#include <Message.hxx>
-#include <RWObj_ConfigurationNode.hxx>
-#include <RWStl_ConfigurationNode.hxx>
-#include <filesystem>
-#include <Poly_Triangulation.hxx>
-#include <MeshVS_DataSource.hxx>
+#include "ais/OCCMesh_DataSource.h"
 
+#include <BRep_Tool.hxx>
+#include <MeshVS_DataSource.hxx>
+#include <MeshVS_Drawer.hxx>
+#include <MeshVS_DrawerAttribute.hxx>
+#include <MeshVS_Mesh.hxx>
+#include <MeshVS_MeshPrsBuilder.hxx>
+#include <Message.hxx>
+#include <Poly_Triangulation.hxx>
+#include <RWObj.hxx>
+#include <RWStl.hxx>
+#include <TColStd_HPackedMapOfInteger.hxx>
+#include <filesystem>
 
 bool MeshImporter::Import(const char* filePath,
                           const Handle(AIS_InteractiveContext) & context,
-                          std::vector<Handle(AIS_Shape)>& shapes,
+                          std::vector<Handle(AIS_InteractiveObject)>& objects,
                           const Handle(V3d_View) & view)
 {
-    // 获取DE会话
-    Handle(DE_Wrapper) aOneTimeSession = DE_Wrapper::GlobalWrapper()->Copy();
-
-    // 获取文件扩展名
     std::string ext = std::filesystem::path(filePath).extension().string().substr(1);
     std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
 
-    if (!ConfigureSession(aOneTimeSession, ext)) {
-        return false;
+    Handle(Poly_Triangulation) aMesh;
+    if (ext == "stl") {
+        aMesh = RWStl::ReadFile(filePath);
+    }
+    else if (ext == "obj") {
+        aMesh = RWObj::ReadFile(filePath);
     }
 
-    // 读取CAD模型
-    TopoDS_Shape aShRes;
-    if (!aOneTimeSession->Read(filePath, aShRes)) {
+    if (aMesh.IsNull()) {
         Message::SendFail() << "Error: Can't read file from " << filePath << "\n";
         return false;
     }
 
-    // 显示新形状
-    Handle(AIS_Shape) aShape = new AIS_Shape(aShRes);
-    context->Display(aShape, AIS_Shaded, 0, true);
-    shapes.push_back(aShape);
+    Handle(OCCMesh_DataSource) aDataSource = new OCCMesh_DataSource(aMesh);
+    Handle(MeshVS_Mesh) aMeshPrs = new MeshVS_Mesh();
+    aMeshPrs->SetDataSource(aDataSource);
 
-    // 调整视图
+    Handle(MeshVS_MeshPrsBuilder) mainBuilder =
+        new MeshVS_MeshPrsBuilder(aMeshPrs, MeshVS_DMF_WireFrame | MeshVS_DMF_Shading);
+    aMeshPrs->AddBuilder(mainBuilder, true);
+    aMeshPrs->GetDrawer()->SetColor(MeshVS_DA_EdgeColor, Quantity_NOC_YELLOW);
+
+    // Hide all nodes by default
+    Handle(TColStd_HPackedMapOfInteger) aNodes = new TColStd_HPackedMapOfInteger();
+    Standard_Integer aLen = aDataSource->GetAllNodes().Extent();
+    for (Standard_Integer anIndex = 1; anIndex <= aLen; anIndex++) {
+        aNodes->ChangeMap().Add(anIndex);
+    }
+    aMeshPrs->SetHiddenNodes(aNodes);
+
+    context->Display(aMeshPrs, AIS_Shaded, 0, true);
+    objects.push_back(aMeshPrs);
+
     view->FitAll();
     view->ZFitAll();
     view->Redraw();
 
     return true;
-}
-
-bool MeshImporter::ConfigureSession(Handle(DE_Wrapper) & session, const std::string& ext)
-{
-    // TODO， don't know how to configure session for mesh file
-    if (ext == "obj") {
-        auto aNode = new RWObj_ConfigurationNode;
-        return session->Bind(aNode);
-    }
-    else if (ext == "stl") {
-        auto aNode = new RWStl_ConfigurationNode;
-        return session->Bind(aNode);
-    }
-    Message::SendFail() << "Error: Unsupported file extension: " << ext;
-    return false;
 }
