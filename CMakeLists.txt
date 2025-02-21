@@ -13,6 +13,10 @@ set(CMAKE_TOOLCHAIN_FILE "${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake")
 # Project configuration
 project(OcctImgui LANGUAGES CXX)
 
+# Use C++17
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 # Set output directories
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin/${CMAKE_BUILD_TYPE})
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib/${CMAKE_BUILD_TYPE})
@@ -30,6 +34,8 @@ add_executable(OcctImgui
     src/GlfwOcctWindow.cpp
     src/ModelTreeGui.cpp
     src/ModelControlGui.cpp
+    src/importers/StepImporter.cpp
+    src/importers/MeshImporter.cpp
     src/main.cpp)
 
 target_include_directories(OcctImgui
@@ -39,28 +45,9 @@ target_include_directories(OcctImgui
 # Link libraries
 target_link_libraries(OcctImgui
     PRIVATE
-    TKernel
-    TKMath
-    TKG2d
-    TKG3d
-    TKGeomBase
-    TKGeomAlgo
-    TKBRep
-    TKTopAlgo
-    TKPrim
-    TKMesh
-    TKService
-    TKOpenGl
-    TKV3d
-    TKDE
-    TKDESTEP
+    ${OpenCASCADE_LIBRARIES}
     nglib
     ngcore
     imgui::imgui
     nfd::nfd
-)
-
-target_compile_options(OcctImgui PRIVATE
-    $<$<CONFIG:Debug>:-g>
-    $<$<CONFIG:Release>:-O3>
 )

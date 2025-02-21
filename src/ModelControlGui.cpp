@@ -1,27 +1,35 @@
-#include "ModelControlGui.h"
+﻿#include "ModelControlGui.h"
 #include "ModelTreeGui.h"
+#include "importers/MeshImporter.h"
+#include "importers/StepImporter.h"
 
-#include <DE_Wrapper.hxx>
-#include <Message.hxx>
-#include <STEPCAFControl_ConfigurationNode.hxx>
 #include <StdSelect_BRepOwner.hxx>
 #include <TopExp.hxx>
 #include <TopTools_IndexedMapOfShape.hxx>
 #include <V3d_View.hxx>
+#include <filesystem>
 #include <imgui.h>
 #include <nfd.h>
 
 
-void ModelControlGui::Show(const Handle(AIS_InteractiveContext) & theContext,
-                           std::vector<Handle(AIS_Shape)>& theShapes,
-                           const Handle(V3d_View) & theView)
+ModelControlGui::ModelControlGui(ModelTreeGui& theModelTree)
+    : myModelTree(theModelTree)
+    , myCurrentSelectionMode(0)
+{
+    // register all importers
+    RegisterImporter(std::make_shared<StepImporter>());
+    RegisterImporter(std::make_shared<MeshImporter>());
+}
+
+void ModelControlGui::Show(const Handle(AIS_InteractiveContext) & context,
+                           std::vector<Handle(AIS_Shape)>& shapes,
+                           const Handle(V3d_View) & view)
 {
     ImGui::Begin("Model Control");
-
     ImGui::SeparatorText("General");
 
-    if (ImGui::Button("Import STEP Model")) {
-        LoadStepFile(theContext, theShapes, theView);
+    if (ImGui::Button("Import Model")) {
+        ImportFile(context, shapes, view);
     }
 
     if (ImGui::Button("Toggle Model Tree")) {
@@ -31,85 +39,76 @@ void ModelControlGui::Show(const Handle(AIS_InteractiveContext) & theContext,
     ImGui::SeparatorText("Selection");
 
     // Selection Mode ComboBox
-    static const char* items[] =
-        {"Neutral", "Vertex", "Edge", "Wire", "Face", "Shell", "Solid"};
+    static const char* items[] = {"Neutral", "Vertex", "Edge", "Wire", "Face", "Shell", "Solid"};
     int previousMode = myCurrentSelectionMode;
 
     if (ImGui::Combo("Selection Mode", &myCurrentSelectionMode, items, IM_ARRAYSIZE(items))) {
         if (previousMode != myCurrentSelectionMode) {
-            UpdateSelectionMode(theContext);
+            UpdateSelectionMode(context);
         }
     }
 
-    ShowSelectionInfo(theContext);
+    ShowSelectionInfo(context);
 
     ImGui::End();
 }
 
-void ModelControlGui::LoadStepFile(const Handle(AIS_InteractiveContext) & theContext,
-                                   std::vector<Handle(AIS_Shape)>& theShapes,
-                                   const Handle(V3d_View) & theView)
+void ModelControlGui::ImportFile(const Handle(AIS_InteractiveContext) & context,
+                                 std::vector<Handle(AIS_Shape)>& shapes,
+                                 const Handle(V3d_View) & view)
 {
     NFD_Init();
 
-    nfdu8char_t* aPath;
-    nfdu8filteritem_t filters[] = {{"STEP file", "stp,step"}};
-    nfdopendialogu8args_t args = {0};
-    args.filterList = filters;
-    args.filterCount = 1;
-    auto aResult = NFD_OpenDialogU8_With(&aPath, &args);
+    // 构建文件过滤器
+    std::vector<nfdu8filteritem_t> filters;
+    // 保存字符串以确保其生命周期
+    std::vector<std::string> names, specs;
 
-    if (aResult == NFD_OKAY) {
-        // Getting a DE session
-        Handle(DE_Wrapper) aOneTimeSession = DE_Wrapper::GlobalWrapper()->Copy();
-
-        // Loading configuration resources
-        TCollection_AsciiString aString = "global.priority.STEP :   OCC DTK\n"
-                                          "global.general.length.unit : 1\n"
-                                          "provider.STEP.OCC.read.precision.val : 0.\n";
-        Standard_Boolean aIsRecursive = Standard_True;
-        if (!aOneTimeSession->Load(aString, aIsRecursive)) {
-            Message::SendFail() << "Error: configuration is incorrect";
-            NFD_FreePathU8(aPath);
-            NFD_Quit();
-            return;
+    // 首先添加所有格式的过滤器
+    names.push_back("All Supported Formats");
+    specs.push_back("");
+    for (const auto& importer : myImporters) {
+        if (!specs.back().empty()) {
+            specs.back() += ",";
         }
-
-        // Registering providers
-        auto aNode = new STEPCAFControl_ConfigurationNode;
-        aOneTimeSession->Bind(aNode);
-
-        // Transfer of CAD models
-        TopoDS_Shape aShRes;
-        if (!aOneTimeSession->Read(aPath, aShRes)) {
-            Message::SendFail() << "Error: Can't read file from " << aPath << "\n";
-            NFD_FreePathU8(aPath);
-            NFD_Quit();
-            return;
-        }
-
-        // Clear existing shapes
-        myModelTree.ClearDisplayModes();
-        for (const auto& shape : theShapes) {
-            theContext->Remove(shape, true);
-        }
-        theShapes.clear();
-
-        // Display the new shape
-        Handle(AIS_Shape) aShape = new AIS_Shape(aShRes);
-        theContext->Display(aShape, AIS_Shaded, 0, true);
-        theShapes.push_back(aShape);
-
-        // Fit view
-        theView->FitAll();
-        theView->ZFitAll();
-        theView->Redraw();
-
-        NFD_FreePathU8(aPath);
+        specs.back() += importer->GetFileExtensions();
     }
-    else if (aResult != NFD_CANCEL) {
-        Message::DefaultMessenger()->Send(TCollection_AsciiString("Error: ") + NFD_GetError(),
-                                          Message_Fail);
+
+    // 然后为每种格式添加单独的过滤器
+    for (const auto& importer : myImporters) {
+        names.push_back(importer->GetImporterName());
+        specs.push_back(importer->GetFileExtensions());
+    }
+
+    // 构建过滤器列表
+    for (size_t i = 0; i < names.size(); ++i) {
+        filters.push_back({names[i].c_str(), specs[i].c_str()});
+    }
+
+    nfdu8char_t* outPath = nullptr;
+    nfdresult_t result = NFD_OpenDialogU8(&outPath, filters.data(), filters.size(), nullptr);
+
+    if (result == NFD_OKAY) {
+        std::filesystem::path filePath(outPath);
+        std::string ext = filePath.extension().string().substr(1);
+        std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
+
+        for (const auto& importer : myImporters) {
+            if (importer->GetFileExtensions().find(ext) != std::string::npos) {
+                // 清理现有形状
+                myModelTree.ClearDisplayModes();
+                for (const auto& shape : shapes) {
+                    context->Remove(shape, true);
+                }
+                shapes.clear();
+
+                // 导入新形状
+                importer->Import(outPath, context, shapes, view);
+                break;
+            }
+        }
+
+        NFD_FreePathU8(outPath);
     }
 
     NFD_Quit();
@@ -231,6 +230,20 @@ void ModelControlGui::ShowSelectionInfo(const Handle(AIS_InteractiveContext) & t
             else {
                 ImGui::Text("Unknown");
             }
+        }
+    }
+}
+
+void ModelControlGui::RegisterImporter(std::shared_ptr<IShapeImporter> importer)
+{
+    if (importer) {
+        // 检查是否已经注册了相同类型的导入器
+        auto it = std::find_if(myImporters.begin(), myImporters.end(), [&](const auto& existing) {
+            return existing->GetImporterName() == importer->GetImporterName();
+        });
+
+        if (it == myImporters.end()) {
+            myImporters.push_back(importer);
         }
     }
 }

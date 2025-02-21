@@ -1,4 +1,4 @@
-// MIT License
+﻿// MIT License
 //
 // Copyright(c) 2023 Shing Liu
 //
@@ -21,6 +21,7 @@
 // SOFTWARE.
 
 #include "GlfwOcctView.h"
+#include "importers/StepImporter.h"
 
 int main(int, char**)
 {
