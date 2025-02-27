@@ -27,6 +27,7 @@
 #include "importers/MeshImporter.h"
 #include "importers/StepImporter.h"
 
+#include <spdlog/spdlog.h>
 #include <AIS_Shape.hxx>
 #include <AIS_ViewCube.hxx>
 #include <Aspect_DisplayConnection.hxx>
@@ -36,8 +37,6 @@
 #include <BRepPrimAPI_MakeCone.hxx>
 #include <DE_Wrapper.hxx>
 #include <GLFW/glfw3.h>
-#include <Message.hxx>
-#include <Message_Messenger.hxx>
 #include <OpenGl_GraphicDriver.hxx>
 #include <STEPCAFControl_ConfigurationNode.hxx>
 #include <TopAbs_ShapeEnum.hxx>
@@ -115,9 +114,7 @@ GlfwOcctView* GlfwOcctView::toView(GLFWwindow* theWin)
 // ================================================================
 void GlfwOcctView::errorCallback(int theError, const char* theDescription)
 {
-    Message::DefaultMessenger()->Send(TCollection_AsciiString("Error") + theError + ": "
-                                          + theDescription,
-                                      Message_Fail);
+    spdlog::error("Error: {}", theDescription);
 }
 
 // ================================================================
@@ -292,8 +289,7 @@ void GlfwOcctView::initDemoScene()
             aGlInfo += TCollection_AsciiString("  ") + aValueIter.Key() + ": " + aValueIter.Value();
         }
     }
-    Message::DefaultMessenger()->Send(TCollection_AsciiString("OpenGL info:\n") + aGlInfo,
-                                      Message_Info);
+    spdlog::info("OpenGL info:\n{}", aGlInfo.ToCString());
 }
 
 // ================================================================

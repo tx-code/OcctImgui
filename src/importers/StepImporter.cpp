@@ -1,46 +1,47 @@
 ﻿#include "StepImporter.h"
+#include <spdlog/spdlog.h>
 
 #include <AIS_Shape.hxx>
-#include <Message.hxx>
-#include <STEPCAFControl_ConfigurationNode.hxx>
+#include <BRepTools.hxx>
+#include <STEPControl_Reader.hxx>
+#include <TopExp_Explorer.hxx>
+#include <TopoDS.hxx>
+#include <TopoDS_Compound.hxx>
 #include <TopoDS_Shape.hxx>
 
 bool StepImporter::Import(const char* filePath,
-                         const Handle(AIS_InteractiveContext) & context,
-                         std::vector<Handle(AIS_InteractiveObject)>& objects)
+                          const Handle(AIS_InteractiveContext) & context,
+                          std::vector<Handle(AIS_InteractiveObject)>& objects)
 {
-    Handle(DE_Wrapper) aOneTimeSession = DE_Wrapper::GlobalWrapper()->Copy();
-
-    if (!ConfigureSession(aOneTimeSession)) {
+    spdlog::debug("Starting STEP file import: {}", filePath);
+    
+    STEPControl_Reader reader;
+    IFSelect_ReturnStatus status = reader.ReadFile(filePath);
+    
+    if (status != IFSelect_RetDone) {
+        spdlog::error("Failed to read STEP file: {}", filePath);
         return false;
     }
-
-    TopoDS_Shape aShRes;
-    if (!aOneTimeSession->Read(filePath, aShRes)) {
-        Message::SendFail() << "Error: Can't read file from " << filePath << "\n";
+    
+    spdlog::debug("STEP file read successfully, preparing conversion");
+    
+    // 转换
+    reader.TransferRoots();
+    TopoDS_Shape shape = reader.OneShape();
+    
+    if (shape.IsNull()) {
+        spdlog::error("Failed to create shape from STEP file");
         return false;
     }
-
-    Handle(AIS_Shape) aShape = new AIS_Shape(aShRes);
-    context->Display(aShape, AIS_Shaded, 0, true);
-    objects.push_back(aShape);
-
-    // TODO: update view to fit the new shape
-
-    return true;
-}
-
-bool StepImporter::ConfigureSession(Handle(DE_Wrapper) & session)
-{
-    TCollection_AsciiString aString = "global.priority.STEP :   OCC DTK\n"
-                                      "global.general.length.unit : 1\n"
-                                      "provider.STEP.OCC.read.precision.val : 0.\n";
-    if (!session->Load(aString, Standard_True)) {
-        Message::SendFail() << "Error: configuration is incorrect";
-        return false;
-    }
-
-    auto aNode = new STEPCAFControl_ConfigurationNode;
-    session->Bind(aNode);
+    
+    spdlog::debug("STEP shape created successfully, adding to interactive context");
+    
+    // 创建可视化对象并添加到上下文
+    Handle(AIS_Shape) aisShape = new AIS_Shape(shape);
+    context->Display(aisShape, Standard_False);
+    objects.push_back(aisShape);
+    
+    spdlog::debug("STEP model imported and displayed successfully");
+    
     return true;
 }

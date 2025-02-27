@@ -18,7 +18,4 @@ public:
     {
         return "STEP file";
     }
-
-private:
-    bool ConfigureSession(Handle(DE_Wrapper) & session);
 };

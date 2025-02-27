@@ -27,6 +27,7 @@ find_package(nfd CONFIG REQUIRED)
 find_package(imgui REQUIRED)
 find_package(OpenCASCADE 7.8.1 REQUIRED)
 find_package(Netgen CONFIG REQUIRED)
+find_package(spdlog CONFIG REQUIRED)
 
 # Add executable target
 add_executable(OcctImgui
@@ -52,4 +53,5 @@ target_link_libraries(OcctImgui
     ngcore
     imgui::imgui
     nfd::nfd
+    spdlog::spdlog
 )
