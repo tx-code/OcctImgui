@@ -5,6 +5,8 @@
 #include <V3d_View.hxx>
 #include <memory>
 #include <vector>
+#include <map>
+#include <string>
 
 class ModelManager;
 class IShapeImporter;
@@ -32,7 +34,7 @@ public:
     // 获取选择模式
     const SelectionModes& getSelectionModes() const { return mySelectionModes; }
 
-    // 在 ModelControlGui 类的 public 部分添加：
+    // 设置视图
     void setView(const Handle(V3d_View)& view);
 
 private:
@@ -41,6 +43,16 @@ private:
     std::string getShapeTypeString(TopAbs_ShapeEnum theType) const;
     void importFile(const Handle(V3d_View)& view);
     void showSelectionControls();
+    
+    // 模型树功能
+    void renderObjectNode(const Handle(AIS_InteractiveObject)& theObject, size_t theIndex);
+    void renderObjectProperties(const Handle(AIS_InteractiveObject)& theObject);
+    void renderObjectVisibility(const Handle(AIS_InteractiveObject)& theObject);
+    void renderDisplayMode(const Handle(AIS_InteractiveObject)& theObject);
+    
+    // 右键菜单功能
+    void showContextMenu(const Handle(AIS_InteractiveObject)& theObject);
+    void showGlobalContextMenu();
 
     std::shared_ptr<ModelManager> myModelManager;
     SelectionModes mySelectionModes;
@@ -48,4 +60,7 @@ private:
     bool myIsVisible;
     std::string myComponentId;
     Handle(V3d_View) myView;
+    
+    // 从ModelTreeGui合并的成员
+    std::map<Handle(AIS_InteractiveObject), Standard_Integer> myDisplayModes;
 }; 

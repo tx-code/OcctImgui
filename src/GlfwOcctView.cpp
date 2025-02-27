@@ -23,7 +23,7 @@
 #include "GlfwOcctView.h"
 #include "model/ModelManager.h"
 
-#include "gui/ModelTreeGui.h"
+#include "gui/ModelControlGui.h"
 #include "importers/MeshImporter.h"
 #include "importers/StepImporter.h"
 
@@ -208,7 +208,6 @@ void GlfwOcctView::initViewer()
 
     // 初始化模型管理器和GUI组件
     myModelManager = std::make_shared<ModelManager>(myContext);
-    myModelTree = std::make_shared<ModelTreeGui>(myModelManager);
     myModelControl = std::make_shared<ModelControlGui>(myModelManager);
     myModelControl->setView(myView);
 
@@ -244,7 +243,6 @@ void GlfwOcctView::renderGui()
 
     // 渲染GUI组件
     myModelControl->render();
-    myModelTree->render();
 
     ImGui::Render();
 

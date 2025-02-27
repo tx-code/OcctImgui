@@ -24,7 +24,6 @@
 
 #include "GlfwOcctWindow.h"
 #include "gui/ModelControlGui.h"
-#include "gui/ModelTreeGui.h"
 #include <AIS_InteractiveContext.hxx>
 #include <AIS_ViewController.hxx>
 #include <V3d_View.hxx>
@@ -116,6 +115,5 @@ private:
 
     // GUI组件
     std::shared_ptr<ModelManager> myModelManager;
-    std::shared_ptr<ModelTreeGui> myModelTree;
     std::shared_ptr<ModelControlGui> myModelControl;
 };
