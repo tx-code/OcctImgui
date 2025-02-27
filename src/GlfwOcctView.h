@@ -23,104 +23,86 @@
 #pragma once
 
 #include "GlfwOcctWindow.h"
-#include "ModelControlGui.h"
-#include "ModelTreeGui.h"
-
+#include "gui/ModelControlGui.h"
+#include "gui/ModelTreeGui.h"
 #include <AIS_InteractiveContext.hxx>
-#include <AIS_Shape.hxx>
 #include <AIS_ViewController.hxx>
 #include <V3d_View.hxx>
-
-#include <vector>
+#include <memory>
 
 class ModelManager;
 
-//! Sample class creating 3D Viewer within GLFW window.
-class GlfwOcctView: protected AIS_ViewController
+//! Sample class using GLFW for window creation.
+class GlfwOcctView : public AIS_ViewController
 {
 public:
-    //! Default constructor.
+    //! Main constructor.
     GlfwOcctView();
 
     //! Destructor.
-    ~GlfwOcctView() override;
+    virtual ~GlfwOcctView();
 
-    //! Main application entry point.
+    //! Run application.
     void run();
 
 private:
-    //! Create GLFW window.
+    //! Perform application initialization.
     void initWindow(int theWidth, int theHeight, const char* theTitle);
 
-    //! Create 3D Viewer.
+    //! Initialize OCCT viewer.
     void initViewer();
 
-    //! Init ImGui.
+    //! Initialize GUI elements.
     void initGui();
 
-    //! Render ImGUI.
-    void renderGui();
-
-    //! Fill 3D Viewer with a DEMO items.
+    //! Create some demonstration shapes.
     void initDemoScene();
 
-    //! Application event loop.
+    //! Main application event loop.
     void mainloop();
 
-    //! Clean up before .
+    //! Clean up resources.
     void cleanup();
 
+    //! Render GUI.
+    void renderGui();
+
     //! Handle view redraw.
-    void handleViewRedraw(const Handle(AIS_InteractiveContext) & theCtx,
-                          const Handle(V3d_View) & theView) override;
+    void handleViewRedraw(const Handle(AIS_InteractiveContext)& theCtx,
+                          const Handle(V3d_View)& theView) override;
 
-    //! @name GLWF callbacks
 private:
-    //! Window resize event.
-    void onResize(int theWidth, int theHeight);
-
-    //! Mouse scroll event.
-    void onMouseScroll(double theOffsetX, double theOffsetY);
-
-    //! Mouse click event.
-    void onMouseButton(int theButton, int theAction, int theMods);
-
-    //! Mouse move event.
-    void onMouseMove(int thePosX, int thePosY);
-
-    //! @name GLWF callbacks (static functions)
-private:
-    //! GLFW callback redirecting messages into Message::DefaultMessenger().
+    //! GLFW callbacks.
     static void errorCallback(int theError, const char* theDescription);
-
-    //! Wrapper for glfwGetWindowUserPointer() returning this class instance.
     static GlfwOcctView* toView(GLFWwindow* theWin);
 
-    //! Window resize callback.
+    //! Window resize event.
+    void onResize(int theWidth, int theHeight);
     static void onResizeCallback(GLFWwindow* theWin, int theWidth, int theHeight)
     {
         toView(theWin)->onResize(theWidth, theHeight);
     }
-
-    //! Frame-buffer resize callback.
     static void onFBResizeCallback(GLFWwindow* theWin, int theWidth, int theHeight)
     {
         toView(theWin)->onResize(theWidth, theHeight);
     }
 
-    //! Mouse scroll callback.
+    //! Mouse scroll event.
+    void onMouseScroll(double theOffsetX, double theOffsetY);
     static void onMouseScrollCallback(GLFWwindow* theWin, double theOffsetX, double theOffsetY)
     {
         toView(theWin)->onMouseScroll(theOffsetX, theOffsetY);
     }
 
-    //! Mouse click callback.
+    //! Mouse click event.
+    void onMouseButton(int theButton, int theAction, int theMods);
     static void onMouseButtonCallback(GLFWwindow* theWin, int theButton, int theAction, int theMods)
     {
         toView(theWin)->onMouseButton(theButton, theAction, theMods);
     }
 
-    //! Mouse move callback.
+    //! Mouse move event.
+    void onMouseMove(int thePosX, int thePosY);
     static void onMouseMoveCallback(GLFWwindow* theWin, double thePosX, double thePosY)
     {
         toView(theWin)->onMouseMove(static_cast<int>(thePosX), static_cast<int>(thePosY));
@@ -132,10 +114,8 @@ private:
     Handle(AIS_InteractiveContext) myContext;
     bool myToWaitEvents = true;
 
-    // 添加 ModelManager
+    // GUI组件
     std::shared_ptr<ModelManager> myModelManager;
-
-    // 这些仍然保留，但会逐步修改为使用ModelManager
-    ModelTreeGui myModelTree;
-    ModelControlGui myModelControl;
+    std::shared_ptr<ModelTreeGui> myModelTree;
+    std::shared_ptr<ModelControlGui> myModelControl;
 };

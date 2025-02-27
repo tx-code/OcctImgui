@@ -1,5 +1,6 @@
 ﻿#pragma once
 
+#include "../events/ModelEvents.h"
 #include <AIS_InteractiveContext.hxx>
 #include <AIS_InteractiveObject.hxx>
 #include <memory>
@@ -12,6 +13,7 @@ class ModelManager
 {
 public:
     ModelManager(const Handle(AIS_InteractiveContext) & theContext);
+    ~ModelManager();
 
     // 模型操作方法
     bool importModel(const std::string& filePath, std::shared_ptr<IShapeImporter> importer);
@@ -32,6 +34,10 @@ public:
     // 添加和删除对象
     void addObject(const Handle(AIS_InteractiveObject) & theObject);
     void removeObject(const Handle(AIS_InteractiveObject) & theObject);
+
+    // 选择对象
+    void selectObject(const Handle(AIS_InteractiveObject) & theObject, bool clearFirst = true);
+    void clearSelection();
 
 private:
     Handle(AIS_InteractiveContext) myContext;

@@ -33,8 +33,8 @@ add_executable(OcctImgui
     src/model/ModelManager.cpp
     src/GlfwOcctView.cpp
     src/GlfwOcctWindow.cpp
-    src/ModelTreeGui.cpp
-    src/ModelControlGui.cpp
+    src/gui/ModelTreeGui.cpp
+    src/gui/ModelControlGui.cpp
     src/ais/OCCMesh_DataSource.cpp
     src/importers/StepImporter.cpp
     src/importers/MeshImporter.cpp

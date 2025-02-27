@@ -1,4 +1,4 @@
-// MIT License
+﻿// MIT License
 //
 // Copyright(c) 2023 Shing Liu
 //
@@ -23,7 +23,7 @@
 #include "GlfwOcctView.h"
 #include "model/ModelManager.h"
 
-#include "ModelTreeGui.h"
+#include "gui/ModelTreeGui.h"
 #include <AIS_Shape.hxx>
 #include <AIS_ViewCube.hxx>
 #include <Aspect_DisplayConnection.hxx>
@@ -86,9 +86,9 @@ Aspect_VKeyFlags keyFlagsFromGlfw(int theFlags)
 // Purpose  :
 // ================================================================
 GlfwOcctView::GlfwOcctView()
-    : myModelControl(myModelTree)
-    , myModelManager(std::make_shared<ModelManager>(myContext))
-{}
+{
+    // 将在 initViewer 中创建 myContext
+}
 
 // ================================================================
 // Function : ~GlfwOcctView
@@ -205,6 +205,12 @@ void GlfwOcctView::initViewer()
     aCube->SetViewAnimation(this->ViewAnimation());
     aCube->SetFixedAnimationLoop(false);
     myContext->Display(aCube, false);
+
+    // 初始化模型管理器和GUI组件
+    myModelManager = std::make_shared<ModelManager>(myContext);
+    myModelTree = std::make_shared<ModelTreeGui>(myModelManager);
+    myModelControl = std::make_shared<ModelControlGui>(myModelManager);
+    myModelControl->setView(myView);
 }
 
 void GlfwOcctView::initGui()
@@ -233,16 +239,14 @@ void GlfwOcctView::renderGui()
 
     ImGui::ShowDemoWindow();
 
-    // Show Model Control window
-    myModelControl.Show(myContext, const_cast<std::vector<Handle(AIS_InteractiveObject)>&>(myModelManager->getObjects()), myView);
-
-    // Show Model Tree window
-    myModelTree.Show(myContext, const_cast<std::vector<Handle(AIS_InteractiveObject)>&>(myModelManager->getObjects()));
+    // 渲染GUI组件
+    myModelControl->render();
+    myModelTree->render();
 
     ImGui::Render();
 
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
+    
     glfwSwapBuffers(myOcctWindow->getGlfwWindow());
 }
 
