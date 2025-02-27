@@ -16,8 +16,7 @@
 
 bool MeshImporter::Import(const char* filePath,
                           const Handle(AIS_InteractiveContext) & context,
-                          std::vector<Handle(AIS_InteractiveObject)>& objects,
-                          const Handle(V3d_View) & view)
+                          std::vector<Handle(AIS_InteractiveObject)>& objects)
 {
     std::string ext = std::filesystem::path(filePath).extension().string().substr(1);
     std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
@@ -55,9 +54,7 @@ bool MeshImporter::Import(const char* filePath,
     context->Display(aMeshPrs, AIS_Shaded, 0, true);
     objects.push_back(aMeshPrs);
 
-    view->FitAll();
-    view->ZFitAll();
-    view->Redraw();
+    // TODO: update view to fit the new shape
 
     return true;
 }

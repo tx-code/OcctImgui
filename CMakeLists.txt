@@ -30,6 +30,7 @@ find_package(Netgen CONFIG REQUIRED)
 
 # Add executable target
 add_executable(OcctImgui
+    src/model/ModelManager.cpp
     src/GlfwOcctView.cpp
     src/GlfwOcctWindow.cpp
     src/ModelTreeGui.cpp

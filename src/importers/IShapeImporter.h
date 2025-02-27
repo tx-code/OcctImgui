@@ -14,8 +14,7 @@ public:
 
     virtual bool Import(const char* filePath,
                         const Handle(AIS_InteractiveContext) & context,
-                        std::vector<Handle(AIS_InteractiveObject)>& objects,
-                        const Handle(V3d_View) & view) = 0;
+                        std::vector<Handle(AIS_InteractiveObject)>& objects) = 0;
 
     virtual std::string GetFileExtensions() const = 0;
     virtual std::string GetImporterName() const = 0;

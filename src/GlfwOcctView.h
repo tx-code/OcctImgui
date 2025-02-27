@@ -33,6 +33,8 @@
 
 #include <vector>
 
+class ModelManager;
+
 //! Sample class creating 3D Viewer within GLFW window.
 class GlfwOcctView: protected AIS_ViewController
 {
@@ -130,10 +132,10 @@ private:
     Handle(AIS_InteractiveContext) myContext;
     bool myToWaitEvents = true;
 
-    // AIS objects container
-    std::vector<Handle(AIS_InteractiveObject)> myObjects;
+    // 添加 ModelManager
+    std::shared_ptr<ModelManager> myModelManager;
 
-    // My other components
+    // 这些仍然保留，但会逐步修改为使用ModelManager
     ModelTreeGui myModelTree;
     ModelControlGui myModelControl;
 };

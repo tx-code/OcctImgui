@@ -187,7 +187,7 @@ void ModelControlGui::ImportFile(const Handle(AIS_InteractiveContext) & context,
                 }
                 objects.clear();
 
-                importer->Import(outPath, context, objects, view);
+                importer->Import(outPath, context, objects);
                 break;
             }
         }

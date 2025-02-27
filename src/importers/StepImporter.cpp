@@ -7,8 +7,7 @@
 
 bool StepImporter::Import(const char* filePath,
                          const Handle(AIS_InteractiveContext) & context,
-                         std::vector<Handle(AIS_InteractiveObject)>& objects,
-                         const Handle(V3d_View) & view)
+                         std::vector<Handle(AIS_InteractiveObject)>& objects)
 {
     Handle(DE_Wrapper) aOneTimeSession = DE_Wrapper::GlobalWrapper()->Copy();
 
@@ -26,9 +25,7 @@ bool StepImporter::Import(const char* filePath,
     context->Display(aShape, AIS_Shaded, 0, true);
     objects.push_back(aShape);
 
-    view->FitAll();
-    view->ZFitAll();
-    view->Redraw();
+    // TODO: update view to fit the new shape
 
     return true;
 }

@@ -21,6 +21,7 @@
 // SOFTWARE.
 
 #include "GlfwOcctView.h"
+#include "model/ModelManager.h"
 
 #include "ModelTreeGui.h"
 #include <AIS_Shape.hxx>
@@ -86,6 +87,7 @@ Aspect_VKeyFlags keyFlagsFromGlfw(int theFlags)
 // ================================================================
 GlfwOcctView::GlfwOcctView()
     : myModelControl(myModelTree)
+    , myModelManager(std::make_shared<ModelManager>(myContext))
 {}
 
 // ================================================================
@@ -232,10 +234,10 @@ void GlfwOcctView::renderGui()
     ImGui::ShowDemoWindow();
 
     // Show Model Control window
-    myModelControl.Show(myContext, myObjects, myView);
+    myModelControl.Show(myContext, const_cast<std::vector<Handle(AIS_InteractiveObject)>&>(myModelManager->getObjects()), myView);
 
     // Show Model Tree window
-    myModelTree.Show(myContext, myObjects);
+    myModelTree.Show(myContext, const_cast<std::vector<Handle(AIS_InteractiveObject)>&>(myModelManager->getObjects()));
 
     ImGui::Render();
 
@@ -260,12 +262,12 @@ void GlfwOcctView::initDemoScene()
     anAxis.SetLocation(gp_Pnt(0.0, 0.0, 0.0));
     Handle(AIS_Shape) aBox = new AIS_Shape(BRepPrimAPI_MakeBox(anAxis, 50, 50, 50).Shape());
     myContext->Display(aBox, AIS_Shaded, 0, false);
-    myObjects.push_back(aBox);
+    myModelManager->addObject(aBox);
 
     anAxis.SetLocation(gp_Pnt(25.0, 125.0, 0.0));
     Handle(AIS_Shape) aCone = new AIS_Shape(BRepPrimAPI_MakeCone(anAxis, 25, 0, 50).Shape());
     myContext->Display(aCone, AIS_Shaded, 0, false);
-    myObjects.push_back(aCone);
+    myModelManager->addObject(aCone);
 
     TCollection_AsciiString aGlInfo;
     {
