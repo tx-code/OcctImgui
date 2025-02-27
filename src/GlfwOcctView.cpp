@@ -24,6 +24,9 @@
 #include "model/ModelManager.h"
 
 #include "gui/ModelTreeGui.h"
+#include "importers/MeshImporter.h"
+#include "importers/StepImporter.h"
+
 #include <AIS_Shape.hxx>
 #include <AIS_ViewCube.hxx>
 #include <Aspect_DisplayConnection.hxx>
@@ -211,6 +214,9 @@ void GlfwOcctView::initViewer()
     myModelTree = std::make_shared<ModelTreeGui>(myModelManager);
     myModelControl = std::make_shared<ModelControlGui>(myModelManager);
     myModelControl->setView(myView);
+
+    myModelControl->registerImporter(std::make_shared<StepImporter>());
+    myModelControl->registerImporter(std::make_shared<MeshImporter>());
 }
 
 void GlfwOcctView::initGui()

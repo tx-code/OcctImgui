@@ -141,7 +141,7 @@ void ModelControlGui::importFile(const Handle(V3d_View) & view)
     }
 
     nfdchar_t* outPath = nullptr;
-    nfdfilteritem_t filterItem[2] = {{"CAD Files", "step,stp,iges,igs,stl"}, {"All Files", "*"}};
+    nfdfilteritem_t filterItem[2] = {{"CAD Files", "step,stp,obj,stl"}, {"All Files", "*"}};
 
     nfdresult_t result = NFD_OpenDialog(&outPath, filterItem, 2, nullptr);
 
