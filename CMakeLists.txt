@@ -12,6 +12,7 @@ set(CMAKE_TOOLCHAIN_FILE "${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake")
 
 # Project configuration
 project(OcctImgui LANGUAGES CXX)
+set(CMAKE_CXX_STANDARD 17)
 
 # Set output directories
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin/${CMAKE_BUILD_TYPE})
@@ -22,10 +23,17 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib/${CMAKE_BUILD_TYPE})
 find_package(imgui REQUIRED)
 find_package(OpenCASCADE REQUIRED)
 find_package(Netgen CONFIG REQUIRED)
+find_package(Boost REQUIRED)
+find_package(nfd REQUIRED)
+find_package(spdlog REQUIRED)
 
 # Add executable target
 add_executable(OcctImgui
-    src/GlfwOcctView.cpp
+    src/model/CadModel.cpp
+    src/view/ImGuiView.cpp
+    src/view/OcctView.cpp
+    src/viewmodel/CadViewModel.cpp
+    src/Application.cpp
     src/GlfwOcctWindow.cpp
     src/main.cpp)
 
@@ -36,22 +44,12 @@ target_include_directories(OcctImgui
 # Link libraries
 target_link_libraries(OcctImgui
     PRIVATE
-    TKernel
-    TKMath
-    TKG2d
-    TKG3d
-    TKGeomBase
-    TKGeomAlgo
-    TKBRep
-    TKTopAlgo
-    TKPrim
-    TKMesh
-    TKService
-    TKOpenGl
-    TKV3d
+    ${OpenCASCADE_LIBRARIES}
     nglib
     ngcore
     imgui::imgui
+    spdlog::spdlog
+    nfd::nfd
 )
 
 target_compile_options(OcctImgui PRIVATE

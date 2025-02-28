@@ -1,0 +1,9 @@
+---
+description: 生成日志以及调试信息
+globs: 
+alwaysApply: false
+---
+
+# Your rule content
+
+- spdlog输出的日志永远使用英文 
