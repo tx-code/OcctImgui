@@ -1,6 +1,16 @@
 #include "CadModel.h"
 #include <algorithm>
 
+// IModel接口实现
+std::vector<std::string> CadModel::getAllEntityIds() const {
+    return getAllShapeIds();
+}
+
+void CadModel::removeEntity(const std::string& id) {
+    removeShape(id);
+}
+
+// 原有CadModel实现
 TopoDS_Shape CadModel::getShape(const std::string& id) const {
     auto it = myShapes.find(id);
     if (it != myShapes.end()) {
@@ -64,14 +74,4 @@ void CadModel::rotate(const std::string& shapeId, const gp_Ax1& axis, double ang
     // 此处仅作为示例，实际实现需要使用BRepBuilderAPI_Transform等OCCT API
     
     notifyChange(shapeId);
-}
-
-void CadModel::addChangeListener(std::function<void(const std::string&)> listener) {
-    myChangeListeners.push_back(listener);
-}
-
-void CadModel::notifyChange(const std::string& shapeId) {
-    for (auto& listener : myChangeListeners) {
-        listener(shapeId);
-    }
 } 

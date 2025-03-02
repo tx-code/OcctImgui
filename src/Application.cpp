@@ -179,6 +179,9 @@ void Application::mainloop()
             // 渲染3D视图
             myOcctView->render();
             
+            // 为ImGui准备新的一帧
+            myImGuiView->newFrame();
+            
             // 渲染ImGui UI
             myImGuiView->render();
             

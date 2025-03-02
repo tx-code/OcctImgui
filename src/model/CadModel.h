@@ -1,8 +1,8 @@
 #pragma once
 
+#include "IModel.h"
 #include <map>
 #include <string>
-#include <functional>
 #include <vector>
 #include <memory>
 
@@ -11,10 +11,14 @@
 #include <gp_Vec.hxx>
 #include <gp_Ax1.hxx>
 
-class CadModel {
+class CadModel : public IModel {
 public:
     CadModel() = default;
-    ~CadModel() = default;
+    ~CadModel() override = default;
+    
+    // IModel接口实现
+    std::vector<std::string> getAllEntityIds() const override;
+    void removeEntity(const std::string& id) override;
     
     // 基础几何数据管理
     TopoDS_Shape getShape(const std::string& id) const;
@@ -30,13 +34,7 @@ public:
     void translate(const std::string& shapeId, const gp_Vec& vector);
     void rotate(const std::string& shapeId, const gp_Ax1& axis, double angle);
     
-    // 事件通知
-    void addChangeListener(std::function<void(const std::string&)> listener);
-    
 private:
     std::map<std::string, TopoDS_Shape> myShapes;
     std::map<std::string, Quantity_Color> myColors;
-    std::vector<std::function<void(const std::string&)>> myChangeListeners;
-    
-    void notifyChange(const std::string& shapeId);
 }; 
