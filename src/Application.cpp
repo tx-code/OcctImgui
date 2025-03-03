@@ -156,18 +156,19 @@ void Application::initViews()
         spdlog::info("App: Creating ImGuiView");
         myImGuiViewId = "ImGuiView";
         myImGuiView = viewManager.createView<ImGuiView>(myImGuiViewId, myViewModelId);
-        spdlog::info("App: Initializing ImGuiView with ID: {}", myImGuiViewId);
-        myImGuiView->initialize(myGlfwWindow);
+        // 使用ViewManager初始化视图
+        viewManager.initializeView(myImGuiViewId, myGlfwWindow);
 
-        // 创建OCCT视图 - 由于OcctView需要特殊处理，我们需要单独创建它
+        // 创建OCCT视图 - 使用专门的工厂方法
         spdlog::info("App: Creating OcctView");
         myOcctViewId = "OcctView";
-        // OcctView需要GlfwOcctWindow参数，所以不能直接使用ViewManager的通用方法
-        myOcctView = std::make_shared<OcctView>(myViewModel, myWindow);
-        // 将OcctView添加到ViewManager中
-        viewManager.addView(myOcctViewId, myOcctView);
-        spdlog::info("App: Initializing OcctView with ID: {}", myOcctViewId);
-        myOcctView->initialize();
+        myOcctView = viewManager.createOcctView(myOcctViewId, myViewModelId, myWindow);
+        if (!myOcctView) {
+            spdlog::error("App: Failed to create OcctView");
+            throw std::runtime_error("Failed to create OcctView");
+        }
+        // 使用ViewManager初始化视图
+        viewManager.initializeView(myOcctViewId, myGlfwWindow);
 
         myOcctView->getView()->MustBeResized();
         myWindow->Map();
@@ -187,6 +188,9 @@ void Application::mainloop()
     auto& viewManager = ViewManager::instance();
     auto occtView = viewManager.getView<OcctView>(myOcctViewId);
     
+    // 定义视图渲染顺序
+    std::vector<std::string> renderOrder = {myOcctViewId, myImGuiViewId};
+    
     // 主循环
     while (!glfwWindowShouldClose(myGlfwWindow)) {
         if (occtView && occtView->toWaitEvents()) {
@@ -197,20 +201,8 @@ void Application::mainloop()
         }
 
         try {
-            // 渲染所有视图
-            // 由于OcctView和ImGuiView需要特定的渲染顺序，我们不能使用ViewManager的renderAll方法
-            
-            // 渲染3D视图
-            if (occtView) {
-                occtView->render();
-            }
-            
-            // 为ImGui准备新的一帧
-            auto imGuiView = viewManager.getView<ImGuiView>(myImGuiViewId);
-            if (imGuiView) {
-                imGuiView->newFrame();
-                imGuiView->render();
-            }
+            // 按照指定的顺序渲染视图
+            viewManager.renderInOrder(renderOrder);
             
             glfwSwapBuffers(myGlfwWindow);
         } catch (const std::exception& e) {
@@ -261,10 +253,7 @@ void Application::onResizeCallback(GLFWwindow* theWin, int theWidth, int theHeig
     Application* app = toApplication(theWin);
     if (app) {
         auto& viewManager = ViewManager::instance();
-        auto occtView = viewManager.getView<OcctView>(app->myOcctViewId);
-        if (occtView) {
-            occtView->onResize(theWidth, theHeight);
-        }
+        viewManager.handleResize(app->myOcctViewId, theWidth, theHeight);
     }
 }
 
@@ -273,23 +262,16 @@ void Application::onFBResizeCallback(GLFWwindow* theWin, int theWidth, int theHe
     Application* app = toApplication(theWin);
     if (app) {
         auto& viewManager = ViewManager::instance();
-        auto occtView = viewManager.getView<OcctView>(app->myOcctViewId);
-        if (occtView) {
-            occtView->onResize(theWidth, theHeight);
-        }
+        viewManager.handleResize(app->myOcctViewId, theWidth, theHeight);
     }
 }
 
 void Application::onMouseScrollCallback(GLFWwindow* theWin, double theOffsetX, double theOffsetY)
 {
     Application* app = toApplication(theWin);
-    // 使用ViewManager检查是否有视图想要捕获鼠标
-    auto& viewManager = ViewManager::instance();
-    if (app && !viewManager.anyViewWantCaptureMouse()) {
-        auto occtView = viewManager.getView<OcctView>(app->myOcctViewId);
-        if (occtView) {
-            occtView->onMouseScroll(theOffsetX, theOffsetY);
-        }
+    if (app) {
+        auto& viewManager = ViewManager::instance();
+        viewManager.handleMouseScroll(app->myOcctViewId, theOffsetX, theOffsetY);
     }
 }
 
@@ -299,26 +281,18 @@ void Application::onMouseButtonCallback(GLFWwindow* theWin,
                                        int theMods)
 {
     Application* app = toApplication(theWin);
-    // 使用ViewManager检查是否有视图想要捕获鼠标
-    auto& viewManager = ViewManager::instance();
-    if (app && !viewManager.anyViewWantCaptureMouse()) {
-        auto occtView = viewManager.getView<OcctView>(app->myOcctViewId);
-        if (occtView) {
-            occtView->onMouseButton(theButton, theAction, theMods);
-        }
+    if (app) {
+        auto& viewManager = ViewManager::instance();
+        viewManager.handleMouseButton(app->myOcctViewId, theButton, theAction, theMods);
     }
 }
 
 void Application::onMouseMoveCallback(GLFWwindow* theWin, double thePosX, double thePosY)
 {
     Application* app = toApplication(theWin);
-    // 使用ViewManager检查是否有视图想要捕获鼠标
-    auto& viewManager = ViewManager::instance();
-    if (app && !viewManager.anyViewWantCaptureMouse()) {
-        auto occtView = viewManager.getView<OcctView>(app->myOcctViewId);
-        if (occtView) {
-            occtView->onMouseMove(thePosX, thePosY);
-        }
+    if (app) {
+        auto& viewManager = ViewManager::instance();
+        viewManager.handleMouseMove(app->myOcctViewId, thePosX, thePosY);
     }
 }
 

@@ -4,6 +4,7 @@
 #include "ImGuiView.h"
 #include "OcctView.h"
 #include "../viewmodel/ViewModelManager.h"
+#include "../GlfwOcctWindow.h"
 #include <spdlog/spdlog.h>
 #include <memory>
 #include <map>
@@ -28,6 +29,7 @@ public:
         auto viewModel = viewModelManager.getViewModel(viewModelId);
         
         if (!viewModel) {
+            spdlog::error("ViewManager: Failed to get ViewModel with ID: {}", viewModelId);
             return nullptr;
         }
         
@@ -38,24 +40,24 @@ public:
         return view;
     }
     
-    // 添加已创建的视图 (unique_ptr版本)
-    template<typename T>
-    void addView(const std::string& viewId, std::unique_ptr<T>& view) {
-        if (view) {
-            // 将unique_ptr转换为shared_ptr并存储
-            myViews[viewId] = std::shared_ptr<IView>(view.release());
-            spdlog::info("ViewManager: Added view with ID: {}", viewId);
+    // 专门用于创建OcctView的工厂方法
+    std::shared_ptr<OcctView> createOcctView(const std::string& viewId,
+                                           const std::string& viewModelId,
+                                           Handle(GlfwOcctWindow) window) {
+        // 获取ViewModel
+        auto& viewModelManager = ViewModelManager::instance();
+        auto viewModel = viewModelManager.getViewModel<UnifiedViewModel>(viewModelId);
+        
+        if (!viewModel) {
+            spdlog::error("ViewManager: Failed to get ViewModel with ID: {}", viewModelId);
+            return nullptr;
         }
-    }
-    
-    // 添加已创建的视图 (shared_ptr版本)
-    template<typename T>
-    void addView(const std::string& viewId, std::shared_ptr<T>& view) {
-        if (view) {
-            // 存储shared_ptr
-            myViews[viewId] = view;
-            spdlog::info("ViewManager: Added view with ID: {}", viewId);
-        }
+        
+        // 创建OcctView
+        auto view = std::make_shared<OcctView>(viewModel, window);
+        myViews[viewId] = view;
+        spdlog::info("ViewManager: Created OcctView with ID: {}", viewId);
+        return view;
     }
     
     // 初始化所有视图
@@ -65,11 +67,36 @@ public:
         }
     }
     
+    // 初始化特定的视图
+    void initializeView(const std::string& viewId, GLFWwindow* window) {
+        auto view = getView(viewId);
+        if (view) {
+            view->initialize(window);
+            spdlog::info("ViewManager: Initialized view with ID: {}", viewId);
+        } else {
+            spdlog::warn("ViewManager: Cannot initialize view with ID: {}, view not found", viewId);
+        }
+    }
+    
     // 渲染所有视图
     void renderAll() {
         for (auto& pair : myViews) {
             pair.second->newFrame();
             pair.second->render();
+        }
+    }
+    
+    // 按照指定的顺序渲染视图
+    void renderInOrder(const std::vector<std::string>& viewIds) {
+        for (const auto& viewId : viewIds) {
+            auto view = getView(viewId);
+            if (view) {
+                view->newFrame();
+                view->render();
+                spdlog::debug("ViewManager: Rendered view with ID: {}", viewId);
+            } else {
+                spdlog::warn("ViewManager: Cannot render view with ID: {}, view not found", viewId);
+            }
         }
     }
     
@@ -126,6 +153,45 @@ public:
             }
         }
         return false;
+    }
+    
+    // 事件处理方法
+    void handleResize(const std::string& occtViewId, int width, int height) {
+        auto occtView = getView<OcctView>(occtViewId);
+        if (occtView) {
+            occtView->onResize(width, height);
+            spdlog::debug("ViewManager: Handled resize event for view with ID: {}", occtViewId);
+        }
+    }
+    
+    void handleMouseScroll(const std::string& occtViewId, double offsetX, double offsetY) {
+        if (!anyViewWantCaptureMouse()) {
+            auto occtView = getView<OcctView>(occtViewId);
+            if (occtView) {
+                occtView->onMouseScroll(offsetX, offsetY);
+                spdlog::debug("ViewManager: Handled mouse scroll event for view with ID: {}", occtViewId);
+            }
+        }
+    }
+    
+    void handleMouseButton(const std::string& occtViewId, int button, int action, int mods) {
+        if (!anyViewWantCaptureMouse()) {
+            auto occtView = getView<OcctView>(occtViewId);
+            if (occtView) {
+                occtView->onMouseButton(button, action, mods);
+                spdlog::debug("ViewManager: Handled mouse button event for view with ID: {}", occtViewId);
+            }
+        }
+    }
+    
+    void handleMouseMove(const std::string& occtViewId, double posX, double posY) {
+        if (!anyViewWantCaptureMouse()) {
+            auto occtView = getView<OcctView>(occtViewId);
+            if (occtView) {
+                occtView->onMouseMove(posX, posY);
+                spdlog::debug("ViewManager: Handled mouse move event for view with ID: {}", occtViewId);
+            }
+        }
     }
     
 private:
