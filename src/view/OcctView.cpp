@@ -1,5 +1,6 @@
 #include "OcctView.h"
 #include "../mvvm/MessageBus.h"
+#include "../mvvm/GlobalSettings.h"
 
 #include <AIS_Shape.hxx>
 #include <AIS_ViewCube.hxx>
@@ -245,8 +246,12 @@ void OcctView::setupGrid()
 
 void OcctView::updateVisibility()
 {
+    // 获取全局设置
+    auto& globalSettings = MVVM::GlobalSettings::getInstance();
+    
     // 更新网格可见性
-    bool isGridVisible = myViewModel->isGridVisible.get();
+    bool isGridVisible = globalSettings.isGridVisible.get();
+    spdlog::debug("OcctView: Updating grid visibility to {}", isGridVisible);
     if (isGridVisible) {
         myViewModel->getContext()->CurrentViewer()->ActivateGrid(Aspect_GT_Rectangular,
                                                                  Aspect_GDM_Lines);
@@ -256,7 +261,8 @@ void OcctView::updateVisibility()
     }
 
     // 更新ViewCube可见性
-    bool isViewCubeVisible = myViewModel->isViewCubeVisible.get();
+    bool isViewCubeVisible = globalSettings.isViewCubeVisible.get();
+    spdlog::debug("OcctView: Updating view cube visibility to {}", isViewCubeVisible);
     if (!myViewCube.IsNull()) {
         if (isViewCubeVisible) {
             myViewModel->getContext()->Display(myViewCube, false);
@@ -281,6 +287,11 @@ void OcctView::updateVisibility()
     }
 
     myViewModel->getContext()->UpdateCurrentViewer();
+    
+    // 强制重绘视图
+    if (!myView.IsNull()) {
+        myView->Invalidate();
+    }
 }
 
 void OcctView::handleSelection(int x, int y)
@@ -308,12 +319,15 @@ void OcctView::subscribeToEvents()
                                                   }
                                               });
 
+    // 获取全局设置
+    auto& globalSettings = MVVM::GlobalSettings::getInstance();
+    
     // 订阅视图属性变更
-    myViewModel->isGridVisible.addObserver([this](const bool& value) {
+    globalSettings.isGridVisible.addObserver([this](const bool& value) {
         updateVisibility();
     });
 
-    myViewModel->isViewCubeVisible.addObserver([this](const bool& value) {
+    globalSettings.isViewCubeVisible.addObserver([this](const bool& value) {
         updateVisibility();
     });
 

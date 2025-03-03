@@ -26,7 +26,6 @@ add_executable(OcctImgui
     src/view/OcctView.cpp
     src/viewmodel/CadViewModel.cpp
     src/viewmodel/PolyViewModel.cpp
-    src/viewmodel/CompositeViewModel.cpp
     src/Application.cpp
     src/GlfwOcctWindow.cpp
     src/main.cpp)

@@ -1,6 +1,7 @@
 #include "ImGuiView.h"
 #include "../viewmodel/Commands.h"
 #include "../mvvm/MessageBus.h"
+#include "../mvvm/GlobalSettings.h"
 
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
@@ -271,14 +272,18 @@ void ImGuiView::renderCadProperties() {
     }
     
     // 全局设置
-    bool isGridVisible = cadViewModel->isGridVisible.get();
+    auto& globalSettings = MVVM::GlobalSettings::getInstance();
+    
+    bool isGridVisible = globalSettings.isGridVisible.get();
     if (ImGui::Checkbox("Show Grid", &isGridVisible)) {
-        cadViewModel->isGridVisible = isGridVisible;
+        globalSettings.isGridVisible = isGridVisible;
+        spdlog::debug("ImGuiView: Grid visibility set to {}", isGridVisible);
     }
     
-    bool isViewCubeVisible = cadViewModel->isViewCubeVisible.get();
+    bool isViewCubeVisible = globalSettings.isViewCubeVisible.get();
     if (ImGui::Checkbox("Show View Cube", &isViewCubeVisible)) {
-        cadViewModel->isViewCubeVisible = isViewCubeVisible;
+        globalSettings.isViewCubeVisible = isViewCubeVisible;
+        spdlog::debug("ImGuiView: View cube visibility set to {}", isViewCubeVisible);
     }
 }
 

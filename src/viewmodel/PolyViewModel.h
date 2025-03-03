@@ -3,6 +3,7 @@
 #include "IViewModel.h"
 #include "../model/PolyModel.h"
 #include "../mvvm/Observable.h"
+#include "../mvvm/GlobalSettings.h"
 #include <AIS_InteractiveContext.hxx>
 #include <AIS_InteractiveObject.hxx>
 #include <AIS_Triangulation.hxx>
@@ -41,6 +42,9 @@ public:
     
     // PolyModel特定访问器
     std::shared_ptr<PolyModel> getPolyModel() const { return myModel; }
+    
+    // 全局设置访问器
+    MVVM::GlobalSettings& getGlobalSettings() const { return MVVM::GlobalSettings::getInstance(); }
     
 private:
     std::shared_ptr<PolyModel> myModel;

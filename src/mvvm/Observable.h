@@ -2,6 +2,7 @@
 
 #include <functional>
 #include <vector>
+#include <spdlog/spdlog.h>
 
 namespace MVVM {
 
@@ -18,6 +19,11 @@ public:
         }
     }
     
+    Observable& operator=(const T& newValue) {
+        set(newValue);
+        return *this;
+    }
+    
     const T& get() const { return myValue; }
     
     void addObserver(std::function<void(const T&)> observer) {
@@ -29,6 +35,7 @@ private:
     std::vector<std::function<void(const T&)>> myObservers;
     
     void notifyObservers() {
+        spdlog::debug("Observable: Notifying {} observers", myObservers.size());
         for (auto& observer : myObservers) {
             observer(myValue);
         }
