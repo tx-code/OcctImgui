@@ -2,9 +2,15 @@
 
 #include <functional>
 #include <vector>
-#include <spdlog/spdlog.h>
+#include "../utils/Logger.h"
 
 namespace MVVM {
+
+// 创建MVVM日志记录器 - 使用函数确保安全初始化
+inline std::shared_ptr<Utils::Logger>& getMvvmLogger() {
+    static std::shared_ptr<Utils::Logger> logger = Utils::Logger::getLogger("mvvm");
+    return logger;
+}
 
 template<typename T>
 class Observable {
@@ -35,7 +41,7 @@ private:
     std::vector<std::function<void(const T&)>> myObservers;
     
     void notifyObservers() {
-        spdlog::debug("Observable: Notifying {} observers", myObservers.size());
+        getMvvmLogger()->debug("Observable: Notifying {} observers", myObservers.size());
         for (auto& observer : myObservers) {
             observer(myValue);
         }

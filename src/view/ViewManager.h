@@ -5,13 +5,19 @@
 #include "OcctView.h"
 #include "../viewmodel/ViewModelManager.h"
 #include "../GlfwOcctWindow.h"
-#include <spdlog/spdlog.h>
+#include "../utils/Logger.h"
 #include <memory>
 #include <map>
 #include <string>
 #include <vector>
 
 struct GLFWwindow;
+
+// 创建ViewManager日志记录器 - 使用函数确保安全初始化
+inline std::shared_ptr<Utils::Logger>& getViewManagerLogger() {
+    static std::shared_ptr<Utils::Logger> logger = Utils::Logger::getLogger("view.manager");
+    return logger;
+}
 
 class ViewManager {
 public:
@@ -29,14 +35,14 @@ public:
         auto viewModel = viewModelManager.getViewModel(viewModelId);
         
         if (!viewModel) {
-            spdlog::error("ViewManager: Failed to get ViewModel with ID: {}", viewModelId);
+            getViewManagerLogger()->error("Failed to get ViewModel with ID: {}", viewModelId);
             return nullptr;
         }
         
         // 创建View
         auto view = std::make_shared<T>(viewModel);
         myViews[viewId] = view;
-        spdlog::info("ViewManager: Created view with ID: {}", viewId);
+        getViewManagerLogger()->info("Created view with ID: {}", viewId);
         return view;
     }
     
@@ -49,19 +55,20 @@ public:
         auto viewModel = viewModelManager.getViewModel<UnifiedViewModel>(viewModelId);
         
         if (!viewModel) {
-            spdlog::error("ViewManager: Failed to get ViewModel with ID: {}", viewModelId);
+            getViewManagerLogger()->error("Failed to get ViewModel with ID: {}", viewModelId);
             return nullptr;
         }
         
         // 创建OcctView
         auto view = std::make_shared<OcctView>(viewModel, window);
         myViews[viewId] = view;
-        spdlog::info("ViewManager: Created OcctView with ID: {}", viewId);
+        getViewManagerLogger()->info("Created OcctView with ID: {}", viewId);
         return view;
     }
     
     // 初始化所有视图
     void initializeAll(GLFWwindow* window) {
+        LOG_FUNCTION_SCOPE(getViewManagerLogger(), "initializeAll");
         for (auto& pair : myViews) {
             pair.second->initialize(window);
         }
@@ -72,9 +79,9 @@ public:
         auto view = getView(viewId);
         if (view) {
             view->initialize(window);
-            spdlog::info("ViewManager: Initialized view with ID: {}", viewId);
+            getViewManagerLogger()->info("Initialized view with ID: {}", viewId);
         } else {
-            spdlog::warn("ViewManager: Cannot initialize view with ID: {}, view not found", viewId);
+            getViewManagerLogger()->warn("Cannot initialize view with ID: {}, view not found", viewId);
         }
     }
     
@@ -93,15 +100,16 @@ public:
             if (view) {
                 view->newFrame();
                 view->render();
-                spdlog::debug("ViewManager: Rendered view with ID: {}", viewId);
+                getViewManagerLogger()->debug("Rendered view with ID: {}", viewId);
             } else {
-                spdlog::warn("ViewManager: Cannot render view with ID: {}, view not found", viewId);
+                getViewManagerLogger()->warn("Cannot render view with ID: {}, view not found", viewId);
             }
         }
     }
     
     // 关闭所有视图
     void shutdownAll() {
+        LOG_FUNCTION_SCOPE(getViewManagerLogger(), "shutdownAll");
         for (auto& pair : myViews) {
             pair.second->shutdown();
         }
@@ -130,6 +138,9 @@ public:
         if (it != myViews.end()) {
             it->second->shutdown();
             myViews.erase(it);
+            getViewManagerLogger()->info("Removed view with ID: {}", viewId);
+        } else {
+            getViewManagerLogger()->warn("Cannot remove view with ID: {}, view not found", viewId);
         }
     }
     
@@ -160,7 +171,7 @@ public:
         auto occtView = getView<OcctView>(occtViewId);
         if (occtView) {
             occtView->onResize(width, height);
-            spdlog::debug("ViewManager: Handled resize event for view with ID: {}", occtViewId);
+            getViewManagerLogger()->debug("Handled resize event for view with ID: {}", occtViewId);
         }
     }
     
@@ -169,7 +180,7 @@ public:
             auto occtView = getView<OcctView>(occtViewId);
             if (occtView) {
                 occtView->onMouseScroll(offsetX, offsetY);
-                spdlog::debug("ViewManager: Handled mouse scroll event for view with ID: {}", occtViewId);
+                getViewManagerLogger()->debug("Handled mouse scroll event for view with ID: {}", occtViewId);
             }
         }
     }
@@ -179,7 +190,7 @@ public:
             auto occtView = getView<OcctView>(occtViewId);
             if (occtView) {
                 occtView->onMouseButton(button, action, mods);
-                spdlog::debug("ViewManager: Handled mouse button event for view with ID: {}", occtViewId);
+                getViewManagerLogger()->debug("Handled mouse button event for view with ID: {}", occtViewId);
             }
         }
     }
@@ -189,7 +200,7 @@ public:
             auto occtView = getView<OcctView>(occtViewId);
             if (occtView) {
                 occtView->onMouseMove(posX, posY);
-                spdlog::debug("ViewManager: Handled mouse move event for view with ID: {}", occtViewId);
+                getViewManagerLogger()->debug("Handled mouse move event for view with ID: {}", occtViewId);
             }
         }
     }

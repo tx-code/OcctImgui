@@ -2,16 +2,21 @@
 #include "../viewmodel/Commands.h"
 #include "../mvvm/MessageBus.h"
 #include "../mvvm/GlobalSettings.h"
+#include "../utils/Logger.h"
 
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 #include <GLFW/glfw3.h>
 
-// 添加spdlog头文件
-#include <spdlog/spdlog.h>
+// 创建ImGui视图日志记录器 - 使用函数确保安全初始化
+std::shared_ptr<Utils::Logger>& getImGuiLogger() {
+    static std::shared_ptr<Utils::Logger> logger = Utils::Logger::getLogger("view.imgui");
+    return logger;
+}
 
 ImGuiView::ImGuiView(std::shared_ptr<IViewModel> viewModel)
     : myViewModel(viewModel), myWindow(nullptr) {
+    getImGuiLogger()->info("Creating view");
     subscribeToEvents();
 }
 
@@ -31,17 +36,18 @@ std::shared_ptr<UnifiedViewModel> ImGuiView::getUnifiedViewModel() const {
 }
 
 void ImGuiView::initialize(GLFWwindow* window) {
-    spdlog::info("ImGui: Starting initialization");
+    LOG_FUNCTION_SCOPE(getImGuiLogger(), "initialize");
+    getImGuiLogger()->info("Starting initialization");
     
     if (window == nullptr) {
-        spdlog::error("ImGui: Initialization failed - window pointer is null");
+        getImGuiLogger()->error("Initialization failed - window pointer is null");
         return;
     }
     myWindow = window;
     
     // 检查OpenGL上下文是否有效
     if (glfwGetCurrentContext() == nullptr) {
-        spdlog::error("ImGui: Initialization failed - no valid OpenGL context");
+        getImGuiLogger()->error("Initialization failed - no valid OpenGL context");
         return;
     }
 
@@ -59,24 +65,24 @@ void ImGuiView::initialize(GLFWwindow* window) {
         // 初始化ImGui平台后端
         bool glfwInitSuccess = ImGui_ImplGlfw_InitForOpenGL(window, true);
         if (!glfwInitSuccess) {
-            spdlog::error("ImGui: GLFW backend initialization failed");
+            getImGuiLogger()->error("GLFW backend initialization failed");
             return;
         }
         
         // 初始化ImGui渲染器后端
         bool gl3InitSuccess = ImGui_ImplOpenGL3_Init("#version 130");
         if (!gl3InitSuccess) {
-            spdlog::error("ImGui: OpenGL3 backend initialization failed");
+            getImGuiLogger()->error("OpenGL3 backend initialization failed");
             return;
         }
         
-        spdlog::info("ImGui: Initialization completed successfully");
+        getImGuiLogger()->info("Initialization completed successfully");
     }
     catch (const std::exception& e) {
-        spdlog::error("ImGui: Exception during initialization: {}", e.what());
+        getImGuiLogger()->error("Exception during initialization: {}", e.what());
     }
     catch (...) {
-        spdlog::error("ImGui: Unknown exception during initialization");
+        getImGuiLogger()->error("Unknown exception during initialization");
     }
 }
 

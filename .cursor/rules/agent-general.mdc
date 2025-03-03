@@ -1,0 +1,9 @@
+---
+description: agent模式下通用的规则
+globs: 
+alwaysApply: false
+---
+
+# Your rule content
+
+- 除非我显式地告诉你无需我的同意即可修改代码，否则都先要告诉我你的想法与思路 

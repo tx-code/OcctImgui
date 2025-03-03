@@ -58,3 +58,72 @@ Use VCPKG to manage 3rd-party libraries (OpenCASCADE, netgen...)
 ```bash
 cmake -DCMAKE_CXX_STANDARD=17 ..
 ```
+
+## Logging System
+
+The application uses a hierarchical logging system built on top of spdlog. This system provides structured logging with context information, function scope tracking, and safe initialization patterns.
+
+### Key Features
+
+- **Hierarchical Loggers**: Organized by module (e.g., "app", "view.occt", "mvvm")
+- **Context IDs**: Track specific sessions or operations
+- **Function Scope Logging**: Automatically log function entry and exit
+- **Thread-Safe**: Safe for multi-threaded environments
+- **Static Initialization Safety**: Uses Meyer's Singleton pattern to avoid static initialization order issues
+
+### Usage Guide
+
+#### Getting a Logger
+
+```cpp
+// Get a module logger
+auto logger = Utils::Logger::getLogger("your.module.name");
+
+// Or use predefined functions
+auto appLogger = getAppLogger();
+auto viewManagerLogger = getViewManagerLogger();
+auto mvvmLogger = getMvvmLogger();
+```
+
+#### Logging at Different Levels
+
+```cpp
+logger->trace("Trace message: {}", value);
+logger->debug("Debug message: {}", value);
+logger->info("Info message: {}", value);
+logger->warn("Warning message: {}", value);
+logger->error("Error message: {}", value);
+logger->critical("Critical message: {}", value);
+```
+
+#### Setting Context ID
+
+```cpp
+// Set a context ID to track specific operations
+logger->setContextId("session-123");
+```
+
+#### Function Scope Logging
+
+```cpp
+void yourFunction() {
+    // Automatically logs function entry and exit
+    LOG_FUNCTION_SCOPE(logger, "yourFunction");
+    
+    // Function code...
+}
+```
+
+#### Creating Child Loggers
+
+```cpp
+// Create a hierarchical logger structure
+auto childLogger = logger->createChild("submodule");
+```
+
+### Implementation Details
+
+- Loggers are implemented as shared pointers with safe initialization
+- The `Logger` class inherits from `std::enable_shared_from_this` for safe shared pointer creation
+- RAII pattern ensures function exit is logged even when exceptions occur
+- Each module has its own logger function (e.g., `getAppLogger()`) to ensure safe static initialization

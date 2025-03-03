@@ -26,6 +26,7 @@ add_executable(OcctImgui
     src/viewmodel/UnifiedViewModel.cpp
     src/Application.cpp
     src/GlfwOcctWindow.cpp
+    src/utils/Logger.cpp
     src/main.cpp)
 
 target_include_directories(OcctImgui

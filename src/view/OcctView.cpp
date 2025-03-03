@@ -1,6 +1,7 @@
 #include "OcctView.h"
 #include "../mvvm/MessageBus.h"
 #include "../mvvm/GlobalSettings.h"
+#include "../utils/Logger.h"
 
 #include <AIS_Shape.hxx>
 #include <AIS_ViewCube.hxx>
@@ -13,9 +14,11 @@
 #include <V3d_View.hxx>
 #include <V3d_Viewer.hxx>
 
-
-// 添加spdlog头文件
-#include <spdlog/spdlog.h>
+// 创建OCCT视图日志记录器 - 使用函数确保安全初始化
+std::shared_ptr<Utils::Logger>& getOcctLogger() {
+    static std::shared_ptr<Utils::Logger> logger = Utils::Logger::getLogger("view.occt");
+    return logger;
+}
 
 // 辅助函数，转换GLFW鼠标按键为OCCT按键
 namespace
@@ -58,17 +61,18 @@ OcctView::OcctView(std::shared_ptr<UnifiedViewModel> viewModel, Handle(GlfwOcctW
     : myViewModel(viewModel)
     , myWindow(window)
 {
-    spdlog::info("OCCT: Creating view");
+    getOcctLogger()->info("Creating view");
     subscribeToEvents();
 }
 
 OcctView::~OcctView()
 {
+    getOcctLogger()->info("Cleaning up view");
 }
 
 void OcctView::cleanup()
 {
-    spdlog::info("OCCT: Cleaning up view");
+    getOcctLogger()->info("Cleaning up view");
     if (!myView.IsNull()) {
         myView->Remove();
     }
@@ -76,16 +80,17 @@ void OcctView::cleanup()
 
 void OcctView::initialize()
 {
-    spdlog::info("OCCT: Starting initialization");
+    LOG_FUNCTION_SCOPE(getOcctLogger(), "initialize");
+    getOcctLogger()->info("Starting initialization");
     if (myWindow.IsNull() || myWindow->getGlfwWindow() == nullptr) {
-        spdlog::error("OCCT: Initialization failed - invalid window");
+        getOcctLogger()->error("Initialization failed - invalid window");
         return;
     }
     
     try {
         // 检查OpenGL上下文
         if (glfwGetCurrentContext() == nullptr) {
-            spdlog::error("OCCT: Initialization failed - no current OpenGL context");
+            getOcctLogger()->error("Initialization failed - no current OpenGL context");
             return;
         }
     
@@ -93,7 +98,7 @@ void OcctView::initialize()
         Handle(OpenGl_GraphicDriver) aGraphicDriver =
             new OpenGl_GraphicDriver(myWindow->GetDisplay(), Standard_False);
         aGraphicDriver->SetBuffersNoSwap(Standard_True);
-        spdlog::info("OCCT: OpenGL graphic driver created, BuffersNoSwap=True");
+        getOcctLogger()->info("OCCT: OpenGL graphic driver created, BuffersNoSwap=True");
 
         // 创建3D查看器
         Handle(V3d_Viewer) aViewer = myViewModel->getViewer();
@@ -101,28 +106,28 @@ void OcctView::initialize()
         aViewer->SetLightOn();
         aViewer->SetDefaultTypeOfView(V3d_PERSPECTIVE);
         aViewer->ActivateGrid(Aspect_GT_Rectangular, Aspect_GDM_Lines);
-        spdlog::info("OCCT: V3d_Viewer configured");
+        getOcctLogger()->info("OCCT: V3d_Viewer configured");
 
         // 创建视图
         myView = aViewer->CreateView();
         if (myView.IsNull()) {
-            spdlog::error("OCCT: Failed to create view");
+            getOcctLogger()->error("OCCT: Failed to create view");
             return;
         }
         
         myView->SetWindow(myWindow, myWindow->NativeGlContext());
         myView->Window()->DoResize();
         myView->ChangeRenderingParams().ToShowStats = Standard_True;
-        spdlog::info("OCCT: V3d_View created and configured");
+        getOcctLogger()->info("OCCT: V3d_View created and configured");
 
         // 显示视图
         myWindow->Map();
-        spdlog::info("OCCT: Window mapped");
+        getOcctLogger()->info("OCCT: Window mapped");
 
         // 设置视图组件
         setupViewCube();
         setupGrid();
-        spdlog::info("OCCT: View components setup complete");
+        getOcctLogger()->info("OCCT: View components setup complete");
 
         // 应用初始设置
         updateVisibility();
@@ -134,23 +139,23 @@ void OcctView::initialize()
         for (TColStd_IndexedDataMapOfStringString::Iterator aValueIter(aRendInfo);
              aValueIter.More();
              aValueIter.Next()) {
-            spdlog::info("OCCT OpenGL: {} = {}", 
+            getOcctLogger()->info("OCCT OpenGL: {} = {}", 
                           aValueIter.Key().ToCString(), 
                           aValueIter.Value().ToCString());
         }
         
-        spdlog::info("OCCT: Initialization complete");
+        getOcctLogger()->info("OCCT: Initialization complete");
     } catch (const std::exception& e) {
-        spdlog::error("OCCT: Initialization exception: {}", e.what());
+        getOcctLogger()->error("OCCT: Initialization exception: {}", e.what());
     } catch (...) {
-        spdlog::error("OCCT: Unknown exception during initialization");
+        getOcctLogger()->error("OCCT: Unknown exception during initialization");
     }
 }
 
 void OcctView::render()
 {
     if (myView.IsNull() || myViewModel->getContext().IsNull()) {
-        spdlog::warn("OCCT: Render skipped - view or context is null");
+        getOcctLogger()->warn("OCCT: Render skipped - view or context is null");
         return;
     }
     
@@ -161,9 +166,9 @@ void OcctView::render()
         // 刷新视图事件
         FlushViewEvents(myViewModel->getContext(), myView, Standard_True);
     } catch (const std::exception& e) {
-        spdlog::error("OCCT: Render exception: {}", e.what());
+        getOcctLogger()->error("OCCT: Render exception: {}", e.what());
     } catch (...) {
-        spdlog::error("OCCT: Unknown exception during render");
+        getOcctLogger()->error("OCCT: Unknown exception during render");
     }
 }
 
@@ -251,7 +256,7 @@ void OcctView::updateVisibility()
     
     // 更新网格可见性
     bool isGridVisible = globalSettings.isGridVisible.get();
-    spdlog::debug("OcctView: Updating grid visibility to {}", isGridVisible);
+    getOcctLogger()->debug("OcctView: Updating grid visibility to {}", isGridVisible);
     if (isGridVisible) {
         myViewModel->getContext()->CurrentViewer()->ActivateGrid(Aspect_GT_Rectangular,
                                                                  Aspect_GDM_Lines);
@@ -262,7 +267,7 @@ void OcctView::updateVisibility()
 
     // 更新ViewCube可见性
     bool isViewCubeVisible = globalSettings.isViewCubeVisible.get();
-    spdlog::debug("OcctView: Updating view cube visibility to {}", isViewCubeVisible);
+    getOcctLogger()->debug("OcctView: Updating view cube visibility to {}", isViewCubeVisible);
     if (!myViewCube.IsNull()) {
         if (isViewCubeVisible) {
             myViewModel->getContext()->Display(myViewCube, false);
@@ -339,7 +344,7 @@ void OcctView::subscribeToEvents()
 // IView 接口实现
 void OcctView::initialize(GLFWwindow* window)
 {
-    spdlog::info("OcctView: Initializing with GLFW window");
+    getOcctLogger()->info("OcctView: Initializing with GLFW window");
     // 调用原始的初始化方法
     initialize();
 }
@@ -352,7 +357,7 @@ void OcctView::newFrame()
 
 void OcctView::shutdown()
 {
-    spdlog::info("OcctView: Shutting down");
+    getOcctLogger()->info("OcctView: Shutting down");
     cleanup();
 }
 
