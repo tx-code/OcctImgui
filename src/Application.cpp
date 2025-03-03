@@ -10,6 +10,11 @@
 // 添加spdlog头文件
 #include <spdlog/spdlog.h>
 
+// Include manager headers
+#include "model/ModelManager.h"
+#include "viewmodel/ViewModelManager.h"
+#include "view/ViewManager.h"
+
 Application::Application()
     : myWidth(800)
     , myHeight(600)
@@ -93,9 +98,11 @@ void Application::initWindow()
 void Application::initModel()
 {
     spdlog::info("App: Initializing model");
-    // 创建统一模型
-    myModel = std::make_shared<UnifiedModel>();
-    spdlog::info("App: Model initialization complete");
+    // 使用ModelManager创建统一模型
+    auto& modelManager = ModelManager::instance();
+    myModelId = "MainModel";
+    myModel = modelManager.createModel<UnifiedModel>(myModelId);
+    spdlog::info("App: Model initialization complete with ID: {}", myModelId);
 }
 
 void Application::initViewModel()
@@ -116,9 +123,12 @@ void Application::initViewModel()
         Handle(AIS_InteractiveContext) aContext = new AIS_InteractiveContext(aViewer);
         spdlog::info("App: AIS_InteractiveContext created");
 
-        // 创建统一视图模型
-        myViewModel = std::make_shared<UnifiedViewModel>(myModel, aContext);
-        spdlog::info("App: View model initialization complete");
+        // 使用ViewModelManager创建统一视图模型
+        auto& viewModelManager = ViewModelManager::instance();
+        myViewModelId = "MainViewModel";
+        myViewModel = viewModelManager.createViewModel<UnifiedViewModel, UnifiedModel>(
+            myViewModelId, myModelId, aContext);
+        spdlog::info("App: View model initialization complete with ID: {}", myViewModelId);
     } catch (const std::exception& e) {
         spdlog::error("App: View model initialization exception: {}", e.what());
         throw;
@@ -139,16 +149,24 @@ void Application::initViews()
             glfwMakeContextCurrent(myGlfwWindow);
         }
         
-        spdlog::info("App: Creating ImGuiView");
+        // 使用ViewManager创建视图
+        auto& viewManager = ViewManager::instance();
+        
         // 创建ImGui视图
-        myImGuiView = std::make_unique<ImGuiView>(myViewModel);
-        spdlog::info("App: Initializing ImGuiView");
+        spdlog::info("App: Creating ImGuiView");
+        myImGuiViewId = "ImGuiView";
+        myImGuiView = viewManager.createView<ImGuiView>(myImGuiViewId, myViewModelId);
+        spdlog::info("App: Initializing ImGuiView with ID: {}", myImGuiViewId);
         myImGuiView->initialize(myGlfwWindow);
 
+        // 创建OCCT视图 - 由于OcctView需要特殊处理，我们需要单独创建它
         spdlog::info("App: Creating OcctView");
-        // 创建OCCT视图
-        myOcctView = std::make_unique<OcctView>(myViewModel, myWindow);
-        spdlog::info("App: Initializing OcctView");
+        myOcctViewId = "OcctView";
+        // OcctView需要GlfwOcctWindow参数，所以不能直接使用ViewManager的通用方法
+        myOcctView = std::make_shared<OcctView>(myViewModel, myWindow);
+        // 将OcctView添加到ViewManager中
+        viewManager.addView(myOcctViewId, myOcctView);
+        spdlog::info("App: Initializing OcctView with ID: {}", myOcctViewId);
         myOcctView->initialize();
 
         myOcctView->getView()->MustBeResized();
@@ -166,9 +184,12 @@ void Application::initViews()
 void Application::mainloop()
 {
     spdlog::info("App: Starting main loop");
+    auto& viewManager = ViewManager::instance();
+    auto occtView = viewManager.getView<OcctView>(myOcctViewId);
+    
     // 主循环
     while (!glfwWindowShouldClose(myGlfwWindow)) {
-        if (myOcctView->toWaitEvents()) {
+        if (occtView && occtView->toWaitEvents()) {
             glfwWaitEvents();
         }
         else {
@@ -176,14 +197,20 @@ void Application::mainloop()
         }
 
         try {
+            // 渲染所有视图
+            // 由于OcctView和ImGuiView需要特定的渲染顺序，我们不能使用ViewManager的renderAll方法
+            
             // 渲染3D视图
-            myOcctView->render();
+            if (occtView) {
+                occtView->render();
+            }
             
             // 为ImGui准备新的一帧
-            myImGuiView->newFrame();
-            
-            // 渲染ImGui UI
-            myImGuiView->render();
+            auto imGuiView = viewManager.getView<ImGuiView>(myImGuiViewId);
+            if (imGuiView) {
+                imGuiView->newFrame();
+                imGuiView->render();
+            }
             
             glfwSwapBuffers(myGlfwWindow);
         } catch (const std::exception& e) {
@@ -198,16 +225,21 @@ void Application::mainloop()
 void Application::cleanup()
 {
     spdlog::info("App: Starting cleanup");
-    // 清理资源
-    if (myImGuiView) {
-        spdlog::info("App: Shutting down ImGuiView");
-        myImGuiView->shutdown();
-    }
-
-    // 先释放OCCT视图，确保在窗口关闭前释放OpenGL资源
-    if (myOcctView) {
-        myOcctView->cleanup();
-    }
+    
+    // 使用ViewManager清理视图
+    auto& viewManager = ViewManager::instance();
+    spdlog::info("App: Shutting down all views");
+    viewManager.shutdownAll();
+    
+    // 清理ViewModelManager
+    auto& viewModelManager = ViewModelManager::instance();
+    spdlog::info("App: Removing view models");
+    viewModelManager.removeViewModel(myViewModelId);
+    
+    // 清理ModelManager
+    auto& modelManager = ModelManager::instance();
+    spdlog::info("App: Removing models");
+    modelManager.removeModel(myModelId);
 
     if (!myWindow.IsNull()) {
         spdlog::info("App: Closing window");
@@ -227,47 +259,70 @@ Application* Application::toApplication(GLFWwindow* theWin)
 void Application::onResizeCallback(GLFWwindow* theWin, int theWidth, int theHeight)
 {
     Application* app = toApplication(theWin);
-    if (app && app->myOcctView) {
-        app->myOcctView->onResize(theWidth, theHeight);
+    if (app) {
+        auto& viewManager = ViewManager::instance();
+        auto occtView = viewManager.getView<OcctView>(app->myOcctViewId);
+        if (occtView) {
+            occtView->onResize(theWidth, theHeight);
+        }
     }
 }
 
 void Application::onFBResizeCallback(GLFWwindow* theWin, int theWidth, int theHeight)
 {
     Application* app = toApplication(theWin);
-    if (app && app->myOcctView) {
-        app->myOcctView->onResize(theWidth, theHeight);
+    if (app) {
+        auto& viewManager = ViewManager::instance();
+        auto occtView = viewManager.getView<OcctView>(app->myOcctViewId);
+        if (occtView) {
+            occtView->onResize(theWidth, theHeight);
+        }
     }
 }
 
 void Application::onMouseScrollCallback(GLFWwindow* theWin, double theOffsetX, double theOffsetY)
 {
     Application* app = toApplication(theWin);
-    if (app && app->myOcctView && !app->myImGuiView->wantCaptureMouse()) {
-        app->myOcctView->onMouseScroll(theOffsetX, theOffsetY);
+    // 使用ViewManager检查是否有视图想要捕获鼠标
+    auto& viewManager = ViewManager::instance();
+    if (app && !viewManager.anyViewWantCaptureMouse()) {
+        auto occtView = viewManager.getView<OcctView>(app->myOcctViewId);
+        if (occtView) {
+            occtView->onMouseScroll(theOffsetX, theOffsetY);
+        }
     }
 }
 
-void Application::onMouseButtonCallback(GLFWwindow* theWin,
-                                        int theButton,
-                                        int theAction,
-                                        int theMods)
+void Application::onMouseButtonCallback(GLFWwindow* theWin, 
+                                       int theButton,
+                                       int theAction,
+                                       int theMods)
 {
     Application* app = toApplication(theWin);
-    if (app && app->myOcctView && !app->myImGuiView->wantCaptureMouse()) {
-        app->myOcctView->onMouseButton(theButton, theAction, theMods);
+    // 使用ViewManager检查是否有视图想要捕获鼠标
+    auto& viewManager = ViewManager::instance();
+    if (app && !viewManager.anyViewWantCaptureMouse()) {
+        auto occtView = viewManager.getView<OcctView>(app->myOcctViewId);
+        if (occtView) {
+            occtView->onMouseButton(theButton, theAction, theMods);
+        }
     }
 }
 
 void Application::onMouseMoveCallback(GLFWwindow* theWin, double thePosX, double thePosY)
 {
     Application* app = toApplication(theWin);
-    if (app && app->myOcctView && !app->myImGuiView->wantCaptureMouse()) {
-        app->myOcctView->onMouseMove((int)thePosX, (int)thePosY);
+    // 使用ViewManager检查是否有视图想要捕获鼠标
+    auto& viewManager = ViewManager::instance();
+    if (app && !viewManager.anyViewWantCaptureMouse()) {
+        auto occtView = viewManager.getView<OcctView>(app->myOcctViewId);
+        if (occtView) {
+            occtView->onMouseMove(thePosX, thePosY);
+        }
     }
 }
 
 void Application::errorCallback(int theError, const char* theDescription)
 {
-    spdlog::error("App: {}", theDescription);
+    spdlog::error("App: GLFW error {}: {}", theError, theDescription);
 }

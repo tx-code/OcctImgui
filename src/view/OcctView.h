@@ -2,19 +2,28 @@
 
 #include "../GlfwOcctWindow.h"
 #include "../viewmodel/UnifiedViewModel.h"
+#include "IView.h"
 #include <AIS_ViewController.hxx>
 #include <memory>
 
 class AIS_ViewCube;
 
-class OcctView: protected AIS_ViewController
+class OcctView: public IView, protected AIS_ViewController
 {
 public:
     OcctView(std::shared_ptr<UnifiedViewModel> viewModel, Handle(GlfwOcctWindow) window);
-    ~OcctView();
+    ~OcctView() override;
 
+    // IView 接口实现
+    void initialize(GLFWwindow* window) override;
+    void newFrame() override;
+    void render() override;
+    void shutdown() override;
+    bool wantCaptureMouse() const override;
+    std::shared_ptr<IViewModel> getViewModel() const override;
+
+    // OcctView 特有方法
     void initialize();
-    void render();
     void cleanup();
 
     // 事件处理

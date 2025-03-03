@@ -7,6 +7,7 @@
 #include "view/OcctView.h"
 
 #include <memory>
+#include <string>
 
 class Application {
 public:
@@ -40,8 +41,14 @@ private:
     // MVVM组件
     std::shared_ptr<UnifiedModel> myModel;
     std::shared_ptr<UnifiedViewModel> myViewModel;
-    std::unique_ptr<ImGuiView> myImGuiView;
-    std::unique_ptr<OcctView> myOcctView;
+    std::shared_ptr<ImGuiView> myImGuiView;
+    std::shared_ptr<OcctView> myOcctView;
+    
+    // MVVM组件ID
+    std::string myModelId;
+    std::string myViewModelId;
+    std::string myImGuiViewId;
+    std::string myOcctViewId;
     
     // 窗口管理
     Handle(GlfwOcctWindow) myWindow;

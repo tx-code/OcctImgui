@@ -2,7 +2,9 @@
 
 #include "IView.h"
 #include "ImGuiView.h"
+#include "OcctView.h"
 #include "../viewmodel/ViewModelManager.h"
+#include <spdlog/spdlog.h>
 #include <memory>
 #include <map>
 #include <string>
@@ -32,7 +34,28 @@ public:
         // 创建View
         auto view = std::make_shared<T>(viewModel);
         myViews[viewId] = view;
+        spdlog::info("ViewManager: Created view with ID: {}", viewId);
         return view;
+    }
+    
+    // 添加已创建的视图 (unique_ptr版本)
+    template<typename T>
+    void addView(const std::string& viewId, std::unique_ptr<T>& view) {
+        if (view) {
+            // 将unique_ptr转换为shared_ptr并存储
+            myViews[viewId] = std::shared_ptr<IView>(view.release());
+            spdlog::info("ViewManager: Added view with ID: {}", viewId);
+        }
+    }
+    
+    // 添加已创建的视图 (shared_ptr版本)
+    template<typename T>
+    void addView(const std::string& viewId, std::shared_ptr<T>& view) {
+        if (view) {
+            // 存储shared_ptr
+            myViews[viewId] = view;
+            spdlog::info("ViewManager: Added view with ID: {}", viewId);
+        }
     }
     
     // 初始化所有视图

@@ -335,3 +335,35 @@ void OcctView::subscribeToEvents()
         updateVisibility();
     });
 }
+
+// IView 接口实现
+void OcctView::initialize(GLFWwindow* window)
+{
+    spdlog::info("OcctView: Initializing with GLFW window");
+    // 调用原始的初始化方法
+    initialize();
+}
+
+void OcctView::newFrame()
+{
+    // OcctView 不需要为每一帧做特殊准备
+    // 这个方法是为了满足 IView 接口
+}
+
+void OcctView::shutdown()
+{
+    spdlog::info("OcctView: Shutting down");
+    cleanup();
+}
+
+bool OcctView::wantCaptureMouse() const
+{
+    // OcctView 通常需要捕获鼠标事件，但不应该阻止其他视图
+    // 返回 false 允许事件继续传播
+    return false;
+}
+
+std::shared_ptr<IViewModel> OcctView::getViewModel() const
+{
+    return std::static_pointer_cast<IViewModel>(myViewModel);
+}
