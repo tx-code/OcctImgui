@@ -6,6 +6,7 @@
 #include "../viewmodel/ViewModelManager.h"
 #include "../GlfwOcctWindow.h"
 #include "../utils/Logger.h"
+#include "../mvvm/MessageBus.h"
 #include <memory>
 #include <map>
 #include <string>
@@ -21,18 +22,16 @@ inline std::shared_ptr<Utils::Logger>& getViewManagerLogger() {
 
 class ViewManager {
 public:
-    static ViewManager& instance() {
-        static ViewManager manager;
-        return manager;
-    }
+    // Constructor with dependency injection
+    ViewManager(ViewModelManager& viewModelManager, MVVM::MessageBus& messageBus) 
+        : myViewModelManager(viewModelManager), myMessageBus(messageBus) {}
     
     // 创建视图
     template<typename T>
     std::shared_ptr<T> createView(const std::string& viewId, 
                                  const std::string& viewModelId) {
         // 获取ViewModel
-        auto& viewModelManager = ViewModelManager::instance();
-        auto viewModel = viewModelManager.getViewModel(viewModelId);
+        auto viewModel = myViewModelManager.getViewModel(viewModelId);
         
         if (!viewModel) {
             getViewManagerLogger()->error("Failed to get ViewModel with ID: {}", viewModelId);
@@ -51,8 +50,7 @@ public:
                                            const std::string& viewModelId,
                                            Handle(GlfwOcctWindow) window) {
         // 获取ViewModel
-        auto& viewModelManager = ViewModelManager::instance();
-        auto viewModel = viewModelManager.getViewModel<UnifiedViewModel>(viewModelId);
+        auto viewModel = myViewModelManager.getViewModel<UnifiedViewModel>(viewModelId);
         
         if (!viewModel) {
             getViewManagerLogger()->error("Failed to get ViewModel with ID: {}", viewModelId);
@@ -60,7 +58,7 @@ public:
         }
         
         // 创建OcctView
-        auto view = std::make_shared<OcctView>(viewModel, window);
+        auto view = std::make_shared<OcctView>(viewModel, window, myMessageBus);
         myViews[viewId] = view;
         getViewManagerLogger()->info("Created OcctView with ID: {}", viewId);
         return view;
@@ -206,8 +204,7 @@ public:
     }
     
 private:
-    ViewManager() = default;
-    ~ViewManager() = default;
-    
+    ViewModelManager& myViewModelManager;
+    MVVM::MessageBus& myMessageBus;
     std::map<std::string, std::shared_ptr<IView>> myViews;
 }; 

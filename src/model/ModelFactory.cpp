@@ -2,9 +2,7 @@
 #include "UnifiedModel.h"
 
 // 初始化工厂
-void InitializeModelFactory() {
-    auto& factory = ModelFactory::instance();
-    
+void InitializeModelFactory(ModelFactory& factory) {
     // 注册统一模型
     factory.registerModelType<UnifiedModel>("UnifiedModel");
 } 

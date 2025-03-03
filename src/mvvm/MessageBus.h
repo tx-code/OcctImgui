@@ -9,6 +9,9 @@ namespace MVVM {
 
 class MessageBus {
 public:
+    // Constructor
+    MessageBus() = default;
+    
     enum class MessageType {
         ModelChanged,
         SelectionChanged,
@@ -31,14 +34,7 @@ public:
         }
     }
     
-    // 单例实现
-    static MessageBus& getInstance() {
-        static MessageBus instance;
-        return instance;
-    }
-    
 private:
-    MessageBus() = default;
     std::map<MessageType, std::vector<std::function<void(const Message&)>>> mySubscribers;
 };
 

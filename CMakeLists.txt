@@ -21,9 +21,12 @@ find_package(spdlog REQUIRED)
 add_executable(OcctImgui
     src/model/IModel.cpp
     src/model/UnifiedModel.cpp
+    src/model/ModelFactory.cpp
+    src/model/ModelManager.cpp
     src/view/ImGuiView.cpp
     src/view/OcctView.cpp
     src/viewmodel/UnifiedViewModel.cpp
+    src/viewmodel/ViewModelManager.cpp
     src/Application.cpp
     src/GlfwOcctWindow.cpp
     src/utils/Logger.cpp

@@ -5,6 +5,12 @@
 #include "viewmodel/UnifiedViewModel.h"
 #include "view/ImGuiView.h"
 #include "view/OcctView.h"
+#include "view/ViewManager.h"
+#include "model/ModelManager.h"
+#include "model/ModelFactory.h"
+#include "viewmodel/ViewModelManager.h"
+#include "mvvm/MessageBus.h"
+#include "mvvm/GlobalSettings.h"
 
 #include <memory>
 #include <string>
@@ -16,6 +22,14 @@ public:
     
     void run();
     
+    // Get manager instances
+    ViewManager& getViewManager() { return *myViewManager; }
+    ModelManager& getModelManager() { return *myModelManager; }
+    ViewModelManager& getViewModelManager() { return *myViewModelManager; }
+    MVVM::MessageBus& getMessageBus() { return *myMessageBus; }
+    MVVM::GlobalSettings& getGlobalSettings() { return *myGlobalSettings; }
+    ModelFactory& getModelFactory() { return *myModelFactory; }
+
 private:
     // 初始化方法
     void initWindow();
@@ -58,4 +72,12 @@ private:
     int myWidth;
     int myHeight;
     TCollection_AsciiString myTitle;
+
+    // Manager instances owned by the application
+    std::unique_ptr<ViewManager> myViewManager;
+    std::unique_ptr<ModelManager> myModelManager;
+    std::unique_ptr<ViewModelManager> myViewModelManager;
+    std::unique_ptr<MVVM::MessageBus> myMessageBus;
+    std::unique_ptr<MVVM::GlobalSettings> myGlobalSettings;
+    std::unique_ptr<ModelFactory> myModelFactory;
 }; 

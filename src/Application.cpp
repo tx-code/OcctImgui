@@ -16,6 +16,9 @@
 #include "viewmodel/ViewModelManager.h"
 #include "view/ViewManager.h"
 
+// 声明ModelFactory初始化函数
+void InitializeModelFactory(ModelFactory& factory);
+
 // 创建应用程序日志记录器 - 使用函数确保安全初始化
 std::shared_ptr<Utils::Logger>& getAppLogger() {
     static std::shared_ptr<Utils::Logger> logger = Utils::Logger::getLogger("app");
@@ -28,6 +31,19 @@ Application::Application()
     , myTitle("OCCT MVVM")
 {
     getAppLogger()->info("Application instance created");
+    
+    // Initialize manager instances
+    myMessageBus = std::make_unique<MVVM::MessageBus>();
+    myGlobalSettings = std::make_unique<MVVM::GlobalSettings>();
+    myModelFactory = std::make_unique<ModelFactory>();
+    myModelManager = std::make_unique<ModelManager>();
+    myViewModelManager = std::make_unique<ViewModelManager>(*myModelManager, *myMessageBus, *myGlobalSettings);
+    myViewManager = std::make_unique<ViewManager>(*myViewModelManager, *myMessageBus);
+    
+    // Initialize model factory
+    InitializeModelFactory(*myModelFactory);
+    
+    getAppLogger()->info("Manager instances initialized");
 }
 
 Application::~Application()
@@ -110,9 +126,8 @@ void Application::initModel()
 {
     getAppLogger()->info("App: Initializing model");
     // 使用ModelManager创建统一模型
-    auto& modelManager = ModelManager::instance();
     myModelId = "MainModel";
-    myModel = modelManager.createModel<UnifiedModel>(myModelId);
+    myModel = myModelManager->createModel<UnifiedModel>(myModelId);
     getAppLogger()->info("App: Model initialization complete with ID: {}", myModelId);
 }
 
@@ -135,9 +150,8 @@ void Application::initViewModel()
         getAppLogger()->info("App: AIS_InteractiveContext created");
 
         // 使用ViewModelManager创建统一视图模型
-        auto& viewModelManager = ViewModelManager::instance();
         myViewModelId = "MainViewModel";
-        myViewModel = viewModelManager.createViewModel<UnifiedViewModel, UnifiedModel>(
+        myViewModel = myViewModelManager->createViewModel<UnifiedViewModel, UnifiedModel>(
             myViewModelId, myModelId, aContext);
         getAppLogger()->info("App: View model initialization complete with ID: {}", myViewModelId);
     } catch (const std::exception& e) {
@@ -160,26 +174,23 @@ void Application::initViews()
             glfwMakeContextCurrent(myGlfwWindow);
         }
         
-        // 使用ViewManager创建视图
-        auto& viewManager = ViewManager::instance();
-        
         // 创建ImGui视图
         getAppLogger()->info("App: Creating ImGuiView");
         myImGuiViewId = "ImGuiView";
-        myImGuiView = viewManager.createView<ImGuiView>(myImGuiViewId, myViewModelId);
+        myImGuiView = myViewManager->createView<ImGuiView>(myImGuiViewId, myViewModelId);
         // 使用ViewManager初始化视图
-        viewManager.initializeView(myImGuiViewId, myGlfwWindow);
+        myViewManager->initializeView(myImGuiViewId, myGlfwWindow);
 
         // 创建OCCT视图 - 使用专门的工厂方法
         getAppLogger()->info("App: Creating OcctView");
         myOcctViewId = "OcctView";
-        myOcctView = viewManager.createOcctView(myOcctViewId, myViewModelId, myWindow);
+        myOcctView = myViewManager->createOcctView(myOcctViewId, myViewModelId, myWindow);
         if (!myOcctView) {
             getAppLogger()->error("App: Failed to create OcctView");
             throw std::runtime_error("Failed to create OcctView");
         }
         // 使用ViewManager初始化视图
-        viewManager.initializeView(myOcctViewId, myGlfwWindow);
+        myViewManager->initializeView(myOcctViewId, myGlfwWindow);
 
         myOcctView->getView()->MustBeResized();
         myWindow->Map();
@@ -196,8 +207,7 @@ void Application::initViews()
 void Application::mainloop()
 {
     getAppLogger()->info("App: Starting main loop");
-    auto& viewManager = ViewManager::instance();
-    auto occtView = viewManager.getView<OcctView>(myOcctViewId);
+    auto occtView = myViewManager->getView<OcctView>(myOcctViewId);
     
     // 定义视图渲染顺序
     std::vector<std::string> renderOrder = {myOcctViewId, myImGuiViewId};
@@ -213,7 +223,7 @@ void Application::mainloop()
 
         try {
             // 按照指定的顺序渲染视图
-            viewManager.renderInOrder(renderOrder);
+            myViewManager->renderInOrder(renderOrder);
             
             glfwSwapBuffers(myGlfwWindow);
         } catch (const std::exception& e) {
@@ -230,28 +240,25 @@ void Application::cleanup()
     getAppLogger()->info("App: Starting cleanup");
     
     // 使用ViewManager清理视图
-    auto& viewManager = ViewManager::instance();
     getAppLogger()->info("App: Shutting down all views");
-    viewManager.shutdownAll();
+    myViewManager->shutdownAll();
     
     // 清理ViewModelManager
-    auto& viewModelManager = ViewModelManager::instance();
     getAppLogger()->info("App: Removing view models");
-    viewModelManager.removeViewModel(myViewModelId);
+    myViewModelManager->removeViewModel(myViewModelId);
     
     // 清理ModelManager
-    auto& modelManager = ModelManager::instance();
     getAppLogger()->info("App: Removing models");
-    modelManager.removeModel(myModelId);
+    myModelManager->removeModel(myModelId);
 
     if (!myWindow.IsNull()) {
         getAppLogger()->info("App: Closing window");
         myWindow->Close();
     }
-
-    getAppLogger()->info("App: Terminating GLFW");
+    
+    // 终止GLFW
     glfwTerminate();
-    getAppLogger()->info("App: Cleanup complete");
+    getAppLogger()->info("App: GLFW terminated");
 }
 
 Application* Application::toApplication(GLFWwindow* theWin)
@@ -263,8 +270,7 @@ void Application::onResizeCallback(GLFWwindow* theWin, int theWidth, int theHeig
 {
     Application* app = toApplication(theWin);
     if (app) {
-        auto& viewManager = ViewManager::instance();
-        viewManager.handleResize(app->myOcctViewId, theWidth, theHeight);
+        app->myViewManager->handleResize(app->myOcctViewId, theWidth, theHeight);
     }
 }
 
@@ -272,8 +278,7 @@ void Application::onFBResizeCallback(GLFWwindow* theWin, int theWidth, int theHe
 {
     Application* app = toApplication(theWin);
     if (app) {
-        auto& viewManager = ViewManager::instance();
-        viewManager.handleResize(app->myOcctViewId, theWidth, theHeight);
+        app->myViewManager->handleResize(app->myOcctViewId, theWidth, theHeight);
     }
 }
 
@@ -281,8 +286,7 @@ void Application::onMouseScrollCallback(GLFWwindow* theWin, double theOffsetX, d
 {
     Application* app = toApplication(theWin);
     if (app) {
-        auto& viewManager = ViewManager::instance();
-        viewManager.handleMouseScroll(app->myOcctViewId, theOffsetX, theOffsetY);
+        app->myViewManager->handleMouseScroll(app->myOcctViewId, theOffsetX, theOffsetY);
     }
 }
 
@@ -293,8 +297,7 @@ void Application::onMouseButtonCallback(GLFWwindow* theWin,
 {
     Application* app = toApplication(theWin);
     if (app) {
-        auto& viewManager = ViewManager::instance();
-        viewManager.handleMouseButton(app->myOcctViewId, theButton, theAction, theMods);
+        app->myViewManager->handleMouseButton(app->myOcctViewId, theButton, theAction, theMods);
     }
 }
 
@@ -302,8 +305,7 @@ void Application::onMouseMoveCallback(GLFWwindow* theWin, double thePosX, double
 {
     Application* app = toApplication(theWin);
     if (app) {
-        auto& viewManager = ViewManager::instance();
-        viewManager.handleMouseMove(app->myOcctViewId, thePosX, thePosY);
+        app->myViewManager->handleMouseMove(app->myOcctViewId, thePosX, thePosY);
     }
 }
 

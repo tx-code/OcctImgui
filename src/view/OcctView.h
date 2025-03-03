@@ -2,6 +2,7 @@
 
 #include "../GlfwOcctWindow.h"
 #include "../viewmodel/UnifiedViewModel.h"
+#include "../mvvm/MessageBus.h"
 #include "IView.h"
 #include <AIS_ViewController.hxx>
 #include <memory>
@@ -11,7 +12,9 @@ class AIS_ViewCube;
 class OcctView: public IView, protected AIS_ViewController
 {
 public:
-    OcctView(std::shared_ptr<UnifiedViewModel> viewModel, Handle(GlfwOcctWindow) window);
+    OcctView(std::shared_ptr<UnifiedViewModel> viewModel, 
+             Handle(GlfwOcctWindow) window,
+             MVVM::MessageBus& messageBus);
     ~OcctView() override;
 
     // IView 接口实现
@@ -53,6 +56,7 @@ private:
     Handle(GlfwOcctWindow) myWindow;
     Handle(V3d_View) myView;
     Handle(AIS_ViewCube) myViewCube;
+    MVVM::MessageBus& myMessageBus;
     bool myToWaitEvents = true;
 
     // 创建视图配置

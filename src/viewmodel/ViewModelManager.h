@@ -3,6 +3,8 @@
 #include "IViewModel.h"
 #include "UnifiedViewModel.h"
 #include "../model/ModelManager.h"
+#include "../mvvm/MessageBus.h"
+#include "../mvvm/GlobalSettings.h"
 #include <memory>
 #include <map>
 #include <string>
@@ -11,10 +13,13 @@
 
 class ViewModelManager {
 public:
-    static ViewModelManager& instance() {
-        static ViewModelManager manager;
-        return manager;
-    }
+    // Constructor with dependency injection
+    ViewModelManager(ModelManager& modelManager, 
+                    MVVM::MessageBus& messageBus,
+                    MVVM::GlobalSettings& globalSettings) 
+        : myModelManager(modelManager)
+        , myMessageBus(messageBus)
+        , myGlobalSettings(globalSettings) {}
     
     // 创建特定类型的ViewModel
     template<typename T, typename ModelT>
@@ -22,15 +27,14 @@ public:
                                       const std::string& modelId,
                                       Handle(AIS_InteractiveContext) context) {
         // 获取或创建模型
-        auto& modelManager = ModelManager::instance();
-        std::shared_ptr<ModelT> model = std::dynamic_pointer_cast<ModelT>(modelManager.getModel(modelId));
+        std::shared_ptr<ModelT> model = std::dynamic_pointer_cast<ModelT>(myModelManager.getModel(modelId));
         
         if (!model) {
-            model = modelManager.createModel<ModelT>(modelId);
+            model = myModelManager.createModel<ModelT>(modelId);
         }
         
         // 创建ViewModel
-        auto viewModel = std::make_shared<T>(model, context);
+        auto viewModel = std::make_shared<T>(model, context, myGlobalSettings);
         myViewModels[viewModelId] = viewModel;
         return viewModel;
     }
@@ -68,9 +72,13 @@ public:
         return ids;
     }
     
-private:
-    ViewModelManager() = default;
-    ~ViewModelManager() = default;
+    // 获取依赖的服务
+    MVVM::MessageBus& getMessageBus() const { return myMessageBus; }
+    MVVM::GlobalSettings& getGlobalSettings() const { return myGlobalSettings; }
     
+private:
+    ModelManager& myModelManager;
+    MVVM::MessageBus& myMessageBus;
+    MVVM::GlobalSettings& myGlobalSettings;
     std::map<std::string, std::shared_ptr<IViewModel>> myViewModels;
 }; 

@@ -18,7 +18,8 @@
 class UnifiedViewModel : public IViewModel {
 public:
     UnifiedViewModel(std::shared_ptr<UnifiedModel> model, 
-                    Handle(AIS_InteractiveContext) context);
+                    Handle(AIS_InteractiveContext) context,
+                    MVVM::GlobalSettings& globalSettings);
     ~UnifiedViewModel() override = default;
     
     // 命令 - 对应UI操作
@@ -47,12 +48,13 @@ public:
     Handle(V3d_Viewer) getViewer() const { return myContext->CurrentViewer(); }
     
     // 全局设置访问器
-    MVVM::GlobalSettings& getGlobalSettings() const { return MVVM::GlobalSettings::getInstance(); }
+    MVVM::GlobalSettings& getGlobalSettings() const { return myGlobalSettings; }
     
 private:
     std::shared_ptr<UnifiedModel> myModel;
     Handle(AIS_InteractiveContext) myContext;
     std::set<std::string> mySelectedObjects;
+    MVVM::GlobalSettings& myGlobalSettings;
     
     // 模型->视图同步
     void updatePresentation(const std::string& id);

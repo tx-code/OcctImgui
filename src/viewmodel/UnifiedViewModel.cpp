@@ -11,8 +11,9 @@
 
 // 构造函数
 UnifiedViewModel::UnifiedViewModel(std::shared_ptr<UnifiedModel> model, 
-                                Handle(AIS_InteractiveContext) context)
-    : myModel(model), myContext(context) {
+                                Handle(AIS_InteractiveContext) context,
+                                MVVM::GlobalSettings& globalSettings)
+    : myModel(model), myContext(context), myGlobalSettings(globalSettings) {
     
     // 注册模型变更监听器
     model->addChangeListener([this](const std::string& id) {

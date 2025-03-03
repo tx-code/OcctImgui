@@ -8,10 +8,8 @@
 
 class ModelFactory {
 public:
-    static ModelFactory& instance() {
-        static ModelFactory factory;
-        return factory;
-    }
+    ModelFactory() = default;
+    ~ModelFactory() = default;
     
     template<typename T>
     void registerModelType(const std::string& typeName) {
@@ -27,8 +25,5 @@ public:
     }
     
 private:
-    ModelFactory() = default;
-    ~ModelFactory() = default;
-    
     std::map<std::string, std::function<std::shared_ptr<IModel>()>> myModelCreators;
 }; 

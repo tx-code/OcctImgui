@@ -8,10 +8,8 @@
 
 class ModelManager {
 public:
-    static ModelManager& instance() {
-        static ModelManager manager;
-        return manager;
-    }
+    // Constructor
+    ModelManager() = default;
     
     template<typename T>
     std::shared_ptr<T> createModel(const std::string& modelId) {
@@ -44,8 +42,5 @@ public:
     }
     
 private:
-    ModelManager() = default;
-    ~ModelManager() = default;
-    
     std::map<std::string, std::shared_ptr<IModel>> myModels;
 }; 

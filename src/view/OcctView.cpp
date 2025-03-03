@@ -57,9 +57,12 @@ static Aspect_VKeyFlags keyFlagsFromGlfw(int theFlags)
 }
 }  // namespace
 
-OcctView::OcctView(std::shared_ptr<UnifiedViewModel> viewModel, Handle(GlfwOcctWindow) window)
+OcctView::OcctView(std::shared_ptr<UnifiedViewModel> viewModel, 
+                  Handle(GlfwOcctWindow) window,
+                  MVVM::MessageBus& messageBus)
     : myViewModel(viewModel)
     , myWindow(window)
+    , myMessageBus(messageBus)
 {
     getOcctLogger()->info("Creating view");
     subscribeToEvents();
@@ -251,28 +254,24 @@ void OcctView::setupGrid()
 
 void OcctView::updateVisibility()
 {
-    // 获取全局设置
-    auto& globalSettings = MVVM::GlobalSettings::getInstance();
+    // 使用ViewModel获取全局设置
+    auto& globalSettings = myViewModel->getGlobalSettings();
     
     // 更新网格可见性
     bool isGridVisible = globalSettings.isGridVisible.get();
-    getOcctLogger()->debug("OcctView: Updating grid visibility to {}", isGridVisible);
     if (isGridVisible) {
         myViewModel->getContext()->CurrentViewer()->ActivateGrid(Aspect_GT_Rectangular,
-                                                                 Aspect_GDM_Lines);
-    }
-    else {
+                                                               Aspect_GDM_Lines);
+    } else {
         myViewModel->getContext()->CurrentViewer()->DeactivateGrid();
     }
-
-    // 更新ViewCube可见性
+    
+    // 更新视图立方体可见性
     bool isViewCubeVisible = globalSettings.isViewCubeVisible.get();
-    getOcctLogger()->debug("OcctView: Updating view cube visibility to {}", isViewCubeVisible);
     if (!myViewCube.IsNull()) {
         if (isViewCubeVisible) {
             myViewModel->getContext()->Display(myViewCube, false);
-        }
-        else {
+        } else {
             myViewModel->getContext()->Erase(myViewCube, false);
         }
     }
@@ -316,24 +315,25 @@ void OcctView::handleSelection(int x, int y)
 void OcctView::subscribeToEvents()
 {
     // 订阅模型变更事件
-    MVVM::MessageBus::getInstance().subscribe(MVVM::MessageBus::MessageType::ModelChanged,
-                                              [this](const MVVM::MessageBus::Message& msg) {
-                                                  // 强制重绘
-                                                  if (!myView.IsNull()) {
-                                                      myView->Invalidate();
-                                                  }
-                                              });
-
-    // 获取全局设置
-    auto& globalSettings = MVVM::GlobalSettings::getInstance();
+    myMessageBus.subscribe(MVVM::MessageBus::MessageType::ModelChanged,
+        [this](const MVVM::MessageBus::Message& message) {
+            // 强制重绘视图
+            myView->Invalidate();
+        });
     
-    // 订阅视图属性变更
-    globalSettings.isGridVisible.addObserver([this](const bool& value) {
+    // 订阅全局设置变更
+    auto& globalSettings = myViewModel->getGlobalSettings();
+    
+    // 网格可见性变更
+    globalSettings.isGridVisible.addObserver([this](bool isVisible) {
         updateVisibility();
+        myView->Invalidate();
     });
-
-    globalSettings.isViewCubeVisible.addObserver([this](const bool& value) {
+    
+    // 视图立方体可见性变更
+    globalSettings.isViewCubeVisible.addObserver([this](bool isVisible) {
         updateVisibility();
+        myView->Invalidate();
     });
 
     myViewModel->displayMode.addObserver([this](const int& value) {
