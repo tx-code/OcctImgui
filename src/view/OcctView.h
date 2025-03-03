@@ -11,6 +11,7 @@
 #include "../GlfwOcctWindow.h"
 #include "../viewmodel/UnifiedViewModel.h"
 #include "../mvvm/MessageBus.h"
+#include "../mvvm/Signal.h"
 #include "IView.h"
 #include <AIS_ViewController.hxx>
 #include <memory>
@@ -160,6 +161,9 @@ private:
     
     /** Flag indicating whether to wait for events */
     bool myToWaitEvents = true;
+    
+    /** Connection tracker for signal connections */
+    MVVM::ConnectionTracker myConnections;
 
     /**
      * @brief Sets up the view cube

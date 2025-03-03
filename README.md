@@ -127,3 +127,149 @@ auto childLogger = logger->createChild("submodule");
 - The `Logger` class inherits from `std::enable_shared_from_this` for safe shared pointer creation
 - RAII pattern ensures function exit is logged even when exceptions occur
 - Each module has its own logger function (e.g., `getAppLogger()`) to ensure safe static initialization
+
+## Using the Signal and Property System
+
+The application implements a reactive property and signal system based on Boost.Signals2 to facilitate communication between components in the MVVM architecture.
+
+### Property System
+
+The `MVVM::Property<T>` class provides a way to store values and notify observers when they change:
+
+```cpp
+// Create a property with initial value
+MVVM::Property<int> count(0);
+
+// Get the current value
+int currentCount = count.get();
+
+// Set a new value
+count.set(10);
+
+// Use the assignment operator
+count = 20;
+```
+
+### Connecting to Property Changes
+
+You can observe property changes by connecting to the `valueChanged` signal:
+
+```cpp
+// Connect to property changes
+auto connection = count.valueChanged.connect([](const int& oldValue, const int& newValue) {
+    std::cout << "Count changed from " << oldValue << " to " << newValue << std::endl;
+});
+
+// Later, disconnect when no longer needed
+connection.disconnect();
+```
+
+### Property Binding
+
+Properties can be bound to each other, so that changes to one property automatically propagate to another:
+
+```cpp
+// Create source and target properties
+MVVM::Property<std::string> source("Hello");
+MVVM::Property<std::string> target;
+
+// Bind target to source (target will automatically update when source changes)
+auto bindConn = target.bindTo(source);
+
+// Change source, target updates automatically
+source.set("World");
+```
+
+### Computed Properties
+
+You can create properties that compute their values based on other properties:
+
+```cpp
+// Create properties
+MVVM::Property<int> width(5);
+MVVM::Property<int> height(10);
+MVVM::Property<int> area;
+
+// Bind area as a computed property
+auto computedConns = area.bindComputed<MVVM::Property<int>, MVVM::Property<int>>(
+    [](const int& w, const int& h) { return w * h; },
+    width, height
+);
+
+// Change width or height, area updates automatically
+width.set(7);
+```
+
+### Signal System
+
+The `MVVM::Signal<Args...>` class provides a type-safe way to implement the observer pattern:
+
+```cpp
+// Define a signal
+MVVM::Signal<int, std::string> mySignal;
+
+// Connect a slot
+auto connection = mySignal.connect([](int value, const std::string& text) {
+    std::cout << "Received: " << value << ", " << text << std::endl;
+});
+
+// Emit the signal
+mySignal.emit(42, "Hello");
+
+// Disconnect when done
+connection.disconnect();
+```
+
+### Connection Management
+
+The `MVVM::ConnectionTracker` class helps manage multiple connections:
+
+```cpp
+// Create a connection tracker
+MVVM::ConnectionTracker tracker;
+
+// Track connections
+tracker.track(signal1.connect(slot1));
+tracker.track(signal2.connect(slot2));
+
+// Disconnect all when done
+tracker.disconnectAll();
+```
+
+### ScopedConnection
+
+The `MVVM::ScopedConnection` class provides RAII-style connection management:
+
+```cpp
+// Create a scoped connection
+{
+    MVVM::ScopedConnection conn = signal.connect(slot);
+    // Connection is automatically disconnected when conn goes out of scope
+}
+```
+
+### Example Usage in ViewModels
+
+In the application, ViewModels use properties to expose state to Views:
+
+```cpp
+// In ViewModel class
+MVVM::Property<int> displayMode{0};
+MVVM::Property<bool> hasSelectionProperty{false};
+MVVM::Property<int> selectionCountProperty{0};
+
+// In View class
+void subscribeToEvents() {
+    // Connect to display mode property
+    auto displayConn = myViewModel->displayMode.valueChanged.connect(
+        [this](const int&, const int& newMode) {
+            updateVisibility();
+            if (!myView.IsNull()) {
+                myView->Invalidate();
+            }
+        });
+    myConnections.track(displayConn);
+}
+```
+
+This reactive property system makes it easy to implement the MVVM pattern, with clear separation of concerns and automatic UI updates when the underlying data changes.

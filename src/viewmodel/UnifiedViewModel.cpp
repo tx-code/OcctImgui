@@ -9,72 +9,80 @@
 
 #include <iostream>
 
-// 构造函数
+// Constructor
 UnifiedViewModel::UnifiedViewModel(std::shared_ptr<UnifiedModel> model, 
                                 Handle(AIS_InteractiveContext) context,
                                 MVVM::GlobalSettings& globalSettings)
     : myModel(model), myContext(context), myGlobalSettings(globalSettings) {
     
-    // 注册模型变更监听器
+    // Register model change listener
     model->addChangeListener([this](const std::string& id) {
         this->onModelChanged(id);
     });
     
-    // 初始化现有几何体的显示
+    // Initialize display of existing geometries
     for (const std::string& id : model->getAllEntityIds()) {
         updatePresentation(id);
     }
+    
+    // Bind display mode property to global settings
+    // Create a scoped connection and track it
+    auto connection = displayMode.bindTo(globalSettings.displayMode);
+    connections.track(connection);
+    
+    // Initialize selection properties
+    updateSelectionProperties();
 }
 
-// 命令 - CAD几何操作
+// Command - CAD geometry operations
 void UnifiedViewModel::createBox(const gp_Pnt& location, double sizeX, double sizeY, double sizeZ) {
-    // 生成唯一ID
+    // Generate unique ID
     static int boxCounter = 0;
     std::string id = "box_" + std::to_string(++boxCounter);
     
-    // 创建盒子几何体
+    // Create box geometry
     BRepPrimAPI_MakeBox boxMaker(location, sizeX, sizeY, sizeZ);
     TopoDS_Shape boxShape = boxMaker.Shape();
     
-    // 添加到模型
+    // Add to model
     myModel->addShape(id, boxShape);
 }
 
 void UnifiedViewModel::createCone(const gp_Pnt& location, double radius, double height) {
-    // 生成唯一ID
+    // Generate unique ID
     static int coneCounter = 0;
     std::string id = "cone_" + std::to_string(++coneCounter);
     
-    // 创建圆锥几何体
+    // Create cone geometry
     gp_Ax2 axis(location, gp_Dir(0, 0, 1));
     BRepPrimAPI_MakeCone coneMaker(axis, radius, 0, height);
     TopoDS_Shape coneShape = coneMaker.Shape();
     
-    // 添加到模型
+    // Add to model
     myModel->addShape(id, coneShape);
 }
 
-void UnifiedViewModel::createMesh(/* 网格创建参数 */) {
-    // 这个方法需要根据实际的网格创建需求来实现
-    // 以下为示例代码，应该根据实际情况修改
+void UnifiedViewModel::createMesh(/* Mesh creation parameters */) {
+    // This method needs to be implemented based on the actual mesh creation requirements
+    // Below is example code, should be modified based on actual situation
     
     /*
-    // 生成唯一ID
+    // Generate unique ID
     static int meshCounter = 0;
     std::string id = "mesh_" + std::to_string(++meshCounter);
     
-    // 创建三角形网格 (示例)
+    // Create triangle mesh (example)
     Handle(Poly_Triangulation) mesh = new Poly_Triangulation(numVertices, numTriangles, false);
     
-    // 设置顶点和三角形
-    // ... 填充网格数据 ...
+    // Set vertices and triangles
+    // ... fill mesh data ...
     
-    // 添加到模型
+    // Add to model
     myModel->addMesh(id, mesh);
     */
 }
 
-// IViewModel接口实现
+// IViewModel interface implementation
 void UnifiedViewModel::deleteSelectedObjects() {
     std::vector<std::string> objectsToDelete(mySelectedObjects.begin(), mySelectedObjects.end());
     
@@ -101,15 +109,27 @@ void UnifiedViewModel::processSelection(const Handle(AIS_InteractiveObject)& obj
         } else {
             mySelectedObjects.erase(it->second);
         }
+        
+        // Update selection properties
+        updateSelectionProperties();
     }
 }
 
 void UnifiedViewModel::clearSelection() {
     mySelectedObjects.clear();
     myContext->ClearSelected(Standard_True);
+    
+    // Update selection properties
+    updateSelectionProperties();
 }
 
-// 属性访问与修改
+// New method to update selection properties
+void UnifiedViewModel::updateSelectionProperties() {
+    hasSelectionProperty.set(!mySelectedObjects.empty());
+    selectionCountProperty.set(static_cast<int>(mySelectedObjects.size()));
+}
+
+// Attribute access and modification
 void UnifiedViewModel::setSelectedColor(const Quantity_Color& color) {
     for (const std::string& id : mySelectedObjects) {
         myModel->setColor(id, color);
@@ -118,16 +138,16 @@ void UnifiedViewModel::setSelectedColor(const Quantity_Color& color) {
 
 Quantity_Color UnifiedViewModel::getSelectedColor() const {
     if (mySelectedObjects.empty()) {
-        return Quantity_Color(0.8, 0.8, 0.8, Quantity_TOC_RGB); // 默认灰色
+        return Quantity_Color(0.8, 0.8, 0.8, Quantity_TOC_RGB); // Default gray
     }
     
-    // 返回第一个选中对象的颜色
+    // Return color of the first selected object
     return myModel->getColor(*mySelectedObjects.begin());
 }
 
-// 私有方法
+// Private methods
 void UnifiedViewModel::updatePresentation(const std::string& id) {
-    // 删除现有表示
+    // Delete existing representation
     auto it = myIdToObjectMap.find(id);
     if (it != myIdToObjectMap.end()) {
         myContext->Remove(it->second, false);
@@ -135,22 +155,22 @@ void UnifiedViewModel::updatePresentation(const std::string& id) {
         myIdToObjectMap.erase(it);
     }
     
-    // 获取几何数据
+    // Get geometry data
     const UnifiedModel::GeometryData* data = myModel->getGeometryData(id);
     if (!data) {
         return;
     }
     
-    // 创建新表示
+    // Create new representation
     Handle(AIS_InteractiveObject) aisObj = createPresentationForGeometry(id, data);
     if (aisObj.IsNull()) {
         return;
     }
     
-    // 显示对象
+    // Display object
     myContext->Display(aisObj, false);
     
-    // 更新映射
+    // Update mapping
     myIdToObjectMap[id] = aisObj;
     myObjectToIdMap[aisObj] = id;
 }
@@ -164,14 +184,14 @@ Handle(AIS_InteractiveObject) UnifiedViewModel::createPresentationForGeometry(
     
     Handle(AIS_InteractiveObject) aisObj;
     
-    // 根据几何类型创建适当的AIS对象
+    // Create appropriate AIS object based on geometry type
     if (data->type == UnifiedModel::GeometryType::SHAPE) {
-        // 为CAD形体创建AIS_Shape
+        // Create AIS_Shape for CAD shape
         const TopoDS_Shape& shape = std::get<TopoDS_Shape>(data->geometry);
         Handle(AIS_Shape) aisShape = new AIS_Shape(shape);
         aisShape->SetColor(data->color);
         
-        // 根据displayMode设置显示模式
+        // Set display mode based on displayMode
         switch (displayMode.get()) {
             case 0: // Shaded
                 aisShape->SetDisplayMode(AIS_Shaded);
@@ -179,18 +199,18 @@ Handle(AIS_InteractiveObject) UnifiedViewModel::createPresentationForGeometry(
             case 1: // Wireframe
                 aisShape->SetDisplayMode(AIS_WireFrame);
                 break;
-            // 可以添加更多显示模式
+            // Can add more display modes
         }
         
         aisObj = aisShape;
     }
     else if (data->type == UnifiedModel::GeometryType::MESH) {
-        // 为网格创建AIS_Triangulation
+        // Create AIS_Triangulation for mesh
         const Handle(Poly_Triangulation)& mesh = std::get<Handle(Poly_Triangulation)>(data->geometry);
         Handle(AIS_Triangulation) aisTriangulation = new AIS_Triangulation(mesh);
         aisTriangulation->SetColor(data->color);
         
-        // 设置网格特定的显示属性
+        // Set specific display attributes for mesh
         // ...
         
         aisObj = aisTriangulation;

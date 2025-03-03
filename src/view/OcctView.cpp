@@ -71,6 +71,12 @@ OcctView::OcctView(std::shared_ptr<UnifiedViewModel> viewModel,
 OcctView::~OcctView()
 {
     getOcctLogger()->info("Cleaning up view");
+    
+    // Disconnect all signal connections
+    myConnections.disconnectAll();
+    
+    // Clean up resources
+    cleanup();
 }
 
 void OcctView::cleanup()
@@ -314,31 +320,66 @@ void OcctView::handleSelection(int x, int y)
 
 void OcctView::subscribeToEvents()
 {
-    // 订阅模型变更事件
+    getOcctLogger()->info("Subscribing to events");
+    
+    // Subscribe to model changed events via MessageBus
     myMessageBus.subscribe(MVVM::MessageBus::MessageType::ModelChanged,
         [this](const MVVM::MessageBus::Message& message) {
-            // 强制重绘视图
-            myView->Invalidate();
+            // Force view redraw
+            if (!myView.IsNull()) {
+                myView->Invalidate();
+            }
         });
     
-    // 订阅全局设置变更
+    // Get global settings
     auto& globalSettings = myViewModel->getGlobalSettings();
     
-    // 网格可见性变更
-    globalSettings.isGridVisible.addObserver([this](bool isVisible) {
-        updateVisibility();
-        myView->Invalidate();
-    });
+    // Connect to grid visibility property
+    auto gridConn = globalSettings.isGridVisible.valueChanged.connect(
+        [this](const bool&, const bool& isVisible) {
+            updateVisibility();
+            if (!myView.IsNull()) {
+                myView->Invalidate();
+            }
+        });
+    myConnections.track(gridConn);
     
-    // 视图立方体可见性变更
-    globalSettings.isViewCubeVisible.addObserver([this](bool isVisible) {
-        updateVisibility();
-        myView->Invalidate();
-    });
+    // Connect to view cube visibility property
+    auto cubeConn = globalSettings.isViewCubeVisible.valueChanged.connect(
+        [this](const bool&, const bool& isVisible) {
+            updateVisibility();
+            if (!myView.IsNull()) {
+                myView->Invalidate();
+            }
+        });
+    myConnections.track(cubeConn);
 
-    myViewModel->displayMode.addObserver([this](const int& value) {
-        updateVisibility();
-    });
+    // Connect to display mode property
+    auto displayConn = myViewModel->displayMode.valueChanged.connect(
+        [this](const int&, const int& newMode) {
+            updateVisibility();
+            if (!myView.IsNull()) {
+                myView->Invalidate();
+            }
+        });
+    myConnections.track(displayConn);
+    
+    // Connect to selection properties
+    auto selectionConn = myViewModel->hasSelectionProperty.valueChanged.connect(
+        [this](const bool&, const bool& hasSelection) {
+            // Update UI or view based on selection state
+            if (!myView.IsNull()) {
+                myView->Invalidate();
+            }
+        });
+    myConnections.track(selectionConn);
+    
+    auto countConn = myViewModel->selectionCountProperty.valueChanged.connect(
+        [this](const int&, const int& count) {
+            getOcctLogger()->debug("Selection count changed: {}", count);
+            // Could update status bar or other UI elements
+        });
+    myConnections.track(countConn);
 }
 
 // IView 接口实现

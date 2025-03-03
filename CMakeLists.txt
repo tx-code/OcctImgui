@@ -13,7 +13,7 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib/${CMAKE_BUILD_TYPE})
 find_package(imgui REQUIRED)
 find_package(OpenCASCADE REQUIRED)
 find_package(Netgen CONFIG REQUIRED)
-find_package(Boost REQUIRED)
+find_package(Boost REQUIRED COMPONENTS signals2)
 find_package(nfd REQUIRED)
 find_package(spdlog REQUIRED)
 
@@ -45,6 +45,7 @@ target_link_libraries(OcctImgui
     imgui::imgui
     spdlog::spdlog
     nfd::nfd
+    Boost::signals2
 )
 
 target_compile_options(OcctImgui PRIVATE
