@@ -1,15 +1,5 @@
 cmake_minimum_required(VERSION 3.15)
 
-if(NOT DEFINED ENV{VCPKG_ROOT})
-    set(VCPKG_ROOT "D:/vcpkg") # 默认路径
-else()
-    set(VCPKG_ROOT $ENV{VCPKG_ROOT})
-endif()
-
-# 使用环境变量设置工具链文件
-message(STATUS "VCPKG_ROOT: $ENV{VCPKG_ROOT}")
-set(CMAKE_TOOLCHAIN_FILE "${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake")
-
 # Project configuration
 project(OcctImgui LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
@@ -36,6 +26,7 @@ add_executable(OcctImgui
     src/view/OcctView.cpp
     src/viewmodel/CadViewModel.cpp
     src/viewmodel/PolyViewModel.cpp
+    src/viewmodel/CompositeViewModel.cpp
     src/Application.cpp
     src/GlfwOcctWindow.cpp
     src/main.cpp)
