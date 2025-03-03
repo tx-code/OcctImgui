@@ -2,8 +2,7 @@
 
 #include "IView.h"
 #include "../viewmodel/IViewModel.h"
-#include "../viewmodel/CadViewModel.h"
-#include "../viewmodel/PolyViewModel.h"
+#include "../viewmodel/UnifiedViewModel.h"
 #include <imgui.h>
 #include <memory>
 #include <map>
@@ -37,14 +36,12 @@ private:
     
     // 当前选中的视图模型类型
     enum class ViewModelType {
-        CAD,
-        POLY,
+        UNIFIED,
         UNKNOWN
     };
     
     ViewModelType getViewModelType() const;
-    std::shared_ptr<CadViewModel> getCadViewModel() const;
-    std::shared_ptr<PolyViewModel> getPolyViewModel() const;
+    std::shared_ptr<UnifiedViewModel> getUnifiedViewModel() const;
 
     // 各UI组件的渲染方法
     void renderMainMenu();
@@ -54,16 +51,13 @@ private:
     void renderStatusBar();
     
     // 特定类型视图模型的UI渲染
-    void renderCadProperties();
-    void renderPolyProperties();
-    void renderCadTree();
-    void renderPolyTree();
+    void renderGeometryProperties();
+    void renderGeometryTree();
 
     // 命令执行方法
     void executeCreateBox();
     void executeCreateCone();
-    void executeCreateTriangle();
-    void executeImportMesh();
+    void executeCreateMesh();
     void executeDeleteSelected();
 
     // 订阅事件

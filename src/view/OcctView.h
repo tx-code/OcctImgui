@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../GlfwOcctWindow.h"
-#include "../viewmodel/CadViewModel.h"
+#include "../viewmodel/UnifiedViewModel.h"
 #include <AIS_ViewController.hxx>
 #include <memory>
 
@@ -10,7 +10,7 @@ class AIS_ViewCube;
 class OcctView: protected AIS_ViewController
 {
 public:
-    OcctView(std::shared_ptr<CadViewModel> viewModel, Handle(GlfwOcctWindow) window);
+    OcctView(std::shared_ptr<UnifiedViewModel> viewModel, Handle(GlfwOcctWindow) window);
     ~OcctView();
 
     void initialize();
@@ -40,7 +40,7 @@ protected:
                           const Handle(V3d_View) & theView) override;
 
 private:
-    std::shared_ptr<CadViewModel> myViewModel;
+    std::shared_ptr<UnifiedViewModel> myViewModel;
     Handle(GlfwOcctWindow) myWindow;
     Handle(V3d_View) myView;
     Handle(AIS_ViewCube) myViewCube;

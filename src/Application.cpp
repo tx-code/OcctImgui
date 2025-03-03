@@ -93,8 +93,8 @@ void Application::initWindow()
 void Application::initModel()
 {
     spdlog::info("App: Initializing model");
-    // 创建模型
-    myModel = std::make_shared<CadModel>();
+    // 创建统一模型
+    myModel = std::make_shared<UnifiedModel>();
     spdlog::info("App: Model initialization complete");
 }
 
@@ -116,8 +116,8 @@ void Application::initViewModel()
         Handle(AIS_InteractiveContext) aContext = new AIS_InteractiveContext(aViewer);
         spdlog::info("App: AIS_InteractiveContext created");
 
-        // 创建视图模型
-        myViewModel = std::make_shared<CadViewModel>(myModel, aContext);
+        // 创建统一视图模型
+        myViewModel = std::make_shared<UnifiedViewModel>(myModel, aContext);
         spdlog::info("App: View model initialization complete");
     } catch (const std::exception& e) {
         spdlog::error("App: View model initialization exception: {}", e.what());

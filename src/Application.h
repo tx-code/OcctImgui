@@ -1,8 +1,8 @@
 #pragma once
 
 #include "GlfwOcctWindow.h"
-#include "model/CadModel.h"
-#include "viewmodel/CadViewModel.h"
+#include "model/UnifiedModel.h"
+#include "viewmodel/UnifiedViewModel.h"
 #include "view/ImGuiView.h"
 #include "view/OcctView.h"
 
@@ -38,8 +38,8 @@ private:
     void cleanup();
     
     // MVVM组件
-    std::shared_ptr<CadModel> myModel;
-    std::shared_ptr<CadViewModel> myViewModel;
+    std::shared_ptr<UnifiedModel> myModel;
+    std::shared_ptr<UnifiedViewModel> myViewModel;
     std::unique_ptr<ImGuiView> myImGuiView;
     std::unique_ptr<OcctView> myOcctView;
     

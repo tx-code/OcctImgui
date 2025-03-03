@@ -54,7 +54,7 @@ static Aspect_VKeyFlags keyFlagsFromGlfw(int theFlags)
 }
 }  // namespace
 
-OcctView::OcctView(std::shared_ptr<CadViewModel> viewModel, Handle(GlfwOcctWindow) window)
+OcctView::OcctView(std::shared_ptr<UnifiedViewModel> viewModel, Handle(GlfwOcctWindow) window)
     : myViewModel(viewModel)
     , myWindow(window)
 {

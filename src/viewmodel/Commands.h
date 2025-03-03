@@ -1,8 +1,7 @@
 #pragma once
 
 #include "IViewModel.h"
-#include "CadViewModel.h"
-#include "PolyViewModel.h"
+#include "UnifiedViewModel.h"
 #include <Quantity_Color.hxx>
 #include <gp_Pnt.hxx>
 #include <memory>
@@ -39,15 +38,9 @@ public:
         : myViewModel(viewModel), myColor(color) {}
     
     void execute() override {
-        auto cadViewModel = std::dynamic_pointer_cast<CadViewModel>(myViewModel);
-        if (cadViewModel) {
-            cadViewModel->setSelectedColor(myColor);
-            return;
-        }
-        
-        auto polyViewModel = std::dynamic_pointer_cast<PolyViewModel>(myViewModel);
-        if (polyViewModel) {
-            polyViewModel->setSelectedColor(myColor);
+        auto unifiedViewModel = std::dynamic_pointer_cast<UnifiedViewModel>(myViewModel);
+        if (unifiedViewModel) {
+            unifiedViewModel->setSelectedColor(myColor);
             return;
         }
     }
@@ -62,7 +55,7 @@ private:
 // 创建盒子命令
 class CreateBoxCommand : public Command {
 public:
-    CreateBoxCommand(std::shared_ptr<CadViewModel> viewModel, 
+    CreateBoxCommand(std::shared_ptr<UnifiedViewModel> viewModel, 
                     const gp_Pnt& location, 
                     double sizeX, double sizeY, double sizeZ)
         : myViewModel(viewModel), myLocation(location), 
@@ -73,7 +66,7 @@ public:
     }
     
 private:
-    std::shared_ptr<CadViewModel> myViewModel;
+    std::shared_ptr<UnifiedViewModel> myViewModel;
     gp_Pnt myLocation;
     double mySizeX, mySizeY, mySizeZ;
 };
@@ -81,7 +74,7 @@ private:
 // 创建圆锥命令
 class CreateConeCommand : public Command {
 public:
-    CreateConeCommand(std::shared_ptr<CadViewModel> viewModel, 
+    CreateConeCommand(std::shared_ptr<UnifiedViewModel> viewModel, 
                      const gp_Pnt& location, 
                      double radius, double height)
         : myViewModel(viewModel), myLocation(location), 
@@ -92,7 +85,7 @@ public:
     }
     
 private:
-    std::shared_ptr<CadViewModel> myViewModel;
+    std::shared_ptr<UnifiedViewModel> myViewModel;
     gp_Pnt myLocation;
     double myRadius, myHeight;
 };
@@ -102,32 +95,32 @@ private:
 // 创建三角形命令
 class CreateTriangleCommand : public Command {
 public:
-    CreateTriangleCommand(std::shared_ptr<PolyViewModel> viewModel, 
+    CreateTriangleCommand(std::shared_ptr<UnifiedViewModel> viewModel, 
                          const gp_Pnt& p1, const gp_Pnt& p2, const gp_Pnt& p3)
         : myViewModel(viewModel), myP1(p1), myP2(p2), myP3(p3) {}
     
     void execute() override {
-        myViewModel->createTriangle(myP1, myP2, myP3);
+        // myViewModel->createMesh(myP1, myP2, myP3);
     }
     
 private:
-    std::shared_ptr<PolyViewModel> myViewModel;
+    std::shared_ptr<UnifiedViewModel> myViewModel;
     gp_Pnt myP1, myP2, myP3;
 };
 
 // 导入网格命令
 class ImportMeshCommand : public Command {
 public:
-    ImportMeshCommand(std::shared_ptr<PolyViewModel> viewModel, 
+    ImportMeshCommand(std::shared_ptr<UnifiedViewModel> viewModel, 
                      const std::string& filePath)
         : myViewModel(viewModel), myFilePath(filePath) {}
     
     void execute() override {
-        myViewModel->importMesh(myFilePath);
+        // myViewModel->createMesh(myFilePath);
     }
     
 private:
-    std::shared_ptr<PolyViewModel> myViewModel;
+    std::shared_ptr<UnifiedViewModel> myViewModel;
     std::string myFilePath;
 };
 

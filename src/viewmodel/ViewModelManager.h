@@ -1,8 +1,7 @@
 #pragma once
 
 #include "IViewModel.h"
-#include "CadViewModel.h"
-#include "PolyViewModel.h"
+#include "UnifiedViewModel.h"
 #include "../model/ModelManager.h"
 #include <memory>
 #include <map>

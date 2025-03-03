@@ -20,20 +20,14 @@ ImGuiView::~ImGuiView() {
 }
 
 ImGuiView::ViewModelType ImGuiView::getViewModelType() const {
-    if (std::dynamic_pointer_cast<CadViewModel>(myViewModel)) {
-        return ViewModelType::CAD;
-    } else if (std::dynamic_pointer_cast<PolyViewModel>(myViewModel)) {
-        return ViewModelType::POLY;
+    if (std::dynamic_pointer_cast<UnifiedViewModel>(myViewModel)) {
+        return ViewModelType::UNIFIED;
     }
     return ViewModelType::UNKNOWN;
 }
 
-std::shared_ptr<CadViewModel> ImGuiView::getCadViewModel() const {
-    return std::dynamic_pointer_cast<CadViewModel>(myViewModel);
-}
-
-std::shared_ptr<PolyViewModel> ImGuiView::getPolyViewModel() const {
-    return std::dynamic_pointer_cast<PolyViewModel>(myViewModel);
+std::shared_ptr<UnifiedViewModel> ImGuiView::getUnifiedViewModel() const {
+    return std::dynamic_pointer_cast<UnifiedViewModel>(myViewModel);
 }
 
 void ImGuiView::initialize(GLFWwindow* window) {
@@ -170,19 +164,15 @@ void ImGuiView::renderMainMenu() {
         if (ImGui::BeginMenu("Create")) {
             auto viewModelType = getViewModelType();
             
-            if (viewModelType == ViewModelType::CAD) {
+            if (viewModelType == ViewModelType::UNIFIED) {
                 if (ImGui::MenuItem("Box")) {
                     executeCreateBox();
                 }
                 if (ImGui::MenuItem("Cone")) {
                     executeCreateCone();
                 }
-            } else if (viewModelType == ViewModelType::POLY) {
-                if (ImGui::MenuItem("Triangle")) {
-                    executeCreateTriangle();
-                }
-                if (ImGui::MenuItem("Import Mesh...")) {
-                    executeImportMesh();
+                if (ImGui::MenuItem("Mesh")) {
+                    executeCreateMesh();
                 }
             }
             
@@ -198,7 +188,7 @@ void ImGuiView::renderToolbar() {
     
     auto viewModelType = getViewModelType();
     
-    if (viewModelType == ViewModelType::CAD) {
+    if (viewModelType == ViewModelType::UNIFIED) {
         if (ImGui::Button("Box")) {
             executeCreateBox();
         }
@@ -206,13 +196,9 @@ void ImGuiView::renderToolbar() {
         if (ImGui::Button("Cone")) {
             executeCreateCone();
         }
-    } else if (viewModelType == ViewModelType::POLY) {
-        if (ImGui::Button("Triangle")) {
-            executeCreateTriangle();
-        }
         ImGui::SameLine();
-        if (ImGui::Button("Import Mesh")) {
-            executeImportMesh();
+        if (ImGui::Button("Mesh")) {
+            executeCreateMesh();
         }
     }
     
@@ -229,10 +215,8 @@ void ImGuiView::renderObjectProperties() {
     
     auto viewModelType = getViewModelType();
     
-    if (viewModelType == ViewModelType::CAD) {
-        renderCadProperties();
-    } else if (viewModelType == ViewModelType::POLY) {
-        renderPolyProperties();
+    if (viewModelType == ViewModelType::UNIFIED) {
+        renderGeometryProperties();
     } else {
         ImGui::Text("Unknown view model type");
     }
@@ -240,15 +224,15 @@ void ImGuiView::renderObjectProperties() {
     ImGui::End();
 }
 
-void ImGuiView::renderCadProperties() {
-    auto cadViewModel = getCadViewModel();
-    if (!cadViewModel) return;
+void ImGuiView::renderGeometryProperties() {
+    auto unifiedViewModel = getUnifiedViewModel();
+    if (!unifiedViewModel) return;
     
-    if (cadViewModel->hasSelection()) {
-        ImGui::Text("Selected objects: %zu", cadViewModel->getSelectedObjects().size());
+    if (unifiedViewModel->hasSelection()) {
+        ImGui::Text("Selected objects: %zu", unifiedViewModel->getSelectedObjects().size());
         
         // 显示颜色选择器
-        Quantity_Color currentColor = cadViewModel->getSelectedColor();
+        Quantity_Color currentColor = unifiedViewModel->getSelectedColor();
         float color[3] = {
             static_cast<float>(currentColor.Red()),
             static_cast<float>(currentColor.Green()),
@@ -256,89 +240,43 @@ void ImGuiView::renderCadProperties() {
         };
         
         if (ImGui::ColorEdit3("Color", color)) {
+            // 更新颜色
             Quantity_Color newColor(color[0], color[1], color[2], Quantity_TOC_RGB);
-            Commands::SetColorCommand cmd(cadViewModel, newColor);
-            cmd.execute();
+            unifiedViewModel->setSelectedColor(newColor);
         }
         
         // 显示显示模式选择
-        int displayMode = cadViewModel->displayMode.get();
-        const char* displayModes[] = { "Shaded", "Wireframe", "Points" };
+        int displayMode = unifiedViewModel->displayMode.get();
+        const char* displayModes[] = { "Shaded", "Wireframe", "Vertices" };
+        
         if (ImGui::Combo("Display Mode", &displayMode, displayModes, IM_ARRAYSIZE(displayModes))) {
-            cadViewModel->displayMode = displayMode;
+            unifiedViewModel->displayMode = displayMode;
         }
     } else {
         ImGui::Text("No objects selected");
     }
     
-    // 全局设置
-    auto& globalSettings = MVVM::GlobalSettings::getInstance();
+    // 显示全局设置
+    auto& globalSettings = unifiedViewModel->getGlobalSettings();
     
     bool isGridVisible = globalSettings.isGridVisible.get();
     if (ImGui::Checkbox("Show Grid", &isGridVisible)) {
         globalSettings.isGridVisible = isGridVisible;
-        spdlog::debug("ImGuiView: Grid visibility set to {}", isGridVisible);
     }
     
     bool isViewCubeVisible = globalSettings.isViewCubeVisible.get();
     if (ImGui::Checkbox("Show View Cube", &isViewCubeVisible)) {
         globalSettings.isViewCubeVisible = isViewCubeVisible;
-        spdlog::debug("ImGuiView: View cube visibility set to {}", isViewCubeVisible);
-    }
-}
-
-void ImGuiView::renderPolyProperties() {
-    auto polyViewModel = getPolyViewModel();
-    if (!polyViewModel) return;
-    
-    if (polyViewModel->hasSelection()) {
-        ImGui::Text("Selected objects: %zu", polyViewModel->getSelectedObjects().size());
-        
-        // 显示颜色选择器
-        Quantity_Color currentColor = polyViewModel->getSelectedColor();
-        float color[3] = {
-            static_cast<float>(currentColor.Red()),
-            static_cast<float>(currentColor.Green()),
-            static_cast<float>(currentColor.Blue())
-        };
-        
-        if (ImGui::ColorEdit3("Color", color)) {
-            Quantity_Color newColor(color[0], color[1], color[2], Quantity_TOC_RGB);
-            Commands::SetColorCommand cmd(polyViewModel, newColor);
-            cmd.execute();
-        }
-        
-        // 显示显示模式选择
-        int displayMode = polyViewModel->displayMode.get();
-        const char* displayModes[] = { "Shaded", "Wireframe", "Points" };
-        if (ImGui::Combo("Display Mode", &displayMode, displayModes, IM_ARRAYSIZE(displayModes))) {
-            polyViewModel->displayMode = displayMode;
-        }
-    } else {
-        ImGui::Text("No objects selected");
-    }
-    
-    // 特定于网格的设置
-    bool isWireframeVisible = polyViewModel->isWireframeVisible.get();
-    if (ImGui::Checkbox("Show Wireframe", &isWireframeVisible)) {
-        polyViewModel->isWireframeVisible = isWireframeVisible;
-    }
-    
-    bool isVerticesVisible = polyViewModel->isVerticesVisible.get();
-    if (ImGui::Checkbox("Show Vertices", &isVerticesVisible)) {
-        polyViewModel->isVerticesVisible = isVerticesVisible;
     }
 }
 
 void ImGuiView::renderObjectTree() {
-    ImGui::Begin("Object Tree", &showObjectTree);
+    ImGui::Begin("Objects", &showObjectTree);
     
     auto viewModelType = getViewModelType();
     
-    if (viewModelType == ViewModelType::CAD) {
-        renderCadTree();
-    } else if (viewModelType == ViewModelType::POLY) {
-        renderPolyTree();
+    if (viewModelType == ViewModelType::UNIFIED) {
+        renderGeometryTree();
     } else {
         ImGui::Text("Unknown view model type");
     }
@@ -346,111 +284,107 @@ void ImGuiView::renderObjectTree() {
     ImGui::End();
 }
 
-void ImGuiView::renderCadTree() {
-    auto cadViewModel = getCadViewModel();
-    if (!cadViewModel) return;
+void ImGuiView::renderGeometryTree() {
+    auto unifiedViewModel = getUnifiedViewModel();
+    if (!unifiedViewModel) return;
     
-    auto cadModel = cadViewModel->getCadModel();
-    auto shapeIds = cadModel->getAllShapeIds();
-    auto selectedIds = cadViewModel->getSelectedObjects();
-    
-    ImGui::Text("CAD Objects (%zu)", shapeIds.size());
-    
-    for (const auto& id : shapeIds) {
-        bool isSelected = std::find(selectedIds.begin(), selectedIds.end(), id) != selectedIds.end();
-        if (ImGui::Selectable(id.c_str(), isSelected)) {
-            // 处理选择逻辑
-        }
+    auto model = unifiedViewModel->getUnifiedModel();
+    if (!model) {
+        ImGui::Text("No model available");
+        return;
     }
-}
-
-void ImGuiView::renderPolyTree() {
-    auto polyViewModel = getPolyViewModel();
-    if (!polyViewModel) return;
     
-    auto polyModel = polyViewModel->getPolyModel();
-    auto meshIds = polyModel->getAllMeshIds();
-    auto selectedIds = polyViewModel->getSelectedObjects();
+    const auto& entityIds = model->getAllEntityIds();
     
-    ImGui::Text("Mesh Objects (%zu)", meshIds.size());
+    ImGui::Text("Objects: %zu", entityIds.size());
+    ImGui::Separator();
     
-    for (const auto& id : meshIds) {
-        bool isSelected = std::find(selectedIds.begin(), selectedIds.end(), id) != selectedIds.end();
-        if (ImGui::Selectable(id.c_str(), isSelected)) {
-            // 处理选择逻辑
+    for (const auto& id : entityIds) {
+        try {
+            UnifiedModel::GeometryType type = model->getGeometryType(id);
+            std::string typeStr;
+            
+            switch (type) {
+                case UnifiedModel::GeometryType::SHAPE:
+                    typeStr = "CAD";
+                    break;
+                case UnifiedModel::GeometryType::MESH:
+                    typeStr = "Mesh";
+                    break;
+                default:
+                    typeStr = "Unknown";
+            }
+            
+            std::string label = id + " [" + typeStr + "]";
+            bool isSelected = std::find(unifiedViewModel->getSelectedObjects().begin(),
+                                        unifiedViewModel->getSelectedObjects().end(),
+                                        id) != unifiedViewModel->getSelectedObjects().end();
+            
+            if (ImGui::Selectable(label.c_str(), isSelected)) {
+                // TODO: 处理选择
+            }
+        } catch (const std::exception& e) {
+            ImGui::TextColored(ImVec4(1, 0, 0, 1), "Error: %s", e.what());
         }
     }
 }
 
 void ImGuiView::renderStatusBar() {
-    ImGui::Begin("Status Bar", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar);
+    const float height = ImGui::GetFrameHeight();
+    const ImVec2 viewportSize = ImGui::GetMainViewport()->Size;
     
-    auto viewModelType = getViewModelType();
+    ImGui::SetNextWindowPos(ImVec2(0, viewportSize.y - height));
+    ImGui::SetNextWindowSize(ImVec2(viewportSize.x, height));
     
-    if (viewModelType == ViewModelType::CAD) {
-        auto cadViewModel = getCadViewModel();
-        auto cadModel = cadViewModel->getCadModel();
-        ImGui::Text("CAD Model | Objects: %zu | Selected: %zu", 
-                   cadModel->getAllShapeIds().size(), 
-                   cadViewModel->getSelectedObjects().size());
-    } else if (viewModelType == ViewModelType::POLY) {
-        auto polyViewModel = getPolyViewModel();
-        auto polyModel = polyViewModel->getPolyModel();
-        ImGui::Text("Polygon Model | Meshes: %zu | Selected: %zu", 
-                   polyModel->getAllMeshIds().size(), 
-                   polyViewModel->getSelectedObjects().size());
-    } else {
-        ImGui::Text("Unknown model type");
+    ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoInputs | 
+                                   ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar | 
+                                   ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoBringToFrontOnFocus;
+    
+    if (ImGui::Begin("StatusBar", nullptr, windowFlags)) {
+        ImGui::Text("OpenCascade ImGui Demo");
+        ImGui::SameLine(ImGui::GetWindowWidth() - 120);
+        
+        if (myViewModel->hasSelection()) {
+            ImGui::Text("Selected: %zu", myViewModel->getSelectedObjects().size());
+        } else {
+            ImGui::Text("No selection");
+        }
     }
-    
     ImGui::End();
 }
 
 void ImGuiView::executeCreateBox() {
-    auto cadViewModel = getCadViewModel();
-    if (!cadViewModel) return;
+    auto unifiedViewModel = getUnifiedViewModel();
+    if (!unifiedViewModel) return;
     
-    // 创建一个位于原点的10x10x10的盒子
-    Commands::CreateBoxCommand cmd(cadViewModel, gp_Pnt(0, 0, 0), 10, 10, 10);
-    cmd.execute();
+    // 创建一个10x10x10的盒子，位于原点
+    unifiedViewModel->createBox(gp_Pnt(0, 0, 0), 10, 10, 10);
 }
 
 void ImGuiView::executeCreateCone() {
-    auto cadViewModel = getCadViewModel();
-    if (!cadViewModel) return;
+    auto unifiedViewModel = getUnifiedViewModel();
+    if (!unifiedViewModel) return;
     
-    // 创建一个位于原点的底半径5，高度10的圆锥
-    Commands::CreateConeCommand cmd(cadViewModel, gp_Pnt(0, 0, 0), 5, 10);
-    cmd.execute();
+    // 创建一个底半径5，高为10的圆锥，位于原点
+    unifiedViewModel->createCone(gp_Pnt(0, 0, 0), 5, 10);
 }
 
-void ImGuiView::executeCreateTriangle() {
-    auto polyViewModel = getPolyViewModel();
-    if (!polyViewModel) return;
+void ImGuiView::executeCreateMesh() {
+    auto unifiedViewModel = getUnifiedViewModel();
+    if (!unifiedViewModel) return;
     
-    // 创建一个简单的三角形
-    Commands::CreateTriangleCommand cmd(polyViewModel, 
-                                       gp_Pnt(0, 0, 0), 
-                                       gp_Pnt(10, 0, 0), 
-                                       gp_Pnt(5, 10, 0));
-    cmd.execute();
-}
-
-void ImGuiView::executeImportMesh() {
-    auto polyViewModel = getPolyViewModel();
-    if (!polyViewModel) return;
-    
-    // 这里应该打开文件对话框，但为了简单起见，我们直接使用一个假路径
-    Commands::ImportMeshCommand cmd(polyViewModel, "example.stl");
-    cmd.execute();
+    // 创建一个示例网格
+    // 注意：这个方法需要在UnifiedViewModel中实现
+    unifiedViewModel->createMesh();
 }
 
 void ImGuiView::executeDeleteSelected() {
-    Commands::DeleteSelectedCommand cmd(myViewModel);
-    cmd.execute();
+    if (myViewModel->hasSelection()) {
+        myViewModel->deleteSelectedObjects();
+    }
 }
 
 void ImGuiView::subscribeToEvents() {
-    // 订阅模型变更事件
-    // 在实际应用中，这里应该订阅来自MessageBus的事件
+    // 订阅相关事件
+    // ...
 } 

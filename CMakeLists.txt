@@ -20,12 +20,10 @@ find_package(spdlog REQUIRED)
 # Add executable target
 add_executable(OcctImgui
     src/model/IModel.cpp
-    src/model/CadModel.cpp
-    src/model/PolyModel.cpp
+    src/model/UnifiedModel.cpp
     src/view/ImGuiView.cpp
     src/view/OcctView.cpp
-    src/viewmodel/CadViewModel.cpp
-    src/viewmodel/PolyViewModel.cpp
+    src/viewmodel/UnifiedViewModel.cpp
     src/Application.cpp
     src/GlfwOcctWindow.cpp
     src/main.cpp)
