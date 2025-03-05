@@ -16,6 +16,7 @@
 #include "view/ViewManager.h"
 #include "model/ModelManager.h"
 #include "model/ModelFactory.h"
+#include "model/ModelImporter.h"
 #include "viewmodel/ViewModelManager.h"
 #include "mvvm/MessageBus.h"
 #include "mvvm/GlobalSettings.h"
@@ -90,6 +91,21 @@ public:
      * @return Reference to the model factory
      */
     ModelFactory& getModelFactory() { return *myModelFactory; }
+    
+    /**
+     * @brief Gets the model importer
+     * @return Reference to the model importer
+     */
+    ModelImporter& getModelImporter() { return *myModelImporter; }
+    
+    /**
+     * @brief Imports a model from a file
+     * 
+     * @param filePath The path to the model file
+     * @param modelId The ID to assign to the imported model (if empty, the filename will be used)
+     * @return bool True if import was successful, false otherwise
+     */
+    bool importModel(const std::string& filePath, const std::string& modelId = "");
 
 private:
     // Initialization methods
@@ -227,4 +243,6 @@ private:
     std::unique_ptr<MVVM::GlobalSettings> myGlobalSettings;
     /** The model factory */
     std::unique_ptr<ModelFactory> myModelFactory;
+    /** The model importer */
+    std::unique_ptr<ModelImporter> myModelImporter;
 }; 

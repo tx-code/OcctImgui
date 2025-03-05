@@ -59,6 +59,7 @@ private:
     void executeCreateCone();
     void executeCreateMesh();
     void executeDeleteSelected();
+    void executeImportModel();
 
     // 订阅事件
     void subscribeToEvents();

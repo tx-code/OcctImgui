@@ -35,6 +35,7 @@ add_library(OcctImguiLib STATIC
     src/model/UnifiedModel.cpp
     src/model/ModelFactory.cpp
     src/model/ModelManager.cpp
+    src/model/ModelImporter.cpp
     src/view/ImGuiView.cpp
     src/view/OcctView.cpp
     src/viewmodel/UnifiedViewModel.cpp
@@ -110,4 +111,5 @@ if(BUILD_TESTING)
     add_boost_test(model_manager_test tests/model_manager_test.cpp)
     add_boost_test(mesh_datasource_test tests/mesh_datasource_test.cpp)
     add_boost_test(unified_model_test tests/unified_model_test.cpp)
+    add_boost_test(model_importer_test tests/model_importer_test.cpp)
 endif()

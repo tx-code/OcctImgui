@@ -9,6 +9,7 @@
 
 #include "IViewModel.h"
 #include "../model/UnifiedModel.h"
+#include "../model/ModelImporter.h"
 #include "../mvvm/Property.h"
 #include "../mvvm/GlobalSettings.h"
 
@@ -37,10 +38,12 @@ public:
      * @param model The UnifiedModel to connect with
      * @param context The OCCT interactive context for visualization
      * @param globalSettings Reference to the application's global settings
+     * @param modelImporter The ModelImporter to use for importing models
      */
     UnifiedViewModel(std::shared_ptr<UnifiedModel> model, 
                     Handle(AIS_InteractiveContext) context,
-                    MVVM::GlobalSettings& globalSettings);
+                    MVVM::GlobalSettings& globalSettings,
+                    std::shared_ptr<ModelImporter> modelImporter);
     
     /**
      * @brief Virtual destructor
@@ -68,6 +71,14 @@ public:
      * @brief Creates a mesh (placeholder for future implementation)
      */
     void createMesh(/* Mesh creation parameters */); // Specific parameters to be defined based on requirements
+    
+    /**
+     * @brief Imports a model from a file
+     * @param filePath The path to the model file
+     * @param modelId The ID to assign to the imported model (if empty, the filename will be used)
+     * @return True if import was successful, false otherwise
+     */
+    bool importModel(const std::string& filePath, const std::string& modelId = "");
     
     /**
      * @brief Deletes the currently selected objects
@@ -178,6 +189,9 @@ private:
     
     /** Reference to the global settings */
     MVVM::GlobalSettings& myGlobalSettings;
+    
+    /** The model importer */
+    std::shared_ptr<ModelImporter> myModelImporter;
     
     /**
      * @brief Updates the visual presentation of a geometry

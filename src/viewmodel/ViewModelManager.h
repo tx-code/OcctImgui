@@ -11,6 +11,7 @@
 #include "IViewModel.h"
 #include "UnifiedViewModel.h"
 #include "../model/ModelManager.h"
+#include "../model/ModelImporter.h"
 #include "../mvvm/MessageBus.h"
 #include "../mvvm/GlobalSettings.h"
 #include <memory>
@@ -34,13 +35,16 @@ public:
      * @param modelManager Reference to the ModelManager for model access
      * @param messageBus Reference to the MessageBus for event communication
      * @param globalSettings Reference to the GlobalSettings for application-wide settings
+     * @param modelImporter Reference to the ModelImporter for model import functionality
      */
     ViewModelManager(ModelManager& modelManager, 
                     MVVM::MessageBus& messageBus,
-                    MVVM::GlobalSettings& globalSettings) 
+                    MVVM::GlobalSettings& globalSettings,
+                    ModelImporter& modelImporter) 
         : myModelManager(modelManager)
         , myMessageBus(messageBus)
-        , myGlobalSettings(globalSettings) {}
+        , myGlobalSettings(globalSettings)
+        , myModelImporter(modelImporter) {}
     
     /**
      * @brief Creates a new viewmodel of the specified type
@@ -62,8 +66,9 @@ public:
             model = myModelManager.createModel<ModelT>(modelId);
         }
         
-        // Create the ViewModel
-        auto viewModel = std::make_shared<T>(model, context, myGlobalSettings);
+        // Create the ViewModel with ModelImporter
+        auto viewModel = std::make_shared<T>(model, context, myGlobalSettings, 
+                                            std::make_shared<ModelImporter>(myModelImporter));
         myViewModels[viewModelId] = viewModel;
         return viewModel;
     }
@@ -137,6 +142,9 @@ private:
     
     /** Reference to the global settings */
     MVVM::GlobalSettings& myGlobalSettings;
+    
+    /** Reference to the model importer */
+    ModelImporter& myModelImporter;
     
     /** Map of viewmodel IDs to viewmodel instances */
     std::map<std::string, std::shared_ptr<IViewModel>> myViewModels;

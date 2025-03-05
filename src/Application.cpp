@@ -37,7 +37,8 @@ Application::Application()
     myGlobalSettings = std::make_unique<MVVM::GlobalSettings>();
     myModelFactory = std::make_unique<ModelFactory>();
     myModelManager = std::make_unique<ModelManager>();
-    myViewModelManager = std::make_unique<ViewModelManager>(*myModelManager, *myMessageBus, *myGlobalSettings);
+    myModelImporter = std::make_unique<ModelImporter>();
+    myViewModelManager = std::make_unique<ViewModelManager>(*myModelManager, *myMessageBus, *myGlobalSettings, *myModelImporter);
     myViewManager = std::make_unique<ViewManager>(*myViewModelManager, *myMessageBus);
     
     // Initialize model factory
@@ -312,4 +313,27 @@ void Application::onMouseMoveCallback(GLFWwindow* theWin, double thePosX, double
 void Application::errorCallback(int theError, const char* theDescription)
 {
     getAppLogger()->error("App: GLFW error {}: {}", theError, theDescription);
+}
+
+bool Application::importModel(const std::string& filePath, const std::string& modelId)
+{
+    LOG_FUNCTION_SCOPE(getAppLogger(), "importModel");
+    getAppLogger()->info("Importing model from '{}'", filePath);
+    
+    // 使用 UnifiedViewModel 的 importModel 方法
+    auto viewModel = myViewModelManager->getViewModel<UnifiedViewModel>(myViewModelId);
+    if (!viewModel) {
+        getAppLogger()->error("Failed to get UnifiedViewModel");
+        return false;
+    }
+    
+    bool result = viewModel->importModel(filePath, modelId);
+    
+    if (result) {
+        getAppLogger()->info("Model imported successfully");
+    } else {
+        getAppLogger()->error("Failed to import model");
+    }
+    
+    return result;
 }

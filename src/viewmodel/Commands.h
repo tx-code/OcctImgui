@@ -90,38 +90,22 @@ private:
     double myRadius, myHeight;
 };
 
-// PolyViewModel特定命令
-
-// 创建三角形命令
-class CreateTriangleCommand : public Command {
+// 导入模型命令 - 支持多种格式（STEP, STL, OBJ等）
+class ImportModelCommand : public Command {
 public:
-    CreateTriangleCommand(std::shared_ptr<UnifiedViewModel> viewModel, 
-                         const gp_Pnt& p1, const gp_Pnt& p2, const gp_Pnt& p3)
-        : myViewModel(viewModel), myP1(p1), myP2(p2), myP3(p3) {}
+    ImportModelCommand(std::shared_ptr<UnifiedViewModel> viewModel, 
+                      const std::string& filePath,
+                      const std::string& modelId = "")
+        : myViewModel(viewModel), myFilePath(filePath), myModelId(modelId) {}
     
     void execute() override {
-        // myViewModel->createMesh(myP1, myP2, myP3);
-    }
-    
-private:
-    std::shared_ptr<UnifiedViewModel> myViewModel;
-    gp_Pnt myP1, myP2, myP3;
-};
-
-// 导入网格命令
-class ImportMeshCommand : public Command {
-public:
-    ImportMeshCommand(std::shared_ptr<UnifiedViewModel> viewModel, 
-                     const std::string& filePath)
-        : myViewModel(viewModel), myFilePath(filePath) {}
-    
-    void execute() override {
-        // myViewModel->createMesh(myFilePath);
+        myViewModel->importModel(myFilePath, myModelId);
     }
     
 private:
     std::shared_ptr<UnifiedViewModel> myViewModel;
     std::string myFilePath;
+    std::string myModelId;
 };
 
 } // namespace Commands 

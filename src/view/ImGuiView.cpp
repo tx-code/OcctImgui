@@ -7,6 +7,7 @@
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 #include <GLFW/glfw3.h>
+#include <nfd.h>
 
 // 创建ImGui视图日志记录器 - 使用函数确保安全初始化
 std::shared_ptr<Utils::Logger>& getImGuiLogger() {
@@ -145,6 +146,10 @@ void ImGuiView::renderMainMenu() {
                 // 处理保存命令
             }
             ImGui::Separator();
+            if (ImGui::MenuItem("Import Model", "Ctrl+I")) {
+                executeImportModel();
+            }
+            ImGui::Separator();
             if (ImGui::MenuItem("Exit", "Alt+F4")) {
                 // 处理退出命令
                 glfwSetWindowShouldClose(myWindow, GLFW_TRUE);
@@ -195,6 +200,10 @@ void ImGuiView::renderToolbar() {
     auto viewModelType = getViewModelType();
     
     if (viewModelType == ViewModelType::UNIFIED) {
+        if (ImGui::Button("Import")) {
+            executeImportModel();
+        }
+        ImGui::SameLine();
         if (ImGui::Button("Box")) {
             executeCreateBox();
         }
@@ -363,16 +372,18 @@ void ImGuiView::executeCreateBox() {
     auto unifiedViewModel = getUnifiedViewModel();
     if (!unifiedViewModel) return;
     
-    // 创建一个10x10x10的盒子，位于原点
-    unifiedViewModel->createBox(gp_Pnt(0, 0, 0), 10, 10, 10);
+    // 使用命令模式创建盒子
+    Commands::CreateBoxCommand boxCmd(unifiedViewModel, gp_Pnt(0, 0, 0), 10, 10, 10);
+    boxCmd.execute();
 }
 
 void ImGuiView::executeCreateCone() {
     auto unifiedViewModel = getUnifiedViewModel();
     if (!unifiedViewModel) return;
     
-    // 创建一个底半径5，高为10的圆锥，位于原点
-    unifiedViewModel->createCone(gp_Pnt(0, 0, 0), 5, 10);
+    // 使用命令模式创建圆锥
+    Commands::CreateConeCommand coneCmd(unifiedViewModel, gp_Pnt(0, 0, 0), 5, 10);
+    coneCmd.execute();
 }
 
 void ImGuiView::executeCreateMesh() {
@@ -386,8 +397,55 @@ void ImGuiView::executeCreateMesh() {
 
 void ImGuiView::executeDeleteSelected() {
     if (myViewModel->hasSelection()) {
-        myViewModel->deleteSelectedObjects();
+        // 使用命令模式删除选中对象
+        Commands::DeleteSelectedCommand deleteCmd(myViewModel);
+        deleteCmd.execute();
     }
+}
+
+void ImGuiView::executeImportModel() {
+    getImGuiLogger()->info("Executing import model command");
+    
+    // 初始化NFD (Native File Dialog)
+    NFD_Init();
+    
+    nfdchar_t *outPath = nullptr;
+    nfdfilteritem_t filterItems[4] = {
+        { "All Files", "step,stp,stl,obj" },
+        { "STEP Files", "step,stp" },
+        { "STL Files", "stl" },
+        { "OBJ Files", "obj" }
+    };
+    
+    // 打开文件对话框
+    nfdresult_t result = NFD_OpenDialog(&outPath, filterItems, 4, nullptr);
+    
+    if (result == NFD_OKAY) {
+        getImGuiLogger()->info("Selected file: {}", outPath);
+        
+        // 获取UnifiedViewModel
+        auto unifiedViewModel = getUnifiedViewModel();
+        if (!unifiedViewModel) {
+            getImGuiLogger()->error("Failed to get UnifiedViewModel");
+            NFD_FreePath(outPath);
+            NFD_Quit();
+            return;
+        }
+        
+        // 创建并执行导入模型命令
+        Commands::ImportModelCommand importCmd(unifiedViewModel, outPath);
+        importCmd.execute();
+        
+        // 释放路径内存
+        NFD_FreePath(outPath);
+    } else if (result == NFD_CANCEL) {
+        getImGuiLogger()->info("User canceled file dialog");
+    } else {
+        getImGuiLogger()->error("Error opening file dialog: {}", NFD_GetError());
+    }
+    
+    // 清理NFD
+    NFD_Quit();
 }
 
 void ImGuiView::subscribeToEvents() {

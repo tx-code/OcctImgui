@@ -1,5 +1,6 @@
 #include "UnifiedViewModel.h"
 #include "ais/Mesh_DataSource.h"
+#include "../utils/Logger.h"
 #include <AIS_Shape.hxx>
 #include <AIS_Triangulation.hxx>
 #include <BRepBuilderAPI_Transform.hxx>
@@ -15,13 +16,21 @@
 #include <random>
 #include <iostream>
 
+// 创建ViewModel日志记录器
+static std::shared_ptr<Utils::Logger>& getViewModelLogger() {
+    static std::shared_ptr<Utils::Logger> logger = Utils::Logger::getLogger("viewmodel");
+    return logger;
+}
+
 // Constructor
 UnifiedViewModel::UnifiedViewModel(std::shared_ptr<UnifiedModel> model,
                                    Handle(AIS_InteractiveContext) context,
-                                   MVVM::GlobalSettings& globalSettings)
+                                   MVVM::GlobalSettings& globalSettings,
+                                   std::shared_ptr<ModelImporter> modelImporter)
     : myModel(model)
     , myContext(context)
     , myGlobalSettings(globalSettings)
+    , myModelImporter(modelImporter)
 {
 
     // Register model change listener
@@ -92,6 +101,28 @@ void UnifiedViewModel::createMesh(/* Mesh creation parameters */)
     // Add to model
     myModel->addMesh(id, mesh);
     */
+}
+
+bool UnifiedViewModel::importModel(const std::string& filePath, const std::string& modelId)
+{
+    LOG_FUNCTION_SCOPE(getViewModelLogger(), "importModel");
+    getViewModelLogger()->info("Importing model from '{}'", filePath);
+    
+    if (!myModelImporter) {
+        getViewModelLogger()->error("ModelImporter is not available");
+        return false;
+    }
+    
+    // 使用注入的 ModelImporter 导入模型
+    bool result = myModelImporter->importModel(filePath, *myModel, modelId);
+    
+    if (result) {
+        getViewModelLogger()->info("Model imported successfully");
+    } else {
+        getViewModelLogger()->error("Failed to import model");
+    }
+    
+    return result;
 }
 
 // IViewModel interface implementation
