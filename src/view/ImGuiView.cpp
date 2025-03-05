@@ -1,8 +1,8 @@
 #include "ImGuiView.h"
-#include "../viewmodel/Commands.h"
-#include "../mvvm/MessageBus.h"
-#include "../mvvm/GlobalSettings.h"
-#include "../utils/Logger.h"
+#include "viewmodel/Commands.h"
+#include "mvvm/MessageBus.h"
+#include "mvvm/GlobalSettings.h"
+#include "utils/Logger.h"
 
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
@@ -23,13 +23,6 @@ ImGuiView::ImGuiView(std::shared_ptr<IViewModel> viewModel)
 
 ImGuiView::~ImGuiView() {
     // shutdown();
-}
-
-ImGuiView::ViewModelType ImGuiView::getViewModelType() const {
-    if (std::dynamic_pointer_cast<UnifiedViewModel>(myViewModel)) {
-        return ViewModelType::UNIFIED;
-    }
-    return ViewModelType::UNKNOWN;
 }
 
 std::shared_ptr<UnifiedViewModel> ImGuiView::getUnifiedViewModel() const {
@@ -173,9 +166,9 @@ void ImGuiView::renderMainMenu() {
         }
         
         if (ImGui::BeginMenu("Create")) {
-            auto viewModelType = getViewModelType();
+            auto unifiedViewModel = getUnifiedViewModel();
             
-            if (viewModelType == ViewModelType::UNIFIED) {
+            if (unifiedViewModel) {
                 if (ImGui::MenuItem("Box")) {
                     executeCreateBox();
                 }
@@ -197,9 +190,9 @@ void ImGuiView::renderMainMenu() {
 void ImGuiView::renderToolbar() {
     ImGui::Begin("Toolbar", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar);
     
-    auto viewModelType = getViewModelType();
+    auto unifiedViewModel = getUnifiedViewModel();
     
-    if (viewModelType == ViewModelType::UNIFIED) {
+    if (unifiedViewModel) {
         if (ImGui::Button("Import")) {
             executeImportModel();
         }
@@ -228,9 +221,9 @@ void ImGuiView::renderToolbar() {
 void ImGuiView::renderObjectProperties() {
     ImGui::Begin("Object Properties", &showObjectProperties);
     
-    auto viewModelType = getViewModelType();
+    auto unifiedViewModel = getUnifiedViewModel();
     
-    if (viewModelType == ViewModelType::UNIFIED) {
+    if (unifiedViewModel) {
         renderGeometryProperties();
     } else {
         ImGui::Text("Unknown view model type");
@@ -288,9 +281,9 @@ void ImGuiView::renderGeometryProperties() {
 void ImGuiView::renderObjectTree() {
     ImGui::Begin("Objects", &showObjectTree);
     
-    auto viewModelType = getViewModelType();
+    auto unifiedViewModel = getUnifiedViewModel();
     
-    if (viewModelType == ViewModelType::UNIFIED) {
+    if (unifiedViewModel) {
         renderGeometryTree();
     } else {
         ImGui::Text("Unknown view model type");

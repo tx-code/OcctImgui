@@ -1,7 +1,7 @@
 #include "OcctView.h"
-#include "../mvvm/MessageBus.h"
-#include "../mvvm/GlobalSettings.h"
-#include "../utils/Logger.h"
+#include "mvvm/MessageBus.h"
+#include "mvvm/GlobalSettings.h"
+#include "utils/Logger.h"
 
 #include <AIS_Shape.hxx>
 #include <AIS_ViewCube.hxx>

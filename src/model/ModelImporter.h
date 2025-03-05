@@ -97,8 +97,8 @@ private:
     std::string getFileName(const std::string& filePath) const;
     
     // 定义成员函数指针类型
-    typedef bool (ModelImporter::*ImportFunctionPtr)(const std::string&, UnifiedModel&, const std::string&);
+    using ImportFunction = std::function<bool(const std::string&, UnifiedModel&, const std::string&)>;
     
     // Map of file extensions to import functions
-    std::map<std::string, ImportFunctionPtr> myImportFunctions;
+    std::map<std::string, ImportFunction> myImportFunctions;
 }; 
