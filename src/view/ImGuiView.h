@@ -34,13 +34,7 @@ private:
     bool showObjectTree = true;
     bool showDemoWindow = false;
     
-    // 当前选中的视图模型类型
-    enum class ViewModelType {
-        UNIFIED,
-        UNKNOWN
-    };
-    
-    ViewModelType getViewModelType() const;
+    // 获取UnifiedViewModel的辅助方法
     std::shared_ptr<UnifiedViewModel> getUnifiedViewModel() const;
 
     // 各UI组件的渲染方法
