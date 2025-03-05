@@ -33,16 +33,21 @@ void UnifiedModel::addShape(const std::string& id, const TopoDS_Shape& shape) {
 }
 
 // 几何数据管理 - 多边形网格
-Handle(Poly_Triangulation) UnifiedModel::getMesh(const std::string& id) const {
+const UnifiedModel::MeshData* UnifiedModel::getMesh(const std::string& id) const {
     auto it = myGeometries.find(id);
     if (it != myGeometries.end() && it->second.type == GeometryType::MESH) {
-        return std::get<Handle(Poly_Triangulation)>(it->second.geometry);
+        return &std::get<MeshData>(it->second.geometry);
     }
     return nullptr;
 }
 
-void UnifiedModel::addMesh(const std::string& id, const Handle(Poly_Triangulation)& mesh) {
-    myGeometries.emplace(id, GeometryData(mesh));
+void UnifiedModel::addMesh(const std::string& id, const Eigen::MatrixXd& vertices, const Eigen::MatrixXi& faces) {
+    myGeometries.emplace(id, GeometryData(vertices, faces));
+    notifyChange(id);
+}
+
+void UnifiedModel::addMesh(const std::string& id, const Eigen::MatrixXd& vertices, const Eigen::MatrixXi& faces, const Eigen::MatrixXd& normals) {
+    myGeometries.emplace(id, GeometryData(vertices, faces, normals));
     notifyChange(id);
 }
 
@@ -115,10 +120,39 @@ void UnifiedModel::transform(const std::string& id, const gp_Trsf& transformatio
     }
     else if (it->second.type == GeometryType::MESH) {
         // 对网格应用变换
-        // 注意：这里需要实际遍历并变换网格的所有顶点
-        // 以下代码仅示意，需要根据实际需求实现
-        // Handle(Poly_Triangulation)& mesh = std::get<Handle(Poly_Triangulation)>(it->second.geometry);
-        // 遍历并变换所有网格顶点
+        MeshData& mesh = std::get<MeshData>(it->second.geometry);
+        
+        // 应用变换到顶点
+        for (int i = 0; i < mesh.vertices.rows(); ++i) {
+            gp_XYZ pnt(mesh.vertices(i, 0), mesh.vertices(i, 1), mesh.vertices(i, 2));
+            transformation.Transforms(pnt);
+            mesh.vertices(i, 0) = pnt.X();
+            mesh.vertices(i, 1) = pnt.Y();
+            mesh.vertices(i, 2) = pnt.Z();
+        }
+
+        // 对法向量，只应用旋转部分（不包括平移）
+        if (mesh.normals.rows() > 0) {
+            // 提取变换的线性部分（旋转和缩放）
+            gp_Mat rotMat = transformation.VectorialPart();
+            
+            for (int i = 0; i < mesh.normals.rows(); ++i) {
+                gp_XYZ normal(mesh.normals(i, 0), mesh.normals(i, 1), mesh.normals(i, 2));
+                
+                // 只应用旋转部分
+                normal.Multiply(rotMat);
+                
+                // 重新归一化法向量（如果有非均匀缩放，这一步很重要）
+                double len = sqrt(normal.X()*normal.X() + normal.Y()*normal.Y() + normal.Z()*normal.Z());
+                if (len > 1e-10) {
+                    normal.Divide(len);
+                }
+                
+                mesh.normals(i, 0) = normal.X();
+                mesh.normals(i, 1) = normal.Y();
+                mesh.normals(i, 2) = normal.Z();
+            }
+        }
     }
     
     notifyChange(id);

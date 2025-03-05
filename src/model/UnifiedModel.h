@@ -3,7 +3,7 @@
  * @brief Defines the UnifiedModel class which manages both CAD shapes and mesh data.
  * 
  * The UnifiedModel provides a unified interface for managing different types of
- * geometric data, including CAD shapes (TopoDS_Shape) and polygon meshes (Poly_Triangulation).
+ * geometric data, including CAD shapes (TopoDS_Shape) and polygon meshes (using libigl representation).
  */
 #pragma once
 
@@ -15,16 +15,16 @@
 #include <variant>
 
 #include <TopoDS_Shape.hxx>
-#include <Poly_Triangulation.hxx>
 #include <Quantity_Color.hxx>
 #include <gp_Trsf.hxx>
+#include <Eigen/Dense>
 
 /**
  * @class UnifiedModel
  * @brief A model that manages both CAD shapes and mesh data with a unified interface.
  * 
  * This class implements the IModel interface and provides methods for adding, retrieving,
- * and manipulating both CAD shapes (TopoDS_Shape) and polygon meshes (Poly_Triangulation).
+ * and manipulating both CAD shapes (TopoDS_Shape) and polygon meshes (using libigl representation).
  * Each geometry is identified by a unique string ID and can have associated properties
  * such as color.
  */
@@ -35,15 +35,41 @@ public:
      */
     enum class GeometryType {
         SHAPE,  ///< CAD model (TopoDS_Shape)
-        MESH    ///< Polygon mesh (Poly_Triangulation)
+        MESH    ///< Polygon mesh (libigl representation)
+    };
+    
+    /**
+     * @brief Structure to represent a mesh using libigl's representation
+     */
+    struct MeshData {
+        Eigen::MatrixXd vertices; ///< Vertex positions (n x 3 matrix)
+        Eigen::MatrixXi faces;    ///< Face indices (m x 3 matrix for triangular mesh)
+        Eigen::MatrixXd normals;  ///< Face normals (m x 3 matrix)
+        
+        /**
+         * @brief Default constructor
+         */
+        MeshData() : vertices(0, 3), faces(0, 3), normals(0, 3) {}
+        
+        /**
+         * @brief Constructor with vertices and faces
+         */
+        MeshData(const Eigen::MatrixXd& v, const Eigen::MatrixXi& f) 
+            : vertices(v), faces(f), normals(Eigen::MatrixXd::Zero(f.rows(), 3)) {}
+            
+        /**
+         * @brief Constructor with vertices, faces and normals
+         */
+        MeshData(const Eigen::MatrixXd& v, const Eigen::MatrixXi& f, const Eigen::MatrixXd& n)
+            : vertices(v), faces(f), normals(n) {}
     };
     
     /**
      * @brief Container for geometry data and associated properties
      */
     struct GeometryData {
-        /** The geometry object, either a TopoDS_Shape or a Poly_Triangulation */
-        std::variant<TopoDS_Shape, Handle(Poly_Triangulation)> geometry;
+        /** The geometry object, either a TopoDS_Shape or a MeshData */
+        std::variant<TopoDS_Shape, MeshData> geometry;
         
         /** The color of the geometry */
         Quantity_Color color;
@@ -66,11 +92,24 @@ public:
         
         /**
          * @brief Constructor for polygon meshes
-         * @param mesh The polygon mesh
+         * @param vertices The mesh vertices
+         * @param faces The mesh faces
          * @param color The color of the mesh (default: light gray)
          */
-        GeometryData(const Handle(Poly_Triangulation)& mesh, const Quantity_Color& color = Quantity_Color(0.8, 0.8, 0.8, Quantity_TOC_RGB))
-            : geometry(mesh), color(color), type(GeometryType::MESH) {}
+        GeometryData(const Eigen::MatrixXd& vertices, const Eigen::MatrixXi& faces, 
+                    const Quantity_Color& color = Quantity_Color(0.8, 0.8, 0.8, Quantity_TOC_RGB))
+            : geometry(MeshData(vertices, faces)), color(color), type(GeometryType::MESH) {}
+            
+        /**
+         * @brief Constructor for polygon meshes with pre-computed normals
+         * @param vertices The mesh vertices
+         * @param faces The mesh faces
+         * @param normals The mesh face normals
+         * @param color The color of the mesh (default: light gray)
+         */
+        GeometryData(const Eigen::MatrixXd& vertices, const Eigen::MatrixXi& faces, const Eigen::MatrixXd& normals,
+                    const Quantity_Color& color = Quantity_Color(0.8, 0.8, 0.8, Quantity_TOC_RGB))
+            : geometry(MeshData(vertices, faces, normals)), color(color), type(GeometryType::MESH) {}
     };
     
     /**
@@ -114,14 +153,24 @@ public:
      * @param id The ID of the mesh to retrieve
      * @return The polygon mesh
      */
-    Handle(Poly_Triangulation) getMesh(const std::string& id) const;
+    const MeshData* getMesh(const std::string& id) const;
     
     /**
      * @brief Adds a polygon mesh to the model
      * @param id The ID to assign to the mesh
-     * @param mesh The polygon mesh to add
+     * @param vertices The mesh vertices
+     * @param faces The mesh faces
      */
-    void addMesh(const std::string& id, const Handle(Poly_Triangulation)& mesh);
+    void addMesh(const std::string& id, const Eigen::MatrixXd& vertices, const Eigen::MatrixXi& faces);
+    
+    /**
+     * @brief Adds a polygon mesh with pre-computed normals to the model
+     * @param id The ID to assign to the mesh
+     * @param vertices The mesh vertices
+     * @param faces The mesh faces
+     * @param normals The mesh face normals
+     */
+    void addMesh(const std::string& id, const Eigen::MatrixXd& vertices, const Eigen::MatrixXi& faces, const Eigen::MatrixXd& normals);
     
     /**
      * @brief Removes a geometry from the model
