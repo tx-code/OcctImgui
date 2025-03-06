@@ -1,3 +1,3 @@
 #include "ViewModelManager.h"
 
-// Implementation of non-template methods can go here if needed 
+// Implementation of non-template methods can go here if needed

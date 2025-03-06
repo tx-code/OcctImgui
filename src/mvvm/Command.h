@@ -1,20 +1,27 @@
 #pragma once
 
-#include <memory>
 #include <future>
+#include <memory>
 
-namespace MVVM {
+namespace MVVM
+{
 
-class Command {
+class Command
+{
 public:
-    virtual ~Command() {}
+    virtual ~Command()
+    {}
     virtual void execute() = 0;
-    virtual bool canExecute() const { return true; }
+    virtual bool canExecute() const
+    {
+        return true;
+    }
 };
 
-class AsyncCommand : public Command {
+class AsyncCommand: public Command
+{
 public:
     virtual std::future<void> executeAsync() = 0;
 };
 
-} // namespace MVVM 
+}  // namespace MVVM

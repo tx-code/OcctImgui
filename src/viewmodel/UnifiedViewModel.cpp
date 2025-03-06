@@ -1,23 +1,24 @@
 #include "UnifiedViewModel.h"
-#include "ais/Mesh_DataSource.h"
 #include "../utils/Logger.h"
+#include "ais/Mesh_DataSource.h"
 #include <AIS_Shape.hxx>
 #include <AIS_Triangulation.hxx>
 #include <BRepBuilderAPI_Transform.hxx>
+#include <MeshVS_DisplayModeFlags.hxx>
 #include <MeshVS_Drawer.hxx>
 #include <MeshVS_DrawerAttribute.hxx>
 #include <MeshVS_Mesh.hxx>
 #include <MeshVS_MeshPrsBuilder.hxx>
-#include <MeshVS_DisplayModeFlags.hxx>
-#include <TColStd_HPackedMapOfInteger.hxx>
 #include <Precision.hxx>
+#include <TColStd_HPackedMapOfInteger.hxx>
 #include <TopoDS_Builder.hxx>
 #include <algorithm>
-#include <random>
 #include <iostream>
+#include <random>
 
 // 创建ViewModel日志记录器
-static std::shared_ptr<Utils::Logger>& getViewModelLogger() {
+static std::shared_ptr<Utils::Logger>& getViewModelLogger()
+{
     static std::shared_ptr<Utils::Logger> logger = Utils::Logger::getLogger("viewmodel");
     return logger;
 }
@@ -107,21 +108,22 @@ bool UnifiedViewModel::importModel(const std::string& filePath, const std::strin
 {
     LOG_FUNCTION_SCOPE(getViewModelLogger(), "importModel");
     getViewModelLogger()->info("Importing model from '{}'", filePath);
-    
+
     if (!myModelImporter) {
         getViewModelLogger()->error("ModelImporter is not available");
         return false;
     }
-    
+
     // 使用注入的 ModelImporter 导入模型
     bool result = myModelImporter->importModel(filePath, *myModel, modelId);
-    
+
     if (result) {
         getViewModelLogger()->info("Model imported successfully");
-    } else {
+    }
+    else {
         getViewModelLogger()->error("Failed to import model");
     }
-    
+
     return result;
 }
 
@@ -262,9 +264,8 @@ Handle(AIS_InteractiveObject)
     else if (data->type == UnifiedModel::GeometryType::MESH) {
         // Get the mesh data from the geometry
         const UnifiedModel::MeshData& meshData = std::get<UnifiedModel::MeshData>(data->geometry);
-        Handle(Mesh_DataSource) meshDataSource = new Mesh_DataSource(meshData.vertices,
-                                                                     meshData.faces,
-                                                                     meshData.normals);
+        Handle(Mesh_DataSource) meshDataSource =
+            new Mesh_DataSource(meshData.vertices, meshData.faces, meshData.normals);
 
         Handle(MeshVS_Mesh) meshObj = new MeshVS_Mesh;
         meshObj->SetDataSource(meshDataSource);
@@ -275,7 +276,8 @@ Handle(AIS_InteractiveObject)
         meshObj->GetDrawer()->SetColor(MeshVS_DA_EdgeColor, data->color);
 
         // Hide all nodes by default
-        Handle(TColStd_HPackedMapOfInteger) aNodes = new TColStd_HPackedMapOfInteger(meshDataSource->GetAllNodes());
+        Handle(TColStd_HPackedMapOfInteger) aNodes =
+            new TColStd_HPackedMapOfInteger(meshDataSource->GetAllNodes());
         meshObj->SetHiddenNodes(aNodes);
 
         meshObj->SetDisplayMode(MeshVS_DMF_Shading);

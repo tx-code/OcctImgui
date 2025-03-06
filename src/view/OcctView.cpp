@@ -1,6 +1,6 @@
 #include "OcctView.h"
-#include "mvvm/MessageBus.h"
 #include "mvvm/GlobalSettings.h"
+#include "mvvm/MessageBus.h"
 #include "utils/Logger.h"
 
 #include <AIS_Shape.hxx>
@@ -15,7 +15,8 @@
 #include <V3d_Viewer.hxx>
 
 // 创建OCCT视图日志记录器 - 使用函数确保安全初始化
-std::shared_ptr<Utils::Logger>& getOcctLogger() {
+std::shared_ptr<Utils::Logger>& getOcctLogger()
+{
     static std::shared_ptr<Utils::Logger> logger = Utils::Logger::getLogger("view.occt");
     return logger;
 }
@@ -57,9 +58,9 @@ static Aspect_VKeyFlags keyFlagsFromGlfw(int theFlags)
 }
 }  // namespace
 
-OcctView::OcctView(std::shared_ptr<UnifiedViewModel> viewModel, 
-                  Handle(GlfwOcctWindow) window,
-                  MVVM::MessageBus& messageBus)
+OcctView::OcctView(std::shared_ptr<UnifiedViewModel> viewModel,
+                   Handle(GlfwOcctWindow) window,
+                   MVVM::MessageBus& messageBus)
     : myViewModel(viewModel)
     , myWindow(window)
     , myMessageBus(messageBus)
@@ -71,10 +72,10 @@ OcctView::OcctView(std::shared_ptr<UnifiedViewModel> viewModel,
 OcctView::~OcctView()
 {
     getOcctLogger()->info("Cleaning up view");
-    
+
     // Disconnect all signal connections
     myConnections.disconnectAll();
-    
+
     // Clean up resources
     cleanup();
 }
@@ -95,14 +96,14 @@ void OcctView::initialize()
         getOcctLogger()->error("Initialization failed - invalid window");
         return;
     }
-    
+
     try {
         // 检查OpenGL上下文
         if (glfwGetCurrentContext() == nullptr) {
             getOcctLogger()->error("Initialization failed - no current OpenGL context");
             return;
         }
-    
+
         // 创建图形驱动
         Handle(OpenGl_GraphicDriver) aGraphicDriver =
             new OpenGl_GraphicDriver(myWindow->GetDisplay(), Standard_False);
@@ -123,7 +124,7 @@ void OcctView::initialize()
             getOcctLogger()->error("OCCT: Failed to create view");
             return;
         }
-        
+
         myView->SetWindow(myWindow, myWindow->NativeGlContext());
         myView->Window()->DoResize();
         myView->ChangeRenderingParams().ToShowStats = Standard_True;
@@ -140,7 +141,7 @@ void OcctView::initialize()
 
         // 应用初始设置
         updateVisibility();
-        
+
         // 输出OpenGL信息
         TCollection_AsciiString aGlInfo;
         TColStd_IndexedDataMapOfStringString aRendInfo;
@@ -148,15 +149,17 @@ void OcctView::initialize()
         for (TColStd_IndexedDataMapOfStringString::Iterator aValueIter(aRendInfo);
              aValueIter.More();
              aValueIter.Next()) {
-            getOcctLogger()->info("OCCT OpenGL: {} = {}", 
-                          aValueIter.Key().ToCString(), 
-                          aValueIter.Value().ToCString());
+            getOcctLogger()->info("OCCT OpenGL: {} = {}",
+                                  aValueIter.Key().ToCString(),
+                                  aValueIter.Value().ToCString());
         }
-        
+
         getOcctLogger()->info("OCCT: Initialization complete");
-    } catch (const std::exception& e) {
+    }
+    catch (const std::exception& e) {
         getOcctLogger()->error("OCCT: Initialization exception: {}", e.what());
-    } catch (...) {
+    }
+    catch (...) {
         getOcctLogger()->error("OCCT: Unknown exception during initialization");
     }
 }
@@ -167,16 +170,18 @@ void OcctView::render()
         getOcctLogger()->warn("OCCT: Render skipped - view or context is null");
         return;
     }
-    
+
     try {
         // 立即更新视图
         myView->InvalidateImmediate();
-        
+
         // 刷新视图事件
         FlushViewEvents(myViewModel->getContext(), myView, Standard_True);
-    } catch (const std::exception& e) {
+    }
+    catch (const std::exception& e) {
         getOcctLogger()->error("OCCT: Render exception: {}", e.what());
-    } catch (...) {
+    }
+    catch (...) {
         getOcctLogger()->error("OCCT: Unknown exception during render");
     }
 }
@@ -262,22 +267,24 @@ void OcctView::updateVisibility()
 {
     // 使用ViewModel获取全局设置
     auto& globalSettings = myViewModel->getGlobalSettings();
-    
+
     // 更新网格可见性
     bool isGridVisible = globalSettings.isGridVisible.get();
     if (isGridVisible) {
         myViewModel->getContext()->CurrentViewer()->ActivateGrid(Aspect_GT_Rectangular,
-                                                               Aspect_GDM_Lines);
-    } else {
+                                                                 Aspect_GDM_Lines);
+    }
+    else {
         myViewModel->getContext()->CurrentViewer()->DeactivateGrid();
     }
-    
+
     // 更新视图立方体可见性
     bool isViewCubeVisible = globalSettings.isViewCubeVisible.get();
     if (!myViewCube.IsNull()) {
         if (isViewCubeVisible) {
             myViewModel->getContext()->Display(myViewCube, false);
-        } else {
+        }
+        else {
             myViewModel->getContext()->Erase(myViewCube, false);
         }
     }
@@ -297,7 +304,7 @@ void OcctView::updateVisibility()
     }
 
     myViewModel->getContext()->UpdateCurrentViewer();
-    
+
     // 强制重绘视图
     if (!myView.IsNull()) {
         myView->Invalidate();
@@ -321,19 +328,19 @@ void OcctView::handleSelection(int x, int y)
 void OcctView::subscribeToEvents()
 {
     getOcctLogger()->info("Subscribing to events");
-    
+
     // Subscribe to model changed events via MessageBus
     myMessageBus.subscribe(MVVM::MessageBus::MessageType::ModelChanged,
-        [this](const MVVM::MessageBus::Message& message) {
-            // Force view redraw
-            if (!myView.IsNull()) {
-                myView->Invalidate();
-            }
-        });
-    
+                           [this](const MVVM::MessageBus::Message& message) {
+                               // Force view redraw
+                               if (!myView.IsNull()) {
+                                   myView->Invalidate();
+                               }
+                           });
+
     // Get global settings
     auto& globalSettings = myViewModel->getGlobalSettings();
-    
+
     // Connect to grid visibility property
     auto gridConn = globalSettings.isGridVisible.valueChanged.connect(
         [this](const bool&, const bool& isVisible) {
@@ -343,7 +350,7 @@ void OcctView::subscribeToEvents()
             }
         });
     myConnections.track(gridConn);
-    
+
     // Connect to view cube visibility property
     auto cubeConn = globalSettings.isViewCubeVisible.valueChanged.connect(
         [this](const bool&, const bool& isVisible) {
@@ -355,15 +362,15 @@ void OcctView::subscribeToEvents()
     myConnections.track(cubeConn);
 
     // Connect to display mode property
-    auto displayConn = myViewModel->displayMode.valueChanged.connect(
-        [this](const int&, const int& newMode) {
+    auto displayConn =
+        myViewModel->displayMode.valueChanged.connect([this](const int&, const int& newMode) {
             updateVisibility();
             if (!myView.IsNull()) {
                 myView->Invalidate();
             }
         });
     myConnections.track(displayConn);
-    
+
     // Connect to selection properties
     auto selectionConn = myViewModel->hasSelectionProperty.valueChanged.connect(
         [this](const bool&, const bool& hasSelection) {
@@ -373,7 +380,7 @@ void OcctView::subscribeToEvents()
             }
         });
     myConnections.track(selectionConn);
-    
+
     auto countConn = myViewModel->selectionCountProperty.valueChanged.connect(
         [this](const int&, const int& count) {
             getOcctLogger()->debug("Selection count changed: {}", count);

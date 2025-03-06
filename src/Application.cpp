@@ -13,14 +13,15 @@
 
 // Include manager headers
 #include "model/ModelManager.h"
-#include "viewmodel/ViewModelManager.h"
 #include "view/ViewManager.h"
+#include "viewmodel/ViewModelManager.h"
 
 // 声明ModelFactory初始化函数
 void InitializeModelFactory(ModelFactory& factory);
 
 // 创建应用程序日志记录器 - 使用函数确保安全初始化
-std::shared_ptr<Utils::Logger>& getAppLogger() {
+std::shared_ptr<Utils::Logger>& getAppLogger()
+{
     static std::shared_ptr<Utils::Logger> logger = Utils::Logger::getLogger("app");
     return logger;
 }
@@ -31,19 +32,22 @@ Application::Application()
     , myTitle("OCCT MVVM")
 {
     getAppLogger()->info("Application instance created");
-    
+
     // Initialize manager instances
     myMessageBus = std::make_unique<MVVM::MessageBus>();
     myGlobalSettings = std::make_unique<MVVM::GlobalSettings>();
     myModelFactory = std::make_unique<ModelFactory>();
     myModelManager = std::make_unique<ModelManager>();
     myModelImporter = std::make_unique<ModelImporter>();
-    myViewModelManager = std::make_unique<ViewModelManager>(*myModelManager, *myMessageBus, *myGlobalSettings, *myModelImporter);
+    myViewModelManager = std::make_unique<ViewModelManager>(*myModelManager,
+                                                            *myMessageBus,
+                                                            *myGlobalSettings,
+                                                            *myModelImporter);
     myViewManager = std::make_unique<ViewManager>(*myViewModelManager, *myMessageBus);
-    
+
     // Initialize model factory
     InitializeModelFactory(*myModelFactory);
-    
+
     getAppLogger()->info("Manager instances initialized");
 }
 
@@ -55,7 +59,7 @@ Application::~Application()
 void Application::run()
 {
     LOG_FUNCTION_SCOPE(getAppLogger(), "run");
-    
+
     getAppLogger()->info("Starting application");
     glfwSetErrorCallback(Application::errorCallback);
     if (!glfwInit()) {
@@ -95,18 +99,18 @@ void Application::initWindow()
             getAppLogger()->error("App: Failed to create GLFW window");
             throw std::runtime_error("Failed to create GLFW window");
         }
-        
+
         // 确保窗口的OpenGL上下文是当前上下文
         glfwMakeContextCurrent(myGlfwWindow);
         getAppLogger()->info("App: GLFW window created and set as current context");
-        
+
         glfwSetWindowUserPointer(myGlfwWindow, this);
-        
+
         // 输出GLFW版本信息
         int major, minor, revision;
         glfwGetVersion(&major, &minor, &revision);
         getAppLogger()->info("App: GLFW version: {}.{}.{}", major, minor, revision);
-        
+
         // 设置回调
         glfwSetWindowSizeCallback(myGlfwWindow, Application::onResizeCallback);
         glfwSetFramebufferSizeCallback(myGlfwWindow, Application::onFBResizeCallback);
@@ -114,10 +118,12 @@ void Application::initWindow()
         glfwSetMouseButtonCallback(myGlfwWindow, Application::onMouseButtonCallback);
         glfwSetCursorPosCallback(myGlfwWindow, Application::onMouseMoveCallback);
         getAppLogger()->info("App: GLFW callbacks set");
-    } catch (const std::exception& e) {
+    }
+    catch (const std::exception& e) {
         getAppLogger()->error("App: Window initialization exception: {}", e.what());
         throw;
-    } catch (...) {
+    }
+    catch (...) {
         getAppLogger()->error("App: Unknown exception during window initialization");
         throw std::runtime_error("Unknown error during window initialization");
     }
@@ -152,13 +158,17 @@ void Application::initViewModel()
 
         // 使用ViewModelManager创建统一视图模型
         myViewModelId = "MainViewModel";
-        myViewModel = myViewModelManager->createViewModel<UnifiedViewModel, UnifiedModel>(
-            myViewModelId, myModelId, aContext);
+        myViewModel =
+            myViewModelManager->createViewModel<UnifiedViewModel, UnifiedModel>(myViewModelId,
+                                                                                myModelId,
+                                                                                aContext);
         getAppLogger()->info("App: View model initialization complete with ID: {}", myViewModelId);
-    } catch (const std::exception& e) {
+    }
+    catch (const std::exception& e) {
         getAppLogger()->error("App: View model initialization exception: {}", e.what());
         throw;
-    } catch (...) {
+    }
+    catch (...) {
         getAppLogger()->error("App: Unknown exception during view model initialization");
         throw std::runtime_error("Unknown error during view model initialization");
     }
@@ -171,10 +181,11 @@ void Application::initViews()
         // 确保当前上下文是GLFW窗口
         GLFWwindow* currentContext = glfwGetCurrentContext();
         if (currentContext != myGlfwWindow) {
-            getAppLogger()->warn("App: Current context is not application window, resetting context");
+            getAppLogger()->warn(
+                "App: Current context is not application window, resetting context");
             glfwMakeContextCurrent(myGlfwWindow);
         }
-        
+
         // 创建ImGui视图
         getAppLogger()->info("App: Creating ImGuiView");
         myImGuiViewId = "ImGuiView";
@@ -196,10 +207,12 @@ void Application::initViews()
         myOcctView->getView()->MustBeResized();
         myWindow->Map();
         getAppLogger()->info("App: Views initialization complete");
-    } catch (const std::exception& e) {
+    }
+    catch (const std::exception& e) {
         getAppLogger()->error("App: Views initialization exception: {}", e.what());
         throw;
-    } catch (...) {
+    }
+    catch (...) {
         getAppLogger()->error("App: Unknown exception during views initialization");
         throw std::runtime_error("Unknown error during view initialization");
     }
@@ -209,10 +222,10 @@ void Application::mainloop()
 {
     getAppLogger()->info("App: Starting main loop");
     auto occtView = myViewManager->getView<OcctView>(myOcctViewId);
-    
+
     // 定义视图渲染顺序
     std::vector<std::string> renderOrder = {myOcctViewId, myImGuiViewId};
-    
+
     // 主循环
     while (!glfwWindowShouldClose(myGlfwWindow)) {
         if (occtView && occtView->toWaitEvents()) {
@@ -225,11 +238,13 @@ void Application::mainloop()
         try {
             // 按照指定的顺序渲染视图
             myViewManager->renderInOrder(renderOrder);
-            
+
             glfwSwapBuffers(myGlfwWindow);
-        } catch (const std::exception& e) {
+        }
+        catch (const std::exception& e) {
             getAppLogger()->error("App: Main loop exception: {}", e.what());
-        } catch (...) {
+        }
+        catch (...) {
             getAppLogger()->error("App: Unknown exception in main loop");
         }
     }
@@ -239,15 +254,15 @@ void Application::mainloop()
 void Application::cleanup()
 {
     getAppLogger()->info("App: Starting cleanup");
-    
+
     // 使用ViewManager清理视图
     getAppLogger()->info("App: Shutting down all views");
     myViewManager->shutdownAll();
-    
+
     // 清理ViewModelManager
     getAppLogger()->info("App: Removing view models");
     myViewModelManager->removeViewModel(myViewModelId);
-    
+
     // 清理ModelManager
     getAppLogger()->info("App: Removing models");
     myModelManager->removeModel(myModelId);
@@ -256,7 +271,7 @@ void Application::cleanup()
         getAppLogger()->info("App: Closing window");
         myWindow->Close();
     }
-    
+
     // 终止GLFW
     glfwTerminate();
     getAppLogger()->info("App: GLFW terminated");
@@ -291,10 +306,10 @@ void Application::onMouseScrollCallback(GLFWwindow* theWin, double theOffsetX, d
     }
 }
 
-void Application::onMouseButtonCallback(GLFWwindow* theWin, 
-                                       int theButton,
-                                       int theAction,
-                                       int theMods)
+void Application::onMouseButtonCallback(GLFWwindow* theWin,
+                                        int theButton,
+                                        int theAction,
+                                        int theMods)
 {
     Application* app = toApplication(theWin);
     if (app) {
@@ -319,21 +334,22 @@ bool Application::importModel(const std::string& filePath, const std::string& mo
 {
     LOG_FUNCTION_SCOPE(getAppLogger(), "importModel");
     getAppLogger()->info("Importing model from '{}'", filePath);
-    
+
     // 使用 UnifiedViewModel 的 importModel 方法
     auto viewModel = myViewModelManager->getViewModel<UnifiedViewModel>(myViewModelId);
     if (!viewModel) {
         getAppLogger()->error("Failed to get UnifiedViewModel");
         return false;
     }
-    
+
     bool result = viewModel->importModel(filePath, modelId);
-    
+
     if (result) {
         getAppLogger()->info("Model imported successfully");
-    } else {
+    }
+    else {
         getAppLogger()->error("Failed to import model");
     }
-    
+
     return result;
 }

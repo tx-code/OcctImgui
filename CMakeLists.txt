@@ -99,16 +99,19 @@ if(OCCTIMGUI_BUILD_TESTING)
     function(add_boost_test TEST_NAME TEST_SOURCE)
         add_executable(${TEST_NAME} ${TEST_SOURCE})
         target_include_directories(${TEST_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
-        target_link_libraries(${TEST_NAME} 
-            PRIVATE 
+        target_link_libraries(${TEST_NAME}
+            PRIVATE
             OcctImguiLib
             Boost::unit_test_framework
+
             # Add other dependencies needed by your tests
         )
+
         # Define test target
         add_test(NAME ${TEST_NAME} COMMAND ${TEST_NAME})
+
         # Tell Boost.Test to use dynamic linking
-        target_compile_definitions(${TEST_NAME} PRIVATE 
+        target_compile_definitions(${TEST_NAME} PRIVATE
             BOOST_TEST_DYN_LINK
             MESH_TEST_DATA_DIR="${MESH_TEST_DATA_DIR}"
         )

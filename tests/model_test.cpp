@@ -11,25 +11,28 @@ BOOST_AUTO_TEST_CASE(simple_test)
     // Arrange
     int a = 1;
     int b = 2;
-    
+
     // Act
     int result = a + b;
-    
+
     // Assert
     BOOST_CHECK_EQUAL(result, 3);
 }
 
 // Example of a test fixture
-struct ModelFixture {
-    ModelFixture() {
+struct ModelFixture
+{
+    ModelFixture()
+    {
         // Setup code - runs before each test case
         // Example: model = std::make_unique<YourModel>();
     }
-    
-    ~ModelFixture() {
+
+    ~ModelFixture()
+    {
         // Teardown code - runs after each test case
     }
-    
+
     // Test fixture members
     // std::unique_ptr<YourModel> model;
 };
@@ -39,7 +42,7 @@ BOOST_FIXTURE_TEST_CASE(model_creation_test, ModelFixture)
 {
     // Your test code using the fixture
     // BOOST_CHECK(model != nullptr);
-    
+
     // For now, just a placeholder assertion
     BOOST_CHECK(true);
 }
@@ -50,7 +53,7 @@ BOOST_AUTO_TEST_SUITE(model_operations)
 BOOST_AUTO_TEST_CASE(model_operation_test)
 {
     // Test specific model operations
-    BOOST_CHECK(true); // Placeholder
+    BOOST_CHECK(true);  // Placeholder
 }
 
-BOOST_AUTO_TEST_SUITE_END() 
+BOOST_AUTO_TEST_SUITE_END()

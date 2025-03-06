@@ -21,7 +21,7 @@ class Mesh_DataSource: public MeshVS_DataSource
 public:
     //! Constructor.
     Mesh_DataSource(const Eigen::MatrixXd& V, const Eigen::MatrixXi& F);
-    
+
     //! Constructor with pre-computed normals.
     Mesh_DataSource(const Eigen::MatrixXd& V, const Eigen::MatrixXi& F, const Eigen::MatrixXd& N);
 
@@ -75,14 +75,14 @@ public:
 private:
     //! Initialize nodes and elements maps
     void InitMaps();
-    
+
     //! Calculate face normals if not provided
     void CalculateNormals();
-    
+
     TColStd_PackedMapOfInteger myNodes;
     TColStd_PackedMapOfInteger myElements;
-    
+
     Eigen::MatrixXd myV;
     Eigen::MatrixXi myF;
-    Eigen::MatrixXd myNormals; // 存储每个面的法向量
+    Eigen::MatrixXd myNormals;  // 存储每个面的法向量
 };

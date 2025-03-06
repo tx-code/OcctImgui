@@ -1,17 +1,17 @@
 #pragma once
 
-#include "IView.h"
 #include "../viewmodel/IViewModel.h"
 #include "../viewmodel/UnifiedViewModel.h"
-#include <imgui.h>
-#include <memory>
-#include <map>
+#include "IView.h"
 #include <functional>
+#include <imgui.h>
+#include <map>
+#include <memory>
 #include <string>
 
 struct GLFWwindow;
 
-class ImGuiView : public IView
+class ImGuiView: public IView
 {
 public:
     ImGuiView(std::shared_ptr<IViewModel> viewModel);
@@ -23,7 +23,10 @@ public:
     void render() override;
     void shutdown() override;
     bool wantCaptureMouse() const override;
-    std::shared_ptr<IViewModel> getViewModel() const override { return myViewModel; }
+    std::shared_ptr<IViewModel> getViewModel() const override
+    {
+        return myViewModel;
+    }
 
 private:
     std::shared_ptr<IViewModel> myViewModel;
@@ -33,7 +36,7 @@ private:
     bool showObjectProperties = true;
     bool showObjectTree = true;
     bool showDemoWindow = false;
-    
+
     // 获取UnifiedViewModel的辅助方法
     std::shared_ptr<UnifiedViewModel> getUnifiedViewModel() const;
 
@@ -43,7 +46,7 @@ private:
     void renderObjectProperties();
     void renderObjectTree();
     void renderStatusBar();
-    
+
     // 特定类型视图模型的UI渲染
     void renderGeometryProperties();
     void renderGeometryTree();
