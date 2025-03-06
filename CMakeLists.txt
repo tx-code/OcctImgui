@@ -83,10 +83,10 @@ target_compile_options(OcctImgui PRIVATE
     $<$<CONFIG:Release>:-O3>
 )
 
-option(BUILD_TESTING "Build tests" OFF)
+option(OCCTIMGUI_BUILD_TESTING "Build tests" OFF)
 
 # Tests configuration
-if(BUILD_TESTING)
+if(OCCTIMGUI_BUILD_TESTING)
     # Create a function to add tests easily
     function(add_boost_test TEST_NAME TEST_SOURCE)
         add_executable(${TEST_NAME} ${TEST_SOURCE})
