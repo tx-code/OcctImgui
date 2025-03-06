@@ -60,10 +60,12 @@ static Aspect_VKeyFlags keyFlagsFromGlfw(int theFlags)
 
 OcctView::OcctView(std::shared_ptr<UnifiedViewModel> viewModel,
                    Handle(GlfwOcctWindow) window,
-                   MVVM::MessageBus& messageBus)
+                   MVVM::MessageBus& messageBus,
+                   MVVM::SelectionManager& selectionManager)
     : myViewModel(viewModel)
     , myWindow(window)
     , myMessageBus(messageBus)
+    , mySelectionManager(selectionManager)
 {
     getOcctLogger()->info("Creating view");
     subscribeToEvents();
@@ -198,17 +200,28 @@ void OcctView::onMouseMove(int posX, int posY)
 
 void OcctView::onMouseButton(int button, int action, int mods)
 {
+    auto logger = getOcctLogger();
+    logger->debug("Mouse button: {}, action: {}, mods: {}", button, action, mods);
+
     if (myView.IsNull()) {
         return;
     }
 
     const Graphic3d_Vec2i aPos = myWindow->CursorPosition();
+
+    // Handle OCCT view control
     if (action == GLFW_PRESS) {
         PressMouseButton(aPos, mouseButtonFromGlfw(button), keyFlagsFromGlfw(mods), false);
 
-        // 处理选择
+        // Handle selection on left click without modifiers
         if (button == GLFW_MOUSE_BUTTON_LEFT && (mods & GLFW_MOD_CONTROL) == 0) {
             handleSelection(aPos.x(), aPos.y());
+        }
+        // Right click to clear selection
+        else if (button == GLFW_MOUSE_BUTTON_RIGHT && (mods & GLFW_MOD_CONTROL) == 0) {
+            logger->info("Clearing selection");
+            mySelectionManager.clearSelection();
+            myViewModel->getContext()->ClearSelected(Standard_True);
         }
     }
     else {
@@ -313,14 +326,42 @@ void OcctView::updateVisibility()
 
 void OcctView::handleSelection(int x, int y)
 {
+    auto logger = getOcctLogger();
+    logger->info("Handling selection at position ({}, {})", x, y);
+
+    // Move to the position and perform selection
     myViewModel->getContext()->MoveTo(x, y, myView, Standard_True);
     myViewModel->getContext()->Select(Standard_True);
 
-    // 更新选中状态
+    // Get selected objects
     AIS_ListOfInteractive selected;
-    // myViewModel->getContext()->Selection(selected);
+    myViewModel->getContext()->DisplayedObjects(selected);
 
-    for (const Handle(AIS_InteractiveObject) & obj : selected) {
+    // Filter to only get selected objects
+    AIS_ListOfInteractive selectedObjects;
+    for (AIS_ListOfInteractive::Iterator it(selected); it.More(); it.Next()) {
+        Handle(AIS_InteractiveObject) obj = it.Value();
+        if (myViewModel->getContext()->IsSelected(obj)) {
+            selectedObjects.Append(obj);
+        }
+    }
+
+    logger->info("Selected {} objects", selectedObjects.Extent());
+
+    // Process each selected object
+    for (AIS_ListOfInteractive::Iterator it(selectedObjects); it.More(); it.Next()) {
+        Handle(AIS_InteractiveObject) obj = it.Value();
+
+        // Generate a unique ID for the object
+        std::string objectId =
+            "object_" + std::to_string(reinterpret_cast<std::uintptr_t>(obj.get()));
+
+        logger->info("Selected object: {}", objectId);
+
+        // Add to selection manager
+        mySelectionManager.addToSelection(obj, objectId);
+
+        // Also process in view model if needed
         myViewModel->processSelection(obj, true);
     }
 }
@@ -337,6 +378,26 @@ void OcctView::subscribeToEvents()
                                    myView->Invalidate();
                                }
                            });
+
+    // Subscribe to selection changed events
+    myMessageBus.subscribe(
+        MVVM::MessageBus::MessageType::SelectionChanged,
+        [this](const MVVM::MessageBus::Message& message) {
+            // Get the selection info
+            try {
+                const auto& selectionInfo = std::any_cast<MVVM::SelectionInfo>(message.data);
+                getOcctLogger()->info("Selection changed: {} objects selected",
+                                      selectionInfo.selectedObjects.size());
+
+                // Highlight selected objects in the view
+                if (!myView.IsNull()) {
+                    myView->Invalidate();
+                }
+            }
+            catch (const std::bad_any_cast& e) {
+                getOcctLogger()->error("Failed to cast selection info: {}", e.what());
+            }
+        });
 
     // Get global settings
     auto& globalSettings = myViewModel->getGlobalSettings();
@@ -363,30 +424,16 @@ void OcctView::subscribeToEvents()
 
     // Connect to display mode property
     auto displayConn =
-        myViewModel->displayMode.valueChanged.connect([this](const int&, const int& newMode) {
-            updateVisibility();
+        myViewModel->displayMode.valueChanged.connect([this](const int&, const int& mode) {
+            // Update display mode
             if (!myView.IsNull()) {
                 myView->Invalidate();
             }
         });
     myConnections.track(displayConn);
 
-    // Connect to selection properties
-    auto selectionConn = myViewModel->hasSelectionProperty.valueChanged.connect(
-        [this](const bool&, const bool& hasSelection) {
-            // Update UI or view based on selection state
-            if (!myView.IsNull()) {
-                myView->Invalidate();
-            }
-        });
-    myConnections.track(selectionConn);
-
-    auto countConn = myViewModel->selectionCountProperty.valueChanged.connect(
-        [this](const int&, const int& count) {
-            getOcctLogger()->debug("Selection count changed: {}", count);
-            // Could update status bar or other UI elements
-        });
-    myConnections.track(countConn);
+    // 不再需要连接到选择属性，因为现在使用 SelectionManager
+    // 订阅 SelectionChanged 消息已经足够
 }
 
 // IView 接口实现

@@ -13,7 +13,7 @@ static std::shared_ptr<Utils::Logger>& getSelectionManagerLogger()
     return logger;
 }
 
-SelectionManager::SelectionManager(std::shared_ptr<MessageBus> messageBus)
+SelectionManager::SelectionManager(MessageBus& messageBus)
     : myMessageBus(messageBus)
 {
     // Initialize selection info
@@ -219,5 +219,5 @@ void SelectionManager::notifySelectionChanged()
     message.data = mySelectionInfo;
 
     // Publish the message
-    myMessageBus->publish(message);
+    myMessageBus.publish(message);
 }

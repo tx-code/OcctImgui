@@ -16,9 +16,10 @@ std::shared_ptr<Utils::Logger>& getImGuiLogger()
     return logger;
 }
 
-ImGuiView::ImGuiView(std::shared_ptr<IViewModel> viewModel)
+ImGuiView::ImGuiView(std::shared_ptr<IViewModel> viewModel, MVVM::MessageBus& messageBus)
     : myViewModel(viewModel)
     , myWindow(nullptr)
+    , myMessageBus(messageBus)
 {
     getImGuiLogger()->info("Creating view");
     subscribeToEvents();
@@ -26,7 +27,7 @@ ImGuiView::ImGuiView(std::shared_ptr<IViewModel> viewModel)
 
 ImGuiView::~ImGuiView()
 {
-    // shutdown();
+    myConnections.disconnectAll();
 }
 
 std::shared_ptr<UnifiedViewModel> ImGuiView::getUnifiedViewModel() const
@@ -329,6 +330,8 @@ void ImGuiView::renderGeometryTree()
     ImGui::Text("Objects: %zu", entityIds.size());
     ImGui::Separator();
 
+    // TODO
+#if 0
     for (const auto& id : entityIds) {
         try {
             UnifiedModel::GeometryType type = model->getGeometryType(id);
@@ -359,6 +362,7 @@ void ImGuiView::renderGeometryTree()
             ImGui::TextColored(ImVec4(1, 0, 0, 1), "Error: %s", e.what());
         }
     }
+#endif
 }
 
 void ImGuiView::renderStatusBar()
@@ -377,12 +381,7 @@ void ImGuiView::renderStatusBar()
         ImGui::Text("OpenCascade ImGui Demo");
         ImGui::SameLine(ImGui::GetWindowWidth() - 120);
 
-        if (myViewModel->hasSelection()) {
-            ImGui::Text("Selected: %zu", myViewModel->getSelectedObjects().size());
-        }
-        else {
-            ImGui::Text("No selection");
-        }
+        ImGui::Text(mySelectionMessage.c_str());
     }
     ImGui::End();
 }
@@ -477,6 +476,21 @@ void ImGuiView::executeImportModel()
 
 void ImGuiView::subscribeToEvents()
 {
-    // 订阅相关事件
-    // ...
+    getImGuiLogger()->info("Subscribing to events");
+
+    // 订阅 SelectionChanged 消息
+    // Subscribe to selection changed events
+    myMessageBus.subscribe(
+        MVVM::MessageBus::MessageType::SelectionChanged,
+        [this](const MVVM::MessageBus::Message& message) {
+            // Get the selection info
+            try {
+                const auto& selectionInfo = std::any_cast<MVVM::SelectionInfo>(message.data);
+                // TODO  to string
+            }
+            catch (const std::bad_any_cast& e) {
+                getImGuiLogger()->error("Failed to cast selection info: {}", e.what());
+            }
+        });
+
 }

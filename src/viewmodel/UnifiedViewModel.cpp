@@ -48,9 +48,6 @@ UnifiedViewModel::UnifiedViewModel(std::shared_ptr<UnifiedModel> model,
     // Create a scoped connection and track it
     auto connection = displayMode.bindTo(globalSettings.displayMode);
     connections.track(connection);
-
-    // Initialize selection properties
-    updateSelectionProperties();
 }
 
 // Command - CAD geometry operations
@@ -159,9 +156,6 @@ void UnifiedViewModel::processSelection(const Handle(AIS_InteractiveObject) & ob
         else {
             mySelectedObjects.erase(it->second);
         }
-
-        // Update selection properties
-        updateSelectionProperties();
     }
 }
 
@@ -169,16 +163,7 @@ void UnifiedViewModel::clearSelection()
 {
     mySelectedObjects.clear();
     myContext->ClearSelected(Standard_True);
-
-    // Update selection properties
-    updateSelectionProperties();
-}
-
-// New method to update selection properties
-void UnifiedViewModel::updateSelectionProperties()
-{
-    hasSelectionProperty.set(!mySelectedObjects.empty());
-    selectionCountProperty.set(static_cast<int>(mySelectedObjects.size()));
+    // 不再需要更新选择属性
 }
 
 // Attribute access and modification

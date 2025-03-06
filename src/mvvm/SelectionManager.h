@@ -14,7 +14,7 @@ class SelectionManager
 {
 public:
     // Constructor
-    explicit SelectionManager(std::shared_ptr<MessageBus> messageBus);
+    explicit SelectionManager(MessageBus& messageBus);
 
     // Selection methods
     void addToSelection(const Handle(AIS_InteractiveObject) & object, const std::string& objectId);
@@ -42,7 +42,7 @@ private:
     void notifySelectionChanged();
 
     // MessageBus reference
-    std::shared_ptr<MessageBus> myMessageBus;
+    MessageBus& myMessageBus;
 
     // Current selection state
     SelectionInfo mySelectionInfo;

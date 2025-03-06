@@ -17,7 +17,7 @@ using namespace MVVM;
 BOOST_AUTO_TEST_CASE(selection_manager_basic_test)
 {
     // 准备
-    auto messageBus = std::make_shared<MessageBus>();
+    MessageBus messageBus;
     SelectionManager selectionManager(messageBus);
 
     // 跟踪消息发布
@@ -25,13 +25,13 @@ BOOST_AUTO_TEST_CASE(selection_manager_basic_test)
     SelectionInfo receivedInfo;
 
     // 订阅SelectionChanged消息
-    messageBus->subscribe(MessageBus::MessageType::SelectionChanged,
-                          [&](const MessageBus::Message& message) {
-                              messageReceived = true;
-                              if (message.data.type() == typeid(SelectionInfo)) {
-                                  receivedInfo = std::any_cast<SelectionInfo>(message.data);
-                              }
-                          });
+    messageBus.subscribe(MessageBus::MessageType::SelectionChanged,
+                         [&](const MessageBus::Message& message) {
+                             messageReceived = true;
+                             if (message.data.type() == typeid(SelectionInfo)) {
+                                 receivedInfo = std::any_cast<SelectionInfo>(message.data);
+                             }
+                         });
 
     // 创建模拟对象
     Handle(AIS_Shape) mockObject = new AIS_Shape(TopoDS_Shape());
@@ -49,7 +49,7 @@ BOOST_AUTO_TEST_CASE(selection_manager_basic_test)
 BOOST_AUTO_TEST_CASE(selection_manager_add_remove_test)
 {
     // 准备
-    auto messageBus = std::make_shared<MessageBus>();
+    MessageBus messageBus;
     SelectionManager selectionManager(messageBus);
 
     // 设置选择类型为Add，这样可以添加多个对象而不清除之前的选择
@@ -94,7 +94,7 @@ BOOST_AUTO_TEST_CASE(selection_manager_add_remove_test)
 BOOST_AUTO_TEST_CASE(selection_manager_subfeature_test)
 {
     // 准备
-    auto messageBus = std::make_shared<MessageBus>();
+    MessageBus messageBus;
     SelectionManager selectionManager(messageBus);
 
     // 创建模拟对象
@@ -129,7 +129,7 @@ BOOST_AUTO_TEST_CASE(selection_manager_subfeature_test)
 BOOST_AUTO_TEST_CASE(selection_manager_mode_type_test)
 {
     // 准备
-    auto messageBus = std::make_shared<MessageBus>();
+    MessageBus messageBus;
     SelectionManager selectionManager(messageBus);
 
     // 设置选择模式

@@ -8,10 +8,11 @@
  */
 #pragma once
 
-#include "../GlfwOcctWindow.h"
-#include "../mvvm/MessageBus.h"
-#include "../mvvm/Signal.h"
-#include "../viewmodel/UnifiedViewModel.h"
+#include "GlfwOcctWindow.h"
+#include "mvvm/MessageBus.h"
+#include "mvvm/SelectionManager.h"
+#include "mvvm/Signal.h"
+#include "viewmodel/UnifiedViewModel.h"
 #include "IView.h"
 #include <AIS_ViewController.hxx>
 #include <memory>
@@ -34,10 +35,12 @@ public:
      * @param viewModel The UnifiedViewModel to connect with
      * @param window The GLFW OCCT window for rendering
      * @param messageBus Reference to the message bus for event communication
+     * @param selectionManager Reference to the selection manager for handling selection
      */
     OcctView(std::shared_ptr<UnifiedViewModel> viewModel,
              Handle(GlfwOcctWindow) window,
-             MVVM::MessageBus& messageBus);
+             MVVM::MessageBus& messageBus,
+             MVVM::SelectionManager& selectionManager);
 
     /**
      * @brief Destructor
@@ -158,6 +161,9 @@ private:
 
     /** Reference to the message bus */
     MVVM::MessageBus& myMessageBus;
+
+    /** Reference to the selection manager */
+    MVVM::SelectionManager& mySelectionManager;
 
     /** Flag indicating whether to wait for events */
     bool myToWaitEvents = true;

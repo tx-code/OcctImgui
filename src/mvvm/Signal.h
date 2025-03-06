@@ -50,7 +50,7 @@ public:
      */
     ConnectionType connect(const SlotType& slot)
     {
-        getSignalLogger()->debug("Signal: Connecting new slot");
+        // getSignalLogger()->debug("Signal: Connecting new slot");
         return mySignal.connect(slot);
     }
 
@@ -63,7 +63,7 @@ public:
     template<typename T>
     ConnectionType connect(T* object, void (T::*method)(Args...))
     {
-        getSignalLogger()->debug("Signal: Connecting member function");
+        // getSignalLogger()->debug("Signal: Connecting member function");
         return mySignal.connect([object, method](Args... args) {
             (object->*method)(args...);
         });
@@ -75,7 +75,7 @@ public:
      */
     void emit(Args... args)
     {
-        getSignalLogger()->debug("Signal: Emitting signal to {} slots", mySignal.num_slots());
+        // getSignalLogger()->debug("Signal: Emitting signal to {} slots", mySignal.num_slots());
         mySignal(args...);
     }
 
@@ -93,7 +93,7 @@ public:
      */
     void disconnectAll()
     {
-        getSignalLogger()->debug("Signal: Disconnecting all slots");
+        // getSignalLogger()->debug("Signal: Disconnecting all slots");
         mySignal.disconnect_all_slots();
     }
 

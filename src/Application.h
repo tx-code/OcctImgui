@@ -15,6 +15,7 @@
 #include "model/UnifiedModel.h"
 #include "mvvm/GlobalSettings.h"
 #include "mvvm/MessageBus.h"
+#include "mvvm/SelectionManager.h"
 #include "view/ImGuiView.h"
 #include "view/OcctView.h"
 #include "view/ViewManager.h"
@@ -91,6 +92,15 @@ public:
     MVVM::MessageBus& getMessageBus()
     {
         return *myMessageBus;
+    }
+
+    /**
+     * @brief Gets the selection manager
+     * @return Reference to the selection manager
+     */
+    MVVM::SelectionManager& getSelectionManager()
+    {
+        return *mySelectionManager;
     }
 
     /**
@@ -253,19 +263,21 @@ private:
     /** The window title */
     TCollection_AsciiString myTitle;
 
-    // Manager instances owned by the application
-    /** The view manager */
-    std::unique_ptr<ViewManager> myViewManager;
-    /** The model manager */
-    std::unique_ptr<ModelManager> myModelManager;
-    /** The viewmodel manager */
-    std::unique_ptr<ViewModelManager> myViewModelManager;
+    // MVVM infrastructure
     /** The message bus */
     std::unique_ptr<MVVM::MessageBus> myMessageBus;
     /** The global settings */
     std::unique_ptr<MVVM::GlobalSettings> myGlobalSettings;
+    /** The selection manager */
+    std::unique_ptr<MVVM::SelectionManager> mySelectionManager;
     /** The model factory */
     std::unique_ptr<ModelFactory> myModelFactory;
     /** The model importer */
     std::unique_ptr<ModelImporter> myModelImporter;
+    /** The model manager */
+    std::unique_ptr<ModelManager> myModelManager;
+    /** The viewmodel manager */
+    std::unique_ptr<ViewModelManager> myViewModelManager;
+    /** The view manager */
+    std::unique_ptr<ViewManager> myViewManager;
 };

@@ -8,17 +8,18 @@
  */
 #pragma once
 
-#include "../GlfwOcctWindow.h"
-#include "../mvvm/MessageBus.h"
-#include "../utils/Logger.h"
-#include "../viewmodel/ViewModelManager.h"
+#include "GlfwOcctWindow.h"
 #include "IView.h"
 #include "ImGuiView.h"
 #include "OcctView.h"
+#include "mvvm/MessageBus.h"
+#include "utils/Logger.h"
+#include "viewmodel/ViewModelManager.h"
 #include <map>
 #include <memory>
 #include <string>
 #include <vector>
+
 
 struct GLFWwindow;
 
@@ -72,7 +73,7 @@ public:
         }
 
         // Create the View
-        auto view = std::make_shared<T>(viewModel);
+        auto view = std::make_shared<T>(viewModel, myMessageBus);
         myViews[viewId] = view;
         getViewManagerLogger()->info("Created view with ID: {}", viewId);
         return view;
@@ -83,11 +84,13 @@ public:
      * @param viewId Unique identifier for the view
      * @param viewModelId Identifier of the viewmodel to associate with the view
      * @param window The GLFW OCCT window for rendering
+     * @param selectionManager Reference to the selection manager for handling selection
      * @return Shared pointer to the created OcctView
      */
     std::shared_ptr<OcctView> createOcctView(const std::string& viewId,
                                              const std::string& viewModelId,
-                                             Handle(GlfwOcctWindow) window)
+                                             Handle(GlfwOcctWindow) window,
+                                             MVVM::SelectionManager& selectionManager)
     {
         // Get the ViewModel
         auto viewModel = myViewModelManager.getViewModel<UnifiedViewModel>(viewModelId);
@@ -98,7 +101,7 @@ public:
         }
 
         // Create OcctView
-        auto view = std::make_shared<OcctView>(viewModel, window, myMessageBus);
+        auto view = std::make_shared<OcctView>(viewModel, window, myMessageBus, selectionManager);
         myViews[viewId] = view;
         getViewManagerLogger()->info("Created OcctView with ID: {}", viewId);
         return view;
@@ -156,7 +159,7 @@ public:
             if (view) {
                 view->newFrame();
                 view->render();
-                getViewManagerLogger()->debug("Rendered view with ID: {}", viewId);
+                // getViewManagerLogger()->debug("Rendered view with ID: {}", viewId);
             }
             else {
                 getViewManagerLogger()->warn("Cannot render view with ID: {}, view not found",
@@ -278,8 +281,8 @@ public:
             auto occtView = getView<OcctView>(occtViewId);
             if (occtView) {
                 occtView->onMouseScroll(offsetX, offsetY);
-                getViewManagerLogger()->debug("Handled mouse scroll event for view with ID: {}",
-                                              occtViewId);
+                // getViewManagerLogger()->debug("Handled mouse scroll event for view with ID: {}",
+                //                               occtViewId);
             }
         }
     }
@@ -297,8 +300,8 @@ public:
             auto occtView = getView<OcctView>(occtViewId);
             if (occtView) {
                 occtView->onMouseButton(button, action, mods);
-                getViewManagerLogger()->debug("Handled mouse button event for view with ID: {}",
-                                              occtViewId);
+                // getViewManagerLogger()->debug("Handled mouse button event for view with ID: {}",
+                //                               occtViewId);
             }
         }
     }
@@ -315,8 +318,8 @@ public:
             auto occtView = getView<OcctView>(occtViewId);
             if (occtView) {
                 occtView->onMouseMove(posX, posY);
-                getViewManagerLogger()->debug("Handled mouse move event for view with ID: {}",
-                                              occtViewId);
+                // getViewManagerLogger()->debug("Handled mouse move event for view with ID: {}",
+                //                               occtViewId);
             }
         }
     }

@@ -36,6 +36,7 @@ Application::Application()
     // Initialize manager instances
     myMessageBus = std::make_unique<MVVM::MessageBus>();
     myGlobalSettings = std::make_unique<MVVM::GlobalSettings>();
+    mySelectionManager = std::make_unique<MVVM::SelectionManager>(*myMessageBus);
     myModelFactory = std::make_unique<ModelFactory>();
     myModelManager = std::make_unique<ModelManager>();
     myModelImporter = std::make_unique<ModelImporter>();
@@ -196,25 +197,22 @@ void Application::initViews()
         // 创建OCCT视图 - 使用专门的工厂方法
         getAppLogger()->info("App: Creating OcctView");
         myOcctViewId = "OcctView";
-        myOcctView = myViewManager->createOcctView(myOcctViewId, myViewModelId, myWindow);
-        if (!myOcctView) {
-            getAppLogger()->error("App: Failed to create OcctView");
-            throw std::runtime_error("Failed to create OcctView");
-        }
-        // 使用ViewManager初始化视图
-        myViewManager->initializeView(myOcctViewId, myGlfwWindow);
+        myOcctView = myViewManager->createOcctView(myOcctViewId,
+                                                   myViewModelId,
+                                                   myWindow,
+                                                   *mySelectionManager);
 
-        myOcctView->getView()->MustBeResized();
-        myWindow->Map();
-        getAppLogger()->info("App: Views initialization complete");
+        // 设置选择模式为面选择
+        mySelectionManager->setSelectionMode(4);  // 4 is for face selection in OCCT
+
+        // 初始化OCCT视图
+        myOcctView->initialize();
+
+        getAppLogger()->info("App: Views initialized successfully");
     }
     catch (const std::exception& e) {
-        getAppLogger()->error("App: Views initialization exception: {}", e.what());
+        getAppLogger()->error("App: Exception during view initialization: {}", e.what());
         throw;
-    }
-    catch (...) {
-        getAppLogger()->error("App: Unknown exception during views initialization");
-        throw std::runtime_error("Unknown error during view initialization");
     }
 }
 

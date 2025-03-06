@@ -141,16 +141,6 @@ public:
     MVVM::Property<int> displayMode {0};
 
     /**
-     * @brief Property for selection state
-     */
-    MVVM::Property<bool> hasSelectionProperty {false};
-
-    /**
-     * @brief Property for the number of selected objects
-     */
-    MVVM::Property<int> selectionCountProperty {0};
-
-    /**
      * @brief Sets the color of the selected objects
      * @param color The color to set
      */
@@ -237,9 +227,4 @@ private:
      * @param id The ID of the changed geometry
      */
     void onModelChanged(const std::string& id);
-
-    /**
-     * @brief Updates selection properties
-     */
-    void updateSelectionProperties();
 };
