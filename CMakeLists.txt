@@ -45,6 +45,14 @@ add_library(OcctImguiLib STATIC
     src/utils/Logger.cpp
 )
 
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    target_compile_definitions(OcctImguiLib PUBLIC OCCTIMGUI_DEBUG)
+elseif(CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
+    target_compile_definitions(OcctImguiLib PUBLIC OCCTIMGUI_RELWITHDEBINFO)
+elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
+    target_compile_definitions(OcctImguiLib PUBLIC OCCTIMGUI_RELEASE)
+endif()
+
 target_include_directories(OcctImguiLib
     PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
