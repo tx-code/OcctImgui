@@ -31,6 +31,7 @@ file(MAKE_DIRECTORY ${MESH_TEST_DATA_DIR})
 # Create a library for shared components that will be used in both the main app and tests
 add_library(OcctImguiLib STATIC
     src/ais/Mesh_DataSource.cpp
+    src/mvvm/SelectionManager.cpp
     src/model/IModel.cpp
     src/model/UnifiedModel.cpp
     src/model/ModelFactory.cpp
@@ -127,4 +128,5 @@ if(OCCTIMGUI_BUILD_TESTING)
     add_boost_test(message_bus_test tests/message_bus_test.cpp)
     add_boost_test(mvvm_integration_test tests/mvvm_integration_test.cpp)
     add_boost_test(property_test tests/property_test.cpp)
+    add_boost_test(selection_manager_test tests/selection_manager_test.cpp)
 endif()

@@ -102,27 +102,25 @@ BOOST_AUTO_TEST_CASE(message_bus_selection_info_test)
     // Arrange
     MessageBus bus;
     bool selectionReceived = false;
-    MessageBus::SelectionInfo receivedInfo;
+    SelectionInfo receivedInfo;
 
     // Act - subscribe to selection changed messages
     bus.subscribe(MessageBus::MessageType::SelectionChanged,
                   [&](const MessageBus::Message& message) {
-                      if (message.data.type() == typeid(MessageBus::SelectionInfo)) {
+                      if (message.data.type() == typeid(SelectionInfo)) {
                           selectionReceived = true;
-                          receivedInfo = std::any_cast<MessageBus::SelectionInfo>(message.data);
+                          receivedInfo = std::any_cast<SelectionInfo>(message.data);
                       }
                   });
 
     // Create selection info
-    MessageBus::SelectionInfo selectionInfo;
+    SelectionInfo selectionInfo;
     selectionInfo.selectionMode = 3;
-    selectionInfo.selectionType = MessageBus::SelectionInfo::SelectionType::Add;
+    selectionInfo.selectionType = SelectionInfo::SelectionType::Add;
 
     // Add a sub-feature
     std::string objectId = "TestObject";
-    MessageBus::SelectionInfo::SubFeatureIdentifier subFeature(
-        MessageBus::SelectionInfo::SubFeatureType::Face,
-        42);
+    SelectionInfo::SubFeatureIdentifier subFeature(SelectionInfo::SubFeatureType::Face, 42);
     selectionInfo.subFeatures[objectId].push_back(subFeature);
 
     // Create and publish message
@@ -135,11 +133,10 @@ BOOST_AUTO_TEST_CASE(message_bus_selection_info_test)
     // Assert
     BOOST_CHECK(selectionReceived);
     BOOST_CHECK_EQUAL(receivedInfo.selectionMode, 3);
-    BOOST_CHECK(receivedInfo.selectionType == MessageBus::SelectionInfo::SelectionType::Add);
+    BOOST_CHECK(receivedInfo.selectionType == SelectionInfo::SelectionType::Add);
     BOOST_CHECK(receivedInfo.subFeatures.count(objectId) > 0);
     BOOST_CHECK_EQUAL(receivedInfo.subFeatures[objectId].size(), 1);
-    BOOST_CHECK(receivedInfo.subFeatures[objectId][0].type
-                == MessageBus::SelectionInfo::SubFeatureType::Face);
+    BOOST_CHECK(receivedInfo.subFeatures[objectId][0].type == SelectionInfo::SubFeatureType::Face);
     BOOST_CHECK_EQUAL(receivedInfo.subFeatures[objectId][0].index, 42);
 }
 
@@ -147,14 +144,14 @@ BOOST_AUTO_TEST_CASE(message_bus_selection_info_test)
 BOOST_AUTO_TEST_CASE(sub_feature_identifier_additional_data_test)
 {
     // Arrange
-    using SubFeatureType = MessageBus::SelectionInfo::SubFeatureType;
+    using SubFeatureType = SelectionInfo::SubFeatureType;
 
     // Act - create a sub-feature with additional data
     double paramU = 0.5;
     double paramV = 0.75;
     std::pair<double, double> uvParams(paramU, paramV);
 
-    MessageBus::SelectionInfo::SubFeatureIdentifier subFeature(SubFeatureType::Face, 1, uvParams);
+    SelectionInfo::SubFeatureIdentifier subFeature(SubFeatureType::Face, 1, uvParams);
 
     // Assert
     BOOST_CHECK(subFeature.type == SubFeatureType::Face);
