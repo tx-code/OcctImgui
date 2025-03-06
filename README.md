@@ -208,16 +208,33 @@ The `MVVM::Signal<Args...>` class provides a type-safe way to implement the obse
 // Define a signal
 MVVM::Signal<int, std::string> mySignal;
 
-// Connect a slot
+// Connect a slot (supports any callable object: lambdas, function objects, etc.)
 auto connection = mySignal.connect([](int value, const std::string& text) {
     std::cout << "Received: " << value << ", " << text << std::endl;
+});
+
+// Connect a member function
+class MyClass {
+public:
+    void onSignal(int value, const std::string& text) {
+        std::cout << "MyClass received: " << value << ", " << text << std::endl;
+    }
+};
+
+MyClass instance;
+auto memberConn = mySignal.connect([&instance](int value, const std::string& text) {
+    instance.onSignal(value, text);
 });
 
 // Emit the signal
 mySignal.emit(42, "Hello");
 
+// Alternatively, use the function call operator
+mySignal(42, "Hello");
+
 // Disconnect when done
 connection.disconnect();
+memberConn.disconnect();
 ```
 
 ### Connection Management
@@ -243,10 +260,121 @@ The `MVVM::ScopedConnection` class provides RAII-style connection management:
 ```cpp
 // Create a scoped connection
 {
-    MVVM::ScopedConnection conn = signal.connect(slot);
+    MVVM::ScopedConnection conn(signal.connect(slot));
     // Connection is automatically disconnected when conn goes out of scope
 }
 ```
+
+### MessageBus System
+
+The `MVVM::MessageBus` class provides a centralized communication system for loosely coupled components:
+
+```cpp
+// Create a message bus
+auto messageBus = std::make_shared<MVVM::MessageBus>();
+
+// Subscribe to messages (supports any callable object)
+messageBus->subscribe(MVVM::MessageBus::MessageType::ModelChanged, 
+    [](const MVVM::MessageBus::Message& message) {
+        if (message.data.type() == typeid(std::string)) {
+            std::cout << "Model changed: " << std::any_cast<std::string>(message.data) << std::endl;
+        }
+    });
+
+// Using function objects
+struct MessageHandler {
+    void operator()(const MVVM::MessageBus::Message& message) {
+        std::cout << "Handler received message" << std::endl;
+    }
+};
+messageBus->subscribe(MVVM::MessageBus::MessageType::ViewChanged, MessageHandler());
+
+// Using member functions (via lambda)
+class Observer {
+public:
+    void onMessage(const MVVM::MessageBus::Message& message) {
+        std::cout << "Observer received message" << std::endl;
+    }
+};
+
+Observer observer;
+messageBus->subscribe(MVVM::MessageBus::MessageType::SelectionChanged, 
+    [&observer](const MVVM::MessageBus::Message& msg) {
+        observer.onMessage(msg);
+    });
+
+// Publish a message
+MVVM::MessageBus::Message message;
+message.type = MVVM::MessageBus::MessageType::ModelChanged;
+message.data = std::string("Model updated");
+messageBus->publish(message);
+```
+
+### Combining Signal and MessageBus
+
+The Signal and MessageBus systems can be used together to create a flexible communication architecture:
+
+```cpp
+// Component with direct signals
+class Model {
+public:
+    Model(std::shared_ptr<MVVM::MessageBus> bus) : messageBus(bus) {}
+    
+    // Direct signal for closely coupled components
+    MVVM::Signal<int> valueChanged;
+    
+    void setValue(int newValue) {
+        if (value != newValue) {
+            value = newValue;
+            
+            // Emit direct signal
+            valueChanged.emit(value);
+            
+            // Also publish to message bus for loosely coupled components
+            MVVM::MessageBus::Message message;
+            message.type = MVVM::MessageBus::MessageType::ModelChanged;
+            message.data = std::string("Value changed to " + std::to_string(value));
+            messageBus->publish(message);
+        }
+    }
+    
+private:
+    int value = 0;
+    std::shared_ptr<MVVM::MessageBus> messageBus;
+};
+
+// Component that listens to both signals and message bus
+class ViewModel {
+public:
+    ViewModel(std::shared_ptr<Model> model, std::shared_ptr<MVVM::MessageBus> bus) 
+        : model(model), messageBus(bus) {
+        
+        // Connect to direct signal
+        connections.track(model->valueChanged.connect([this](int newValue) {
+            std::cout << "ViewModel: value changed to " << newValue << std::endl;
+        }));
+        
+        // Subscribe to message bus
+        messageBus->subscribe(MVVM::MessageBus::MessageType::ModelChanged, 
+            [this](const MVVM::MessageBus::Message& message) {
+                if (message.data.type() == typeid(std::string)) {
+                    std::cout << "ViewModel: " << std::any_cast<std::string>(message.data) << std::endl;
+                }
+            });
+    }
+    
+private:
+    std::shared_ptr<Model> model;
+    std::shared_ptr<MVVM::MessageBus> messageBus;
+    MVVM::ConnectionTracker connections;
+};
+```
+
+### When to Use Signal vs MessageBus
+
+- **Signal**: Use for direct, type-safe communication between tightly coupled components. Signals provide strong typing and are efficient for point-to-point communication.
+
+- **MessageBus**: Use for system-wide events or communication between loosely coupled components. MessageBus provides a centralized communication hub with decoupled publishers and subscribers.
 
 ### Example Usage in ViewModels
 

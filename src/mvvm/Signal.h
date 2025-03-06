@@ -1,3 +1,15 @@
+/**
+ * @file Signal.h
+ * @brief Defines a type-safe signal system based on boost::signals2
+ * 
+ * Signal（信号）是一个基于boost::signals2的类型安全的事件系统，具有以下特点：
+ * - 点对点通信：每个Signal对象代表一个特定的事件源
+ * - 类型安全：使用模板参数定义信号的参数类型
+ * - 资源管理：提供ScopedConnection和ConnectionTracker来管理连接的生命周期
+ * - 更丰富的功能：支持成员函数连接、连接计数、自动断开连接等
+ * - 基于库实现：依赖boost::signals2库，提供更强大的功能
+ */
+
 #pragma once
 
 #include <boost/signals2.hpp>
@@ -47,7 +59,9 @@ public:
     template<typename T>
     ConnectionType connect(T* object, void (T::*method)(Args...)) {
         getSignalLogger()->debug("Signal: Connecting member function");
-        return mySignal.connect(std::bind(method, object, std::placeholders::_1, std::placeholders::_2));
+        return mySignal.connect([object, method](Args... args) {
+            (object->*method)(args...);
+        });
     }
     
     /**
@@ -57,6 +71,14 @@ public:
     void emit(Args... args) {
         getSignalLogger()->debug("Signal: Emitting signal to {} slots", mySignal.num_slots());
         mySignal(args...);
+    }
+
+    /**
+     * @brief Emit the signal, calling all connected slots
+     * @param args The arguments to pass to the slots
+     */
+    void operator()(Args... args) {
+        emit(args...);
     }
     
     /**
@@ -157,9 +179,9 @@ public:
         }
     }
     
-    template<typename... Args>
-    void track(Signal<Args...>& signal, const std::function<void(Args...)>& slot) {
-        track(signal.connect(slot));
+    template<typename... Args, typename Callable>
+    void track(Signal<Args...>& signal, Callable&& slot) {
+        track(signal.connect(std::forward<Callable>(slot)));
     }
     
     void disconnectAll() {

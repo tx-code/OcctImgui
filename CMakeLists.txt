@@ -91,7 +91,7 @@ target_compile_options(OcctImgui PRIVATE
     $<$<CONFIG:Release>:-O3>
 )
 
-option(OCCTIMGUI_BUILD_TESTING "Build tests" OFF)
+option(OCCTIMGUI_BUILD_TESTING "Build tests" ON)
 
 # Tests configuration
 if(OCCTIMGUI_BUILD_TESTING)
@@ -120,4 +120,7 @@ if(OCCTIMGUI_BUILD_TESTING)
     add_boost_test(mesh_datasource_test tests/mesh_datasource_test.cpp)
     add_boost_test(unified_model_test tests/unified_model_test.cpp)
     add_boost_test(model_importer_test tests/model_importer_test.cpp)
+    add_boost_test(signal_test tests/signal_test.cpp)
+    add_boost_test(message_bus_test tests/message_bus_test.cpp)
+    add_boost_test(mvvm_integration_test tests/mvvm_integration_test.cpp)
 endif()
