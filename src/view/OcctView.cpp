@@ -54,14 +54,9 @@ static Aspect_VKeyFlags keyFlagsFromGlfw(int theFlags)
 }
 }  // namespace
 
-OcctView::OcctView(std::shared_ptr<GeometryViewModel> viewModel,
-                   Handle(GlfwOcctWindow) window,
-                   MVVM::MessageBus& messageBus,
-                   MVVM::SelectionManager& selectionManager)
+OcctView::OcctView(std::shared_ptr<GeometryViewModel> viewModel, Handle(GlfwOcctWindow) window)
     : myViewModel(viewModel)
     , myWindow(window)
-    , myMessageBus(messageBus)
-    , mySelectionManager(selectionManager)
 {
     getOcctViewLogger()->info("Creating view");
     subscribeToEvents();
@@ -216,7 +211,7 @@ void OcctView::onMouseButton(int button, int action, int mods)
         // Right click to clear selection
         else if (button == GLFW_MOUSE_BUTTON_RIGHT && (mods & GLFW_MOD_CONTROL) == 0) {
             getOcctViewLogger()->info("Clearing selection");
-            mySelectionManager.clearSelection();
+            MVVM::SelectionManager::getInstance().clearSelection();
             myViewModel->getContext()->ClearSelected(Standard_True);
         }
     }
@@ -355,7 +350,7 @@ void OcctView::handleSelection(int x, int y)
         logger->info("Selected object: {}", objectId);
 
         // Add to selection manager
-        mySelectionManager.addToSelection(obj, objectId);
+        MVVM::SelectionManager::getInstance().addToSelection(obj, objectId);
 
         // Also process in view model if needed
         myViewModel->processSelection(obj, true);
@@ -366,32 +361,39 @@ void OcctView::subscribeToEvents()
 {
     getOcctViewLogger()->info("Subscribing to events");
 
-    // Subscribe to model changed events via MessageBus
-    myMessageBus.subscribe(MVVM::MessageBus::MessageType::ModelChanged,
-                           [this](const MVVM::MessageBus::Message& message) {
-                               // Force view redraw
-                               if (!myView.IsNull()) {
-                                   myView->Invalidate();
-                               }
-                           });
-
-    // Subscribe to selection changed events
-    myMessageBus.subscribe(
-        MVVM::MessageBus::MessageType::SelectionChanged,
+    // 使用单个订阅对象订阅多个消息类型
+    mySubscriptions = MVVM::MessageBus::getInstance().subscribeMultiple(
+        {MVVM::MessageBus::MessageType::ModelChanged,
+         MVVM::MessageBus::MessageType::SelectionChanged},
         [this](const MVVM::MessageBus::Message& message) {
-            // Get the selection info
-            try {
-                const auto& selectionInfo = std::any_cast<MVVM::SelectionInfo>(message.data);
-                getOcctViewLogger()->info("Selection changed: {} objects selected",
-                                          selectionInfo.selectedObjects.size());
+            switch (message.type) {
+                case MVVM::MessageBus::MessageType::ModelChanged:
+                    // Force view redraw on model change
+                    if (!myView.IsNull()) {
+                        myView->Invalidate();
+                    }
+                    break;
 
-                // Highlight selected objects in the view
-                if (!myView.IsNull()) {
-                    myView->Invalidate();
-                }
-            }
-            catch (const std::bad_any_cast& e) {
-                getOcctViewLogger()->error("Failed to cast selection info: {}", e.what());
+                case MVVM::MessageBus::MessageType::SelectionChanged:
+                    // Handle selection change
+                    try {
+                        const auto& selectionInfo =
+                            std::any_cast<MVVM::SelectionInfo>(message.data);
+                        getOcctViewLogger()->info("Selection changed: {} objects selected",
+                                                  selectionInfo.selectedObjects.size());
+
+                        // Highlight selected objects in the view
+                        if (!myView.IsNull()) {
+                            myView->Invalidate();
+                        }
+                    }
+                    catch (const std::bad_any_cast& e) {
+                        getOcctViewLogger()->error("Failed to cast selection info: {}", e.what());
+                    }
+                    break;
+
+                default:
+                    break;
             }
         });
 

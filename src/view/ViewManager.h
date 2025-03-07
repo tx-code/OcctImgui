@@ -47,11 +47,9 @@ public:
     /**
      * @brief Constructor with dependency injection
      * @param viewModelManager Reference to the ViewModelManager for viewmodel access
-     * @param messageBus Reference to the MessageBus for event communication
      */
-    ViewManager(ViewModelManager& viewModelManager, MVVM::MessageBus& messageBus)
+    ViewManager(ViewModelManager& viewModelManager)
         : myViewModelManager(viewModelManager)
-        , myMessageBus(messageBus)
     {}
 
     /**
@@ -64,6 +62,8 @@ public:
     template<typename T>
     std::shared_ptr<T> createView(const std::string& viewId, const std::string& viewModelId)
     {
+        static_assert(std::is_base_of<IView, T>::value, "T must inherit from IView");
+
         // Get the ViewModel
         auto viewModel = myViewModelManager.getViewModel(viewModelId);
 
@@ -72,25 +72,47 @@ public:
             return nullptr;
         }
 
-        // Create the View
-        auto view = std::make_shared<T>(viewModel, myMessageBus);
+        // Create view
+        auto view = std::make_shared<T>(viewModel);
         myViews[viewId] = view;
         getViewManagerLogger()->info("Created view with ID: {}", viewId);
         return view;
     }
 
     /**
-     * @brief Factory method specifically for creating OcctView instances
+     * @brief Creates a new ImGuiView
+     * @param viewId Unique identifier for the view
+     * @param viewModelId Identifier of the viewmodel to associate with the view
+     * @return Shared pointer to the created ImGuiView
+     */
+    std::shared_ptr<ImGuiView> createImGuiView(const std::string& viewId,
+                                               const std::string& viewModelId)
+    {
+        // Get the ViewModel
+        auto viewModel = myViewModelManager.getViewModel(viewModelId);
+
+        if (!viewModel) {
+            getViewManagerLogger()->error("Failed to get ViewModel with ID: {}", viewModelId);
+            return nullptr;
+        }
+
+        // Create ImGuiView
+        auto view = std::make_shared<ImGuiView>(viewModel);
+        myViews[viewId] = view;
+        getViewManagerLogger()->info("Created ImGuiView with ID: {}", viewId);
+        return view;
+    }
+
+    /**
+     * @brief Creates a new OcctView
      * @param viewId Unique identifier for the view
      * @param viewModelId Identifier of the viewmodel to associate with the view
      * @param window The GLFW OCCT window for rendering
-     * @param selectionManager Reference to the selection manager for handling selection
      * @return Shared pointer to the created OcctView
      */
     std::shared_ptr<OcctView> createOcctView(const std::string& viewId,
                                              const std::string& viewModelId,
-                                             Handle(GlfwOcctWindow) window,
-                                             MVVM::SelectionManager& selectionManager)
+                                             Handle(GlfwOcctWindow) window)
     {
         // Get the ViewModel
         auto viewModel = myViewModelManager.getViewModel<GeometryViewModel>(viewModelId);
@@ -101,7 +123,7 @@ public:
         }
 
         // Create OcctView
-        auto view = std::make_shared<OcctView>(viewModel, window, myMessageBus, selectionManager);
+        auto view = std::make_shared<OcctView>(viewModel, window);
         myViews[viewId] = view;
         getViewManagerLogger()->info("Created OcctView with ID: {}", viewId);
         return view;
@@ -327,9 +349,6 @@ public:
 private:
     /** Reference to the viewmodel manager */
     ViewModelManager& myViewModelManager;
-
-    /** Reference to the message bus for event communication */
-    MVVM::MessageBus& myMessageBus;
 
     /** Map of view IDs to view instances */
     std::map<std::string, std::shared_ptr<IView>> myViews;

@@ -17,8 +17,8 @@ using namespace MVVM;
 BOOST_AUTO_TEST_CASE(selection_manager_basic_test)
 {
     // 准备
-    MessageBus messageBus;
-    SelectionManager selectionManager(messageBus);
+    auto& messageBus = MessageBus::getInstance();
+    auto& selectionManager = SelectionManager::getInstance();
 
     // 跟踪消息发布
     bool messageReceived = false;
@@ -43,14 +43,17 @@ BOOST_AUTO_TEST_CASE(selection_manager_basic_test)
     // 断言
     BOOST_CHECK(messageReceived);
     BOOST_CHECK_EQUAL(receivedInfo.selectedObjects.size(), 1);
+
+    messageBus.clearAllSubscriptions();
+    selectionManager.clearSelection();
 }
 
 // 测试添加和移除选择
 BOOST_AUTO_TEST_CASE(selection_manager_add_remove_test)
 {
     // 准备
-    MessageBus messageBus;
-    SelectionManager selectionManager(messageBus);
+    auto& messageBus = MessageBus::getInstance();
+    auto& selectionManager = SelectionManager::getInstance();
 
     // 设置选择类型为Add，这样可以添加多个对象而不清除之前的选择
     selectionManager.setSelectionType(SelectionInfo::SelectionType::Add);
@@ -94,8 +97,8 @@ BOOST_AUTO_TEST_CASE(selection_manager_add_remove_test)
 BOOST_AUTO_TEST_CASE(selection_manager_subfeature_test)
 {
     // 准备
-    MessageBus messageBus;
-    SelectionManager selectionManager(messageBus);
+    auto& messageBus = MessageBus::getInstance();
+    auto& selectionManager = SelectionManager::getInstance();
 
     // 创建模拟对象
     Handle(AIS_Shape) mockObject = new AIS_Shape(TopoDS_Shape());
@@ -123,14 +126,16 @@ BOOST_AUTO_TEST_CASE(selection_manager_subfeature_test)
         BOOST_CHECK_EQUAL(it->second[1].type, SelectionInfo::SubFeatureType::Edge);
         BOOST_CHECK_EQUAL(it->second[1].index, 3);
     }
+
+    selectionManager.clearSelection();
 }
 
 // 测试选择模式和类型
 BOOST_AUTO_TEST_CASE(selection_manager_mode_type_test)
 {
     // 准备
-    MessageBus messageBus;
-    SelectionManager selectionManager(messageBus);
+    auto& messageBus = MessageBus::getInstance();
+    auto& selectionManager = SelectionManager::getInstance();
 
     // 设置选择模式
     int testMode = 2;
@@ -150,4 +155,6 @@ BOOST_AUTO_TEST_CASE(selection_manager_mode_type_test)
         const auto& selection = selectionManager.getCurrentSelection();
         BOOST_CHECK_EQUAL(selection.selectionType, SelectionInfo::SelectionType::Add);
     }
+
+    selectionManager.clearSelection();
 }

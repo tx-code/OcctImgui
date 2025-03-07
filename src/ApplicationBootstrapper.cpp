@@ -17,26 +17,23 @@ DECLARE_LOGGER(ApplicationBootstrapper)
 void InitializeModelFactory(ModelFactory& factory);
 
 ApplicationBootstrapper::ApplicationBootstrapper()
-    : myModelId("MainModel")
+    : myLogger(getApplicationBootstrapperLogger())
+    , myModelId("MainModel")
     , myViewModelId("MainViewModel")
     , myImGuiViewId("ImGuiView")
     , myOcctViewId("OcctView")
-    , myLogger(getApplicationBootstrapperLogger())
 {
     myLogger->info("ApplicationBootstrapper created");
 
     // Initialize manager instances
-    myMessageBus = std::make_unique<MVVM::MessageBus>();
+    // MessageBus and SelectionManager are now singletons
     myGlobalSettings = std::make_unique<MVVM::GlobalSettings>();
-    mySelectionManager = std::make_unique<MVVM::SelectionManager>(*myMessageBus);
     myModelFactory = std::make_unique<ModelFactory>();
     myModelManager = std::make_unique<ModelManager>();
     myModelImporter = std::make_unique<ModelImporter>();
-    myViewModelManager = std::make_unique<ViewModelManager>(*myModelManager,
-                                                            *myMessageBus,
-                                                            *myGlobalSettings,
-                                                            *myModelImporter);
-    myViewManager = std::make_unique<ViewManager>(*myViewModelManager, *myMessageBus);
+    myViewModelManager =
+        std::make_unique<ViewModelManager>(*myModelManager, *myGlobalSettings, *myModelImporter);
+    myViewManager = std::make_unique<ViewManager>(*myViewModelManager);
 
     // Initialize model factory
     InitializeModelFactory(*myModelFactory);
@@ -210,7 +207,8 @@ bool ApplicationBootstrapper::initializeViews()
     try {
         // Create ImGui view
         myLogger->info("Creating ImGuiView");
-        auto imguiView = myViewManager->createView<ImGuiView>(myImGuiViewId, myViewModelId);
+        auto imguiView = myViewManager->createImGuiView(myImGuiViewId, myViewModelId);
+
         if (!imguiView) {
             myLogger->error("Failed to create ImGuiView");
             return false;
@@ -224,8 +222,7 @@ bool ApplicationBootstrapper::initializeViews()
         myLogger->info("Creating OcctView");
         auto occtView = myViewManager->createOcctView(myOcctViewId,
                                                       myViewModelId,
-                                                      myWindowManager->getOcctWindow(),
-                                                      *mySelectionManager);
+                                                      myWindowManager->getOcctWindow());
 
         if (!occtView) {
             myLogger->error("Failed to create OcctView");
@@ -233,7 +230,8 @@ bool ApplicationBootstrapper::initializeViews()
         }
 
         // Set selection mode to face selection
-        mySelectionManager->setSelectionMode(4);  // 4 is for face selection in OCCT
+        MVVM::SelectionManager::getInstance().setSelectionMode(
+            4);  // 4 is for face selection in OCCT
 
         // Initialize OCCT view
         occtView->initialize();

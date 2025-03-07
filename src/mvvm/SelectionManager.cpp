@@ -8,8 +8,14 @@ using namespace MVVM;
 // 使用宏声明 SelectionManager 类的 logger
 DECLARE_LOGGER(SelectionManager)
 
-SelectionManager::SelectionManager(MessageBus& messageBus)
-    : myMessageBus(messageBus)
+SelectionManager& SelectionManager::getInstance()
+{
+    static SelectionManager instance;
+    return instance;
+}
+
+SelectionManager::SelectionManager()
+    : myMessageBus(MessageBus::getInstance())
 {
     // Initialize selection info
     mySelectionInfo.selectionMode = 0;

@@ -109,7 +109,7 @@ public:
      */
     MVVM::MessageBus& getMessageBus() const
     {
-        return *myMessageBus;
+        return MVVM::MessageBus::getInstance();
     }
 
     /**
@@ -119,7 +119,7 @@ public:
      */
     MVVM::SelectionManager& getSelectionManager() const
     {
-        return *mySelectionManager;
+        return MVVM::SelectionManager::getInstance();
     }
 
     /**
@@ -194,14 +194,8 @@ private:
     /** Input manager */
     std::unique_ptr<InputManager> myInputManager;
 
-    /** Message bus */
-    std::unique_ptr<MVVM::MessageBus> myMessageBus;
-
     /** Global settings */
     std::unique_ptr<MVVM::GlobalSettings> myGlobalSettings;
-
-    /** Selection manager */
-    std::unique_ptr<MVVM::SelectionManager> mySelectionManager;
 
     /** Model factory */
     std::unique_ptr<ModelFactory> myModelFactory;

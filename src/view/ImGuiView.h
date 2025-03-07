@@ -11,13 +11,12 @@
 #include <string>
 
 
-
 struct GLFWwindow;
 
 class ImGuiView: public IView
 {
 public:
-    ImGuiView(std::shared_ptr<IViewModel> viewModel, MVVM::MessageBus& messageBus);
+    ImGuiView(std::shared_ptr<IViewModel> viewModel);
     ~ImGuiView() override;
 
     // IView接口实现
@@ -35,11 +34,11 @@ private:
     std::shared_ptr<IViewModel> myViewModel;
     GLFWwindow* myWindow;
 
-    /** Reference to the message bus */
-    MVVM::MessageBus& myMessageBus;
-
     /** Connection tracker for signal connections */
     MVVM::ConnectionTracker myConnections;
+
+    // Subscriptions to message bus events
+    MVVM::Subscription mySubcriptions;
 
     // UI状态
     bool showObjectProperties = true;

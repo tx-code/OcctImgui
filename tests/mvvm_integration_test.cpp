@@ -14,7 +14,7 @@ using namespace MVVM;
 class TestModel
 {
 public:
-    TestModel(std::shared_ptr<MessageBus> messageBus)
+    TestModel(MessageBus& messageBus)
         : myMessageBus(messageBus)
     {}
 
@@ -33,7 +33,7 @@ public:
             MessageBus::Message message;
             message.type = MessageBus::MessageType::ModelChanged;
             message.data = std::string("Value changed to " + std::to_string(myValue));
-            myMessageBus->publish(message);
+            myMessageBus.publish(message);
         }
     }
 
@@ -44,25 +44,30 @@ public:
 
 private:
     int myValue = 0;
-    std::shared_ptr<MessageBus> myMessageBus;
+    MessageBus& myMessageBus;
 };
 
 // A simple view class that listens to both Signal and MessageBus
 class TestView
 {
 public:
-    TestView(std::shared_ptr<MessageBus> messageBus)
+    TestView(MessageBus& messageBus)
         : myMessageBus(messageBus)
     {
         // Subscribe to message bus
-        myMessageBus->subscribe(MessageBus::MessageType::ModelChanged,
-                                [this](const MessageBus::Message& message) {
-                                    if (message.data.type() == typeid(std::string)) {
-                                        lastMessageReceived =
-                                            std::any_cast<std::string>(message.data);
-                                        messageCount++;
-                                    }
-                                });
+        myToken = myMessageBus.subscribe(MessageBus::MessageType::ModelChanged,
+                                         [this](const MessageBus::Message& message) {
+                                             if (message.data.type() == typeid(std::string)) {
+                                                 lastMessageReceived =
+                                                     std::any_cast<std::string>(message.data);
+                                                 messageCount++;
+                                             }
+                                         });
+    }
+
+    ~TestView()
+    {
+        myMessageBus.unsubscribe(myToken);
     }
 
     // Connect to model's signal
@@ -81,15 +86,16 @@ public:
     std::string lastMessageReceived;
 
 private:
-    std::shared_ptr<MessageBus> myMessageBus;
+    MessageBus& myMessageBus;
     ConnectionTracker myConnections;
+    int myToken;
 };
 
 // Test the integration between Signal and MessageBus
 BOOST_AUTO_TEST_CASE(signal_message_bus_integration_test)
 {
     // Arrange
-    auto messageBus = std::make_shared<MessageBus>();
+    auto& messageBus = MessageBus::getInstance();
     TestModel model(messageBus);
     TestView view(messageBus);
 
@@ -119,7 +125,7 @@ BOOST_AUTO_TEST_CASE(signal_message_bus_integration_test)
 BOOST_AUTO_TEST_CASE(multiple_views_test)
 {
     // Arrange
-    auto messageBus = std::make_shared<MessageBus>();
+    auto& messageBus = MessageBus::getInstance();
     TestModel model(messageBus);
     TestView view1(messageBus);
     TestView view2(messageBus);
@@ -145,7 +151,7 @@ BOOST_AUTO_TEST_CASE(multiple_views_test)
 class ViewModel
 {
 public:
-    ViewModel(std::shared_ptr<TestModel> model, std::shared_ptr<MessageBus> messageBus)
+    ViewModel(std::shared_ptr<TestModel> model, MessageBus& messageBus)
         : myModel(model)
         , myMessageBus(messageBus)
     {
@@ -160,7 +166,7 @@ public:
             MessageBus::Message message;
             message.type = MessageBus::MessageType::ViewChanged;
             message.data = formattedValue;
-            myMessageBus->publish(message);
+            myMessageBus.publish(message);
         }));
     }
 
@@ -169,14 +175,14 @@ public:
 
 private:
     std::shared_ptr<TestModel> myModel;
-    std::shared_ptr<MessageBus> myMessageBus;
+    MessageBus& myMessageBus;
     ConnectionTracker myConnections;
 };
 
 BOOST_AUTO_TEST_CASE(mvvm_pattern_test)
 {
     // Arrange
-    auto messageBus = std::make_shared<MessageBus>();
+    auto& messageBus = MessageBus::getInstance();
     auto model = std::make_shared<TestModel>(messageBus);
     auto viewModel = std::make_shared<ViewModel>(model, messageBus);
 
@@ -192,13 +198,13 @@ BOOST_AUTO_TEST_CASE(mvvm_pattern_test)
     // Track ViewChanged messages
     std::string lastViewChangedMessage;
     int viewChangedCount = 0;
-    messageBus->subscribe(MessageBus::MessageType::ViewChanged,
-                          [&](const MessageBus::Message& message) {
-                              if (message.data.type() == typeid(std::string)) {
-                                  lastViewChangedMessage = std::any_cast<std::string>(message.data);
-                                  viewChangedCount++;
-                              }
-                          });
+    messageBus.subscribe(MessageBus::MessageType::ViewChanged,
+                         [&](const MessageBus::Message& message) {
+                             if (message.data.type() == typeid(std::string)) {
+                                 lastViewChangedMessage = std::any_cast<std::string>(message.data);
+                                 viewChangedCount++;
+                             }
+                         });
 
     // Act
     model->setValue(42);

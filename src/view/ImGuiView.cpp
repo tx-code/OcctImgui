@@ -12,10 +12,9 @@
 // 使用宏声明 ImGuiView 类的 logger
 DECLARE_LOGGER(ImGuiView)
 
-ImGuiView::ImGuiView(std::shared_ptr<IViewModel> viewModel, MVVM::MessageBus& messageBus)
+ImGuiView::ImGuiView(std::shared_ptr<IViewModel> viewModel)
     : myViewModel(viewModel)
     , myWindow(nullptr)
-    , myMessageBus(messageBus)
 {
     getImGuiViewLogger()->info("Creating view");
     subscribeToEvents();
@@ -476,7 +475,7 @@ void ImGuiView::subscribeToEvents()
 
     // 订阅 SelectionChanged 消息
     // Subscribe to selection changed events
-    myMessageBus.subscribe(
+    mySubcriptions = MVVM::MessageBus::getInstance().subscribeWithManager(
         MVVM::MessageBus::MessageType::SelectionChanged,
         [this](const MVVM::MessageBus::Message& message) {
             // Get the selection info

@@ -13,8 +13,12 @@ namespace MVVM
 class SelectionManager
 {
 public:
-    // Constructor
-    explicit SelectionManager(MessageBus& messageBus);
+    // 获取单例实例
+    static SelectionManager& getInstance();
+
+    // 删除拷贝构造函数和赋值操作符
+    SelectionManager(const SelectionManager&) = delete;
+    SelectionManager& operator=(const SelectionManager&) = delete;
 
     // Selection methods
     void addToSelection(const Handle(AIS_InteractiveObject) & object, const std::string& objectId);
@@ -38,6 +42,9 @@ public:
     const SelectionInfo& getCurrentSelection() const;
 
 private:
+    // 私有构造函数
+    SelectionManager();
+
     // Notify selection changes through MessageBus
     void notifySelectionChanged();
 

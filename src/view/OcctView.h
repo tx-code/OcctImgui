@@ -16,6 +16,7 @@
 #include "viewmodel/GeometryViewModel.h"
 #include <AIS_ViewController.hxx>
 #include <memory>
+#include <vector>
 
 
 class AIS_ViewCube;
@@ -38,10 +39,7 @@ public:
      * @param messageBus Reference to the message bus for event communication
      * @param selectionManager Reference to the selection manager for handling selection
      */
-    OcctView(std::shared_ptr<GeometryViewModel> viewModel,
-             Handle(GlfwOcctWindow) window,
-             MVVM::MessageBus& messageBus,
-             MVVM::SelectionManager& selectionManager);
+    OcctView(std::shared_ptr<GeometryViewModel> viewModel, Handle(GlfwOcctWindow) window);
 
     /**
      * @brief Destructor
@@ -160,11 +158,8 @@ private:
     /** The view cube for orientation */
     Handle(AIS_ViewCube) myViewCube;
 
-    /** Reference to the message bus */
-    MVVM::MessageBus& myMessageBus;
-
-    /** Reference to the selection manager */
-    MVVM::SelectionManager& mySelectionManager;
+    /** Subscriptions to message bus events */
+    MVVM::Subscription mySubscriptions;
 
     /** Flag indicating whether to wait for events */
     bool myToWaitEvents = true;

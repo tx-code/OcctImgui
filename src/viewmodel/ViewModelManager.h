@@ -36,16 +36,13 @@ public:
     /**
      * @brief Constructor with dependency injection
      * @param modelManager Reference to the ModelManager for model access
-     * @param messageBus Reference to the MessageBus for event communication
      * @param globalSettings Reference to the GlobalSettings for application-wide settings
      * @param modelImporter Reference to the ModelImporter for model import functionality
      */
     ViewModelManager(ModelManager& modelManager,
-                     MVVM::MessageBus& messageBus,
                      MVVM::GlobalSettings& globalSettings,
                      ModelImporter& modelImporter)
         : myModelManager(modelManager)
-        , myMessageBus(messageBus)
         , myGlobalSettings(globalSettings)
         , myModelImporter(modelImporter)
     {}
@@ -134,15 +131,6 @@ public:
     }
 
     /**
-     * @brief Gets the message bus instance
-     * @return Reference to the message bus
-     */
-    MVVM::MessageBus& getMessageBus() const
-    {
-        return myMessageBus;
-    }
-
-    /**
      * @brief Gets the global settings instance
      * @return Reference to the global settings
      */
@@ -154,9 +142,6 @@ public:
 private:
     /** Reference to the model manager */
     ModelManager& myModelManager;
-
-    /** Reference to the message bus for event communication */
-    MVVM::MessageBus& myMessageBus;
 
     /** Reference to the global settings */
     MVVM::GlobalSettings& myGlobalSettings;
