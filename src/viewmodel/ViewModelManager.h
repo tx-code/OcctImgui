@@ -9,10 +9,10 @@
  */
 #pragma once
 
-#include "../model/ModelImporter.h"
-#include "../model/ModelManager.h"
-#include "../mvvm/GlobalSettings.h"
-#include "../mvvm/MessageBus.h"
+#include "model/ModelImporter.h"
+#include "model/ModelManager.h"
+#include "mvvm/GlobalSettings.h"
+#include "mvvm/MessageBus.h"
 #include "IViewModel.h"
 #include "UnifiedViewModel.h"
 #include <AIS_InteractiveContext.hxx>

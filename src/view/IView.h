@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../viewmodel/IViewModel.h"
+#include "viewmodel/IViewModel.h"
 #include <memory>
 
 struct GLFWwindow;

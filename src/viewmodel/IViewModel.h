@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../model/IModel.h"
+#include "model/IModel.h"
 #include <AIS_InteractiveContext.hxx>
 #include <AIS_InteractiveObject.hxx>
 #include <memory>

@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include "../utils/Logger.h"
+#include "utils/Logger.h"
 #include <boost/signals2.hpp>
 #include <functional>
 #include <memory>

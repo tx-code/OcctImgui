@@ -1,5 +1,5 @@
 #include "UnifiedViewModel.h"
-#include "../utils/Logger.h"
+#include "utils/Logger.h"
 #include "ais/Mesh_DataSource.h"
 #include <AIS_Shape.hxx>
 #include <AIS_Triangulation.hxx>

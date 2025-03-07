@@ -41,6 +41,9 @@ add_library(OcctImguiLib STATIC
     src/view/OcctView.cpp
     src/viewmodel/UnifiedViewModel.cpp
     src/viewmodel/ViewModelManager.cpp
+    src/window/WindowManager.cpp
+    src/input/InputManager.cpp
+    src/ApplicationBootstrapper.cpp
     src/Application.cpp
     src/GlfwOcctWindow.cpp
     src/utils/Logger.cpp
@@ -55,7 +58,8 @@ elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
 endif()
 
 target_include_directories(OcctImguiLib
-    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src
+    PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
 target_link_libraries(OcctImguiLib
@@ -78,7 +82,8 @@ add_executable(OcctImgui
 )
 
 target_include_directories(OcctImgui
-    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src
+    PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
 # Link libraries
@@ -99,7 +104,10 @@ if(OCCTIMGUI_BUILD_TESTING)
     # Create a function to add tests easily
     function(add_boost_test TEST_NAME TEST_SOURCE)
         add_executable(${TEST_NAME} ${TEST_SOURCE})
-        target_include_directories(${TEST_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+        target_include_directories(${TEST_NAME}
+            PRIVATE
+            ${CMAKE_CURRENT_SOURCE_DIR}/src
+        )
         target_link_libraries(${TEST_NAME}
             PRIVATE
             OcctImguiLib
