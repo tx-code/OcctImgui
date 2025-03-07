@@ -14,6 +14,8 @@
 #include <V3d_View.hxx>
 #include <V3d_Viewer.hxx>
 
+#include <imgui.h>
+
 // 使用宏声明 OcctView 类的 logger
 DECLARE_LOGGER(OcctView)
 
@@ -185,6 +187,15 @@ void OcctView::onMouseMove(int posX, int posY)
         return;
     }
 
+    // 当弹出菜单关闭时，需要重置视图输入，否则鼠标移动会导致视图的缩放，
+    // 但也许有更好的方法来处理这个问题
+    if (myResetViewInput) {
+        myResetViewInput = false;
+        ResetViewInput();
+        getOcctViewLogger()->debug("Resetting view input after context menu close");
+        return;
+    }
+
     const Graphic3d_Vec2i aNewPos(posX, posY);
     UpdateMousePosition(aNewPos, PressedMouseButtons(), LastMouseFlags(), Standard_False);
 }
@@ -352,7 +363,8 @@ void OcctView::subscribeToEvents()
     // 使用单个订阅对象订阅多个消息类型
     mySubscriptions = MVVM::MessageBus::getInstance().subscribeMultiple(
         {MVVM::MessageBus::MessageType::ModelChanged,
-         MVVM::MessageBus::MessageType::SelectionChanged},
+         MVVM::MessageBus::MessageType::SelectionChanged,
+         MVVM::MessageBus::MessageType::ViewChanged},  // 添加 ViewChanged 类型
         [this](const MVVM::MessageBus::Message& message) {
             switch (message.type) {
                 case MVVM::MessageBus::MessageType::ModelChanged:
@@ -379,8 +391,19 @@ void OcctView::subscribeToEvents()
                         getOcctViewLogger()->error("Failed to cast selection info: {}", e.what());
                     }
                     break;
-
-                default:
+                    
+                case MVVM::MessageBus::MessageType::ViewChanged:
+                    // 处理视图变更消息
+                    try {
+                        const auto& msgData = std::any_cast<std::string>(message.data);
+                        if (msgData == "ImGuiContextMenuClosed") {
+                            // 菜单关闭后，重置鼠标状态
+                            myResetViewInput = true;
+                        }
+                    }
+                    catch (const std::bad_any_cast& e) {
+                        getOcctViewLogger()->error("Failed to cast view change data: {}", e.what());
+                    }
                     break;
             }
         });

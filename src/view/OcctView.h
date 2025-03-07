@@ -193,4 +193,6 @@ private:
      * @brief Subscribes to events from the message bus
      */
     void subscribeToEvents();
+
+    bool myResetViewInput = false; // 是否重置视图输入
 };

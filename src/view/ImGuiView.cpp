@@ -252,17 +252,33 @@ void ImGuiView::renderObjectProperties()
 
 void ImGuiView::popupContextMenu()
 {
+    static bool wasPopupOpen = false;
+    bool isPopupOpen = false;
+
     if (!wantCaptureMouse() && ImGui::IsMouseClicked(ImGuiMouseButton_Right)) {
         ImGui::OpenPopup("OcctView Context Menu");
     }
 
     // FIXME handle the mouse event
     if (ImGui::BeginPopup("OcctView Context Menu")) {
+        isPopupOpen = true;
         // TODO more globalSettings related items
         if (ImGui::MenuItem("Clear Selection")) {}
 
         ImGui::EndPopup();
     }
+
+    // 检测菜单是否刚刚关闭
+    if (wasPopupOpen && !isPopupOpen) {
+
+        // 发送消息通知其他组件菜单已关闭
+        MVVM::MessageBus::Message msg;
+        msg.type = MVVM::MessageBus::MessageType::ViewChanged;
+        msg.data = std::string("ImGuiContextMenuClosed");
+        MVVM::MessageBus::getInstance().publish(msg);
+    }
+
+    wasPopupOpen = isPopupOpen;
 }
 
 void ImGuiView::renderGeometryProperties()
