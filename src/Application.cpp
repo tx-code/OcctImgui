@@ -12,9 +12,7 @@
 #include <spdlog/spdlog.h>
 
 // Include manager headers
-#include "model/ModelManager.h"
 #include "view/ViewManager.h"
-#include "viewmodel/UnifiedViewModel.h"
 #include "viewmodel/ViewModelManager.h"
 
 
@@ -102,41 +100,4 @@ void Application::cleanup()
     myBootstrapper.reset();
 
     myLogger->info("Application resources cleaned up");
-}
-
-bool Application::importModel(const std::string& filePath, const std::string& modelId)
-{
-    LOG_FUNCTION_SCOPE(myLogger, "importModel");
-    myLogger->info("Importing model from '{}'", filePath);
-
-    try {
-        // Get the viewmodel
-        auto& viewModelManager = myBootstrapper->getViewModelManager();
-        auto viewModel = viewModelManager.getViewModel<UnifiedViewModel>("MainViewModel");
-
-        if (!viewModel) {
-            myLogger->error("Failed to get UnifiedViewModel");
-            return false;
-        }
-
-        // Import the model
-        bool result = viewModel->importModel(filePath, modelId);
-
-        if (result) {
-            myLogger->info("Model imported successfully");
-        }
-        else {
-            myLogger->error("Failed to import model");
-        }
-
-        return result;
-    }
-    catch (const std::exception& e) {
-        myLogger->error("Exception during model import: {}", e.what());
-        return false;
-    }
-    catch (...) {
-        myLogger->error("Unknown exception during model import");
-        return false;
-    }
 }

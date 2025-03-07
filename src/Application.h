@@ -49,15 +49,6 @@ public:
      */
     void run();
 
-    /**
-     * @brief Imports a model from a file
-     *
-     * @param filePath The path to the model file
-     * @param modelId The ID to assign to the imported model (if empty, the filename will be used)
-     * @return bool True if import was successful, false otherwise
-     */
-    bool importModel(const std::string& filePath, const std::string& modelId = "");
-
 private:
     /**
      * @brief Runs the main application loop
