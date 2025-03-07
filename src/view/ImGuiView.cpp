@@ -9,19 +9,15 @@
 #include <GLFW/glfw3.h>
 #include <nfd.h>
 
-// 创建ImGui视图日志记录器 - 使用函数确保安全初始化
-std::shared_ptr<Utils::Logger>& getImGuiLogger()
-{
-    static std::shared_ptr<Utils::Logger> logger = Utils::Logger::getLogger("view.imgui");
-    return logger;
-}
+// 使用宏声明 ImGuiView 类的 logger
+DECLARE_LOGGER(ImGuiView)
 
 ImGuiView::ImGuiView(std::shared_ptr<IViewModel> viewModel, MVVM::MessageBus& messageBus)
     : myViewModel(viewModel)
     , myWindow(nullptr)
     , myMessageBus(messageBus)
 {
-    getImGuiLogger()->info("Creating view");
+    getImGuiViewLogger()->info("Creating view");
     subscribeToEvents();
 }
 
@@ -37,18 +33,18 @@ std::shared_ptr<UnifiedViewModel> ImGuiView::getUnifiedViewModel() const
 
 void ImGuiView::initialize(GLFWwindow* window)
 {
-    LOG_FUNCTION_SCOPE(getImGuiLogger(), "initialize");
-    getImGuiLogger()->info("Starting initialization");
+    LOG_FUNCTION_SCOPE(getImGuiViewLogger(), "initialize");
+    getImGuiViewLogger()->info("Starting initialization");
 
     if (window == nullptr) {
-        getImGuiLogger()->error("Initialization failed - window pointer is null");
+        getImGuiViewLogger()->error("Initialization failed - window pointer is null");
         return;
     }
     myWindow = window;
 
     // 检查OpenGL上下文是否有效
     if (glfwGetCurrentContext() == nullptr) {
-        getImGuiLogger()->error("Initialization failed - no valid OpenGL context");
+        getImGuiViewLogger()->error("Initialization failed - no valid OpenGL context");
         return;
     }
 
@@ -66,24 +62,24 @@ void ImGuiView::initialize(GLFWwindow* window)
         // 初始化ImGui平台后端
         bool glfwInitSuccess = ImGui_ImplGlfw_InitForOpenGL(window, true);
         if (!glfwInitSuccess) {
-            getImGuiLogger()->error("GLFW backend initialization failed");
+            getImGuiViewLogger()->error("GLFW backend initialization failed");
             return;
         }
 
         // 初始化ImGui渲染器后端
         bool gl3InitSuccess = ImGui_ImplOpenGL3_Init("#version 130");
         if (!gl3InitSuccess) {
-            getImGuiLogger()->error("OpenGL3 backend initialization failed");
+            getImGuiViewLogger()->error("OpenGL3 backend initialization failed");
             return;
         }
 
-        getImGuiLogger()->info("Initialization completed successfully");
+        getImGuiViewLogger()->info("Initialization completed successfully");
     }
     catch (const std::exception& e) {
-        getImGuiLogger()->error("Exception during initialization: {}", e.what());
+        getImGuiViewLogger()->error("Exception during initialization: {}", e.what());
     }
     catch (...) {
-        getImGuiLogger()->error("Unknown exception during initialization");
+        getImGuiViewLogger()->error("Unknown exception during initialization");
     }
 }
 
@@ -430,7 +426,7 @@ void ImGuiView::executeDeleteSelected()
 
 void ImGuiView::executeImportModel()
 {
-    getImGuiLogger()->info("Executing import model command");
+    getImGuiViewLogger()->info("Executing import model command");
 
     // 初始化NFD (Native File Dialog)
     NFD_Init();
@@ -445,12 +441,12 @@ void ImGuiView::executeImportModel()
     nfdresult_t result = NFD_OpenDialog(&outPath, filterItems, 4, nullptr);
 
     if (result == NFD_OKAY) {
-        getImGuiLogger()->info("Selected file: {}", outPath);
+        getImGuiViewLogger()->info("Selected file: {}", outPath);
 
         // 获取UnifiedViewModel
         auto unifiedViewModel = getUnifiedViewModel();
         if (!unifiedViewModel) {
-            getImGuiLogger()->error("Failed to get UnifiedViewModel");
+            getImGuiViewLogger()->error("Failed to get UnifiedViewModel");
             NFD_FreePath(outPath);
             NFD_Quit();
             return;
@@ -464,10 +460,10 @@ void ImGuiView::executeImportModel()
         NFD_FreePath(outPath);
     }
     else if (result == NFD_CANCEL) {
-        getImGuiLogger()->info("User canceled file dialog");
+        getImGuiViewLogger()->info("User canceled file dialog");
     }
     else {
-        getImGuiLogger()->error("Error opening file dialog: {}", NFD_GetError());
+        getImGuiViewLogger()->error("Error opening file dialog: {}", NFD_GetError());
     }
 
     // 清理NFD
@@ -476,7 +472,7 @@ void ImGuiView::executeImportModel()
 
 void ImGuiView::subscribeToEvents()
 {
-    getImGuiLogger()->info("Subscribing to events");
+    getImGuiViewLogger()->info("Subscribing to events");
 
     // 订阅 SelectionChanged 消息
     // Subscribe to selection changed events
@@ -489,8 +485,7 @@ void ImGuiView::subscribeToEvents()
                 // TODO  to string
             }
             catch (const std::bad_any_cast& e) {
-                getImGuiLogger()->error("Failed to cast selection info: {}", e.what());
+                getImGuiViewLogger()->error("Failed to cast selection info: {}", e.what());
             }
         });
-
 }

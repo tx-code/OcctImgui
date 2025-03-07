@@ -1,77 +1,74 @@
+/**
+ * @file Logger.h
+ * @brief Defines the Logger class that provides hierarchical logging functionality.
+ */
 #pragma once
 
 #include <memory>
 #include <spdlog/spdlog.h>
 #include <string>
-#include <unordered_map>
-#include <vector>
 
 namespace Utils
 {
 
+// Forward declaration
+class LoggerManager;
+
 /**
- * @brief 分层级日志记录器
+ * @class Logger
+ * @brief Provides hierarchical logging functionality.
  *
- * 提供分层级的日志记录功能，可以跟踪调用链和上下文
+ * This class provides hierarchical logging with context tracking and call chain tracking.
  */
 class Logger: public std::enable_shared_from_this<Logger>
 {
 public:
     /**
-     * @brief 获取指定模块的日志记录器
+     * @brief Get a logger for the specified module
      *
-     * @param module 模块名称
-     * @return 日志记录器实例
+     * @param module Module name
+     * @return Shared pointer to the logger
      */
     static std::shared_ptr<Logger> getLogger(const std::string& module);
 
     /**
-     * @brief 构造函数
+     * @brief Initialize the logging system
      *
-     * @param module 模块名称
+     * @param logDirPath Path to the log directory
+     * @return True if initialization was successful, false otherwise
      */
-    Logger(const std::string& module)
-        : myModule(module)
-    {}
+    static bool initialize(const std::string& logDirPath = "logs");
 
     /**
-     * @brief 创建子日志记录器
+     * @brief Constructor
      *
-     * @param subModule 子模块名称
-     * @return 子日志记录器
+     * @param module Module name
      */
-    std::shared_ptr<Logger> createChild(const std::string& subModule)
-    {
-        std::string fullPath = myModule + "." + subModule;
-        return std::make_shared<Logger>(fullPath);
-    }
+    Logger(const std::string& module);
 
     /**
-     * @brief 设置上下文ID
+     * @brief Create a child logger
      *
-     * @param contextId 上下文ID
+     * @param subModule Sub-module name
+     * @return Shared pointer to the child logger
      */
-    void setContextId(const std::string& contextId)
-    {
-        myContextId = contextId;
-    }
+    std::shared_ptr<Logger> createChild(const std::string& subModule);
 
     /**
-     * @brief 获取完整的日志前缀
+     * @brief Set the context ID
      *
-     * @return 日志前缀
+     * @param contextId Context ID
      */
-    std::string getPrefix() const
-    {
-        if (myContextId.empty()) {
-            return "[" + myModule + "]";
-        }
-        else {
-            return "[" + myModule + ":" + myContextId + "]";
-        }
-    }
+    void setContextId(const std::string& contextId);
 
-    // 各级别日志记录函数
+    /**
+     * @brief Get the full log prefix
+     *
+     * @return Log prefix
+     */
+    std::string getPrefix() const;
+
+    // Log level methods
     template<typename... Args>
     void trace(const std::string& fmt, const Args&... args)
     {
@@ -145,42 +142,69 @@ public:
     }
 
     /**
-     * @brief 记录函数进入
+     * @class ScopedLogger
+     * @brief Logs function entry and exit
      *
-     * @param functionName 函数名称
-     * @return 函数作用域对象，在析构时自动记录函数退出
+     * This class logs function entry when constructed and function exit when destructed.
      */
     class ScopedLogger
     {
     public:
-        ScopedLogger(std::shared_ptr<Logger> logger, const std::string& functionName)
-            : myLogger(logger)
-            , myFunctionName(functionName)
-        {
-            myLogger->debug("Enter: {}", myFunctionName);
-        }
+        /**
+         * @brief Constructor
+         *
+         * @param logger Logger to use
+         * @param functionName Function name
+         */
+        ScopedLogger(std::shared_ptr<Logger> logger, const std::string& functionName);
 
-        ~ScopedLogger()
-        {
-            myLogger->debug("Exit: {}", myFunctionName);
-        }
+        /**
+         * @brief Destructor
+         */
+        ~ScopedLogger();
 
     private:
         std::shared_ptr<Logger> myLogger;
         std::string myFunctionName;
     };
 
-    ScopedLogger functionScope(const std::string& functionName)
-    {
-        return ScopedLogger(shared_from_this(), functionName);
-    }
+    /**
+     * @brief Create a function scope logger
+     *
+     * @param functionName Function name
+     * @return ScopedLogger instance
+     */
+    ScopedLogger functionScope(const std::string& functionName);
 
 private:
     std::string myModule;
     std::string myContextId;
 };
 
-// 便捷宏，用于创建函数作用域日志
+// Convenience macro for creating function scope loggers
 #define LOG_FUNCTION_SCOPE(logger, function) auto scopedLogger = logger->functionScope(function)
+
+// Convenience macros for getting loggers with consistent naming
+#define DECLARE_LOGGER(className)                                                                  \
+    static std::shared_ptr<Utils::Logger>& get##className##Logger()                                \
+    {                                                                                              \
+        static std::shared_ptr<Utils::Logger> logger = Utils::Logger::getLogger(#className);       \
+        return logger;                                                                             \
+    }
+
+#define DECLARE_STATIC_LOGGER(moduleName)                                                          \
+    static std::shared_ptr<Utils::Logger>& get##moduleName##Logger()                               \
+    {                                                                                              \
+        static std::shared_ptr<Utils::Logger> logger = Utils::Logger::getLogger(moduleName);       \
+        return logger;                                                                             \
+    }
+
+#define DECLARE_NAMESPACE_LOGGER(namespaceName, className)                                         \
+    static std::shared_ptr<Utils::Logger>& get##namespaceName####className##Logger()               \
+    {                                                                                              \
+        static std::shared_ptr<Utils::Logger> logger =                                             \
+            Utils::Logger::getLogger(#namespaceName "." #className);                               \
+        return logger;                                                                             \
+    }
 
 }  // namespace Utils

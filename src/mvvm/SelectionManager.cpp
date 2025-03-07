@@ -5,13 +5,8 @@
 
 using namespace MVVM;
 
-
-// 创建SelectionManager日志记录器
-static std::shared_ptr<Utils::Logger>& getSelectionManagerLogger()
-{
-    static std::shared_ptr<Utils::Logger> logger = Utils::Logger::getLogger("selectionmanager");
-    return logger;
-}
+// 使用宏声明 SelectionManager 类的 logger
+DECLARE_LOGGER(SelectionManager)
 
 SelectionManager::SelectionManager(MessageBus& messageBus)
     : myMessageBus(messageBus)

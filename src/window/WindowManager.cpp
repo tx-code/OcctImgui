@@ -1,14 +1,10 @@
 #include "WindowManager.h"
-#include "utils/Logger.h"
+#include "../utils/Logger.h"
 #include <GLFW/glfw3.h>
 #include <stdexcept>
 
-// Get the window manager logger
-std::shared_ptr<Utils::Logger>& getWindowManagerLogger()
-{
-    static std::shared_ptr<Utils::Logger> logger = Utils::Logger::getLogger("window.manager");
-    return logger;
-}
+// 使用宏声明 WindowManager 类的 logger
+DECLARE_LOGGER(WindowManager)
 
 WindowManager::WindowManager(int width, int height, const std::string& title)
     : myWidth(width)

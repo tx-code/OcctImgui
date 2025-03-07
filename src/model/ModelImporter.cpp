@@ -24,12 +24,8 @@
 #include <functional>
 
 
-// 创建导入器日志记录器
-static std::shared_ptr<Utils::Logger>& getImporterLogger()
-{
-    static std::shared_ptr<Utils::Logger> logger = Utils::Logger::getLogger("model.importer");
-    return logger;
-}
+// 使用宏声明 ModelImporter 类的 logger
+DECLARE_LOGGER(ModelImporter)
 
 ModelImporter::ModelImporter()
 {
@@ -51,7 +47,7 @@ ModelImporter::ModelImporter()
                                           std::placeholders::_2,
                                           std::placeholders::_3);
 
-    getImporterLogger()->info("ModelImporter initialized with {} supported formats",
+    getModelImporterLogger()->info("ModelImporter initialized with {} supported formats",
                               myImportFunctions.size());
 }
 
@@ -65,12 +61,12 @@ bool ModelImporter::importModel(const std::string& filePath,
     // 如果未指定模型ID，则使用文件名作为ID
     std::string effectiveModelId = modelId.empty() ? getFileName(filePath) : modelId;
 
-    getImporterLogger()->info("Importing model from '{}' with ID '{}'", filePath, effectiveModelId);
+    getModelImporterLogger()->info("Importing model from '{}' with ID '{}'", filePath, effectiveModelId);
 
     // 查找对应的导入函数
     auto it = myImportFunctions.find(extension);
     if (it == myImportFunctions.end()) {
-        getImporterLogger()->error("Unsupported file format: {}", extension);
+        getModelImporterLogger()->error("Unsupported file format: {}", extension);
         return false;
     }
 
@@ -94,14 +90,14 @@ bool ModelImporter::importStepFile(const std::string& filePath,
                                    UnifiedModel& model,
                                    const std::string& modelId)
 {
-    getImporterLogger()->info("Importing STEP file: {}", filePath);
+    getModelImporterLogger()->info("Importing STEP file: {}", filePath);
 
     // 使用OpenCASCADE的STEP读取器
     STEPControl_Reader reader;
     IFSelect_ReturnStatus status = reader.ReadFile(filePath.c_str());
 
     if (status != IFSelect_RetDone) {
-        getImporterLogger()->error("Failed to read STEP file: {}", filePath);
+        getModelImporterLogger()->error("Failed to read STEP file: {}", filePath);
         return false;
     }
 
@@ -110,13 +106,13 @@ bool ModelImporter::importStepFile(const std::string& filePath,
     TopoDS_Shape shape = reader.OneShape();
 
     if (shape.IsNull()) {
-        getImporterLogger()->error("No valid shape in STEP file: {}", filePath);
+        getModelImporterLogger()->error("No valid shape in STEP file: {}", filePath);
         return false;
     }
 
     // 添加形体到模型
     model.addShape(modelId, shape);
-    getImporterLogger()->info("Successfully imported STEP model with ID: {}", modelId);
+    getModelImporterLogger()->info("Successfully imported STEP model with ID: {}", modelId);
 
     return true;
 }
@@ -125,14 +121,14 @@ bool ModelImporter::importStlFile(const std::string& filePath,
                                   UnifiedModel& model,
                                   const std::string& modelId)
 {
-    getImporterLogger()->info("Importing STL file: {}", filePath);
+    getModelImporterLogger()->info("Importing STL file: {}", filePath);
 
     // 使用libigl读取STL文件
     Eigen::MatrixXd vertices;
     Eigen::MatrixXi faces;
 
     if (!igl::read_triangle_mesh(filePath, vertices, faces)) {
-        getImporterLogger()->error("Failed to read STL file: {}", filePath);
+        getModelImporterLogger()->error("Failed to read STL file: {}", filePath);
         return false;
     }
 
@@ -142,7 +138,7 @@ bool ModelImporter::importStlFile(const std::string& filePath,
 
     // 添加网格到模型
     model.addMesh(modelId, vertices, faces, normals);
-    getImporterLogger()->info("Successfully imported STL model with ID: {} ({} vertices, {} faces)",
+    getModelImporterLogger()->info("Successfully imported STL model with ID: {} ({} vertices, {} faces)",
                               modelId,
                               vertices.rows(),
                               faces.rows());
@@ -154,14 +150,14 @@ bool ModelImporter::importObjFile(const std::string& filePath,
                                   UnifiedModel& model,
                                   const std::string& modelId)
 {
-    getImporterLogger()->info("Importing OBJ file: {}", filePath);
+    getModelImporterLogger()->info("Importing OBJ file: {}", filePath);
 
     // 使用libigl读取OBJ文件
     Eigen::MatrixXd vertices;
     Eigen::MatrixXi faces;
 
     if (!igl::readOBJ(filePath, vertices, faces)) {
-        getImporterLogger()->error("Failed to read OBJ file: {}", filePath);
+        getModelImporterLogger()->error("Failed to read OBJ file: {}", filePath);
         return false;
     }
 
@@ -171,7 +167,7 @@ bool ModelImporter::importObjFile(const std::string& filePath,
 
     // 添加网格到模型
     model.addMesh(modelId, vertices, faces, normals);
-    getImporterLogger()->info("Successfully imported OBJ model with ID: {} ({} vertices, {} faces)",
+    getModelImporterLogger()->info("Successfully imported OBJ model with ID: {} ({} vertices, {} faces)",
                               modelId,
                               vertices.rows(),
                               faces.rows());

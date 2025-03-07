@@ -39,12 +39,18 @@
         {
             "name": "default-build",
             "configurePreset": "default",
-            "configuration": "RelWithDebInfo"
+            "configuration": "RelWithDebInfo",
+            "targets": [
+                "OcctImgui"
+            ]
         },
         {
             "name": "release-build",
             "configurePreset": "release",
-            "configuration": "Release"
+            "configuration": "Release",
+            "targets": [
+                "OcctImguiLib"
+            ]
         }
     ]
 }

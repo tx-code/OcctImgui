@@ -7,11 +7,12 @@
  */
 #pragma once
 
+#include "IViewModel.h"
 #include "model/ModelImporter.h"
 #include "model/UnifiedModel.h"
 #include "mvvm/GlobalSettings.h"
 #include "mvvm/Property.h"
-#include "IViewModel.h"
+
 
 #include <AIS_InteractiveContext.hxx>
 #include <AIS_InteractiveObject.hxx>

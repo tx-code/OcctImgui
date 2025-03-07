@@ -47,6 +47,7 @@ add_library(OcctImguiLib STATIC
     src/Application.cpp
     src/GlfwOcctWindow.cpp
     src/utils/Logger.cpp
+    src/utils/LoggerManager.cpp
 )
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
@@ -59,7 +60,7 @@ endif()
 
 target_include_directories(OcctImguiLib
     PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${CMAKE_CURRENT_SOURCE_DIR}/src # Only keep the src directory in the include path
 )
 
 target_link_libraries(OcctImguiLib
@@ -84,6 +85,8 @@ add_executable(OcctImgui
 target_include_directories(OcctImgui
     PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/window
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/input
 )
 
 # Link libraries
@@ -107,6 +110,8 @@ if(OCCTIMGUI_BUILD_TESTING)
         target_include_directories(${TEST_NAME}
             PRIVATE
             ${CMAKE_CURRENT_SOURCE_DIR}/src
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/window
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/input
         )
         target_link_libraries(${TEST_NAME}
             PRIVATE

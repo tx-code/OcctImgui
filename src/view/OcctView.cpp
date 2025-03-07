@@ -14,12 +14,8 @@
 #include <V3d_View.hxx>
 #include <V3d_Viewer.hxx>
 
-// 创建OCCT视图日志记录器 - 使用函数确保安全初始化
-std::shared_ptr<Utils::Logger>& getOcctLogger()
-{
-    static std::shared_ptr<Utils::Logger> logger = Utils::Logger::getLogger("view.occt");
-    return logger;
-}
+// 使用宏声明 OcctView 类的 logger
+DECLARE_LOGGER(OcctView)
 
 // 辅助函数，转换GLFW鼠标按键为OCCT按键
 namespace
@@ -67,13 +63,13 @@ OcctView::OcctView(std::shared_ptr<UnifiedViewModel> viewModel,
     , myMessageBus(messageBus)
     , mySelectionManager(selectionManager)
 {
-    getOcctLogger()->info("Creating view");
+    getOcctViewLogger()->info("Creating view");
     subscribeToEvents();
 }
 
 OcctView::~OcctView()
 {
-    getOcctLogger()->info("Cleaning up view");
+    getOcctViewLogger()->info("Cleaning up view");
 
     // Disconnect all signal connections
     myConnections.disconnectAll();
@@ -84,7 +80,7 @@ OcctView::~OcctView()
 
 void OcctView::cleanup()
 {
-    getOcctLogger()->info("Cleaning up view");
+    getOcctViewLogger()->info("Cleaning up view");
     if (!myView.IsNull()) {
         myView->Remove();
     }
@@ -92,17 +88,17 @@ void OcctView::cleanup()
 
 void OcctView::initialize()
 {
-    LOG_FUNCTION_SCOPE(getOcctLogger(), "initialize");
-    getOcctLogger()->info("Starting initialization");
+    LOG_FUNCTION_SCOPE(getOcctViewLogger(), "initialize");
+    getOcctViewLogger()->info("Starting initialization");
     if (myWindow.IsNull() || myWindow->getGlfwWindow() == nullptr) {
-        getOcctLogger()->error("Initialization failed - invalid window");
+        getOcctViewLogger()->error("Initialization failed - invalid window");
         return;
     }
 
     try {
         // 检查OpenGL上下文
         if (glfwGetCurrentContext() == nullptr) {
-            getOcctLogger()->error("Initialization failed - no current OpenGL context");
+            getOcctViewLogger()->error("Initialization failed - no current OpenGL context");
             return;
         }
 
@@ -110,7 +106,7 @@ void OcctView::initialize()
         Handle(OpenGl_GraphicDriver) aGraphicDriver =
             new OpenGl_GraphicDriver(myWindow->GetDisplay(), Standard_False);
         aGraphicDriver->SetBuffersNoSwap(Standard_True);
-        getOcctLogger()->info("OCCT: OpenGL graphic driver created, BuffersNoSwap=True");
+        getOcctViewLogger()->info("OCCT: OpenGL graphic driver created, BuffersNoSwap=True");
 
         // 创建3D查看器
         Handle(V3d_Viewer) aViewer = myViewModel->getViewer();
@@ -118,28 +114,28 @@ void OcctView::initialize()
         aViewer->SetLightOn();
         aViewer->SetDefaultTypeOfView(V3d_PERSPECTIVE);
         aViewer->ActivateGrid(Aspect_GT_Rectangular, Aspect_GDM_Lines);
-        getOcctLogger()->info("OCCT: V3d_Viewer configured");
+        getOcctViewLogger()->info("OCCT: V3d_Viewer configured");
 
         // 创建视图
         myView = aViewer->CreateView();
         if (myView.IsNull()) {
-            getOcctLogger()->error("OCCT: Failed to create view");
+            getOcctViewLogger()->error("OCCT: Failed to create view");
             return;
         }
 
         myView->SetWindow(myWindow, myWindow->NativeGlContext());
         myView->Window()->DoResize();
         myView->ChangeRenderingParams().ToShowStats = Standard_True;
-        getOcctLogger()->info("OCCT: V3d_View created and configured");
+        getOcctViewLogger()->info("OCCT: V3d_View created and configured");
 
         // 显示视图
         myWindow->Map();
-        getOcctLogger()->info("OCCT: Window mapped");
+        getOcctViewLogger()->info("OCCT: Window mapped");
 
         // 设置视图组件
         setupViewCube();
         setupGrid();
-        getOcctLogger()->info("OCCT: View components setup complete");
+        getOcctViewLogger()->info("OCCT: View components setup complete");
 
         // 应用初始设置
         updateVisibility();
@@ -151,25 +147,25 @@ void OcctView::initialize()
         for (TColStd_IndexedDataMapOfStringString::Iterator aValueIter(aRendInfo);
              aValueIter.More();
              aValueIter.Next()) {
-            getOcctLogger()->info("OCCT OpenGL: {} = {}",
-                                  aValueIter.Key().ToCString(),
-                                  aValueIter.Value().ToCString());
+            getOcctViewLogger()->info("OCCT OpenGL: {} = {}",
+                                      aValueIter.Key().ToCString(),
+                                      aValueIter.Value().ToCString());
         }
 
-        getOcctLogger()->info("OCCT: Initialization complete");
+        getOcctViewLogger()->info("OCCT: Initialization complete");
     }
     catch (const std::exception& e) {
-        getOcctLogger()->error("OCCT: Initialization exception: {}", e.what());
+        getOcctViewLogger()->error("OCCT: Initialization exception: {}", e.what());
     }
     catch (...) {
-        getOcctLogger()->error("OCCT: Unknown exception during initialization");
+        getOcctViewLogger()->error("OCCT: Unknown exception during initialization");
     }
 }
 
 void OcctView::render()
 {
     if (myView.IsNull() || myViewModel->getContext().IsNull()) {
-        getOcctLogger()->warn("OCCT: Render skipped - view or context is null");
+        getOcctViewLogger()->warn("OCCT: Render skipped - view or context is null");
         return;
     }
 
@@ -181,10 +177,10 @@ void OcctView::render()
         FlushViewEvents(myViewModel->getContext(), myView, Standard_True);
     }
     catch (const std::exception& e) {
-        getOcctLogger()->error("OCCT: Render exception: {}", e.what());
+        getOcctViewLogger()->error("OCCT: Render exception: {}", e.what());
     }
     catch (...) {
-        getOcctLogger()->error("OCCT: Unknown exception during render");
+        getOcctViewLogger()->error("OCCT: Unknown exception during render");
     }
 }
 
@@ -200,7 +196,7 @@ void OcctView::onMouseMove(int posX, int posY)
 
 void OcctView::onMouseButton(int button, int action, int mods)
 {
-    auto logger = getOcctLogger();
+    auto logger = getOcctViewLogger();
     logger->debug("Mouse button: {}, action: {}, mods: {}", button, action, mods);
 
     if (myView.IsNull()) {
@@ -219,7 +215,7 @@ void OcctView::onMouseButton(int button, int action, int mods)
         }
         // Right click to clear selection
         else if (button == GLFW_MOUSE_BUTTON_RIGHT && (mods & GLFW_MOD_CONTROL) == 0) {
-            logger->info("Clearing selection");
+            getOcctViewLogger()->info("Clearing selection");
             mySelectionManager.clearSelection();
             myViewModel->getContext()->ClearSelected(Standard_True);
         }
@@ -326,7 +322,7 @@ void OcctView::updateVisibility()
 
 void OcctView::handleSelection(int x, int y)
 {
-    auto logger = getOcctLogger();
+    auto logger = getOcctViewLogger();
     logger->info("Handling selection at position ({}, {})", x, y);
 
     // Move to the position and perform selection
@@ -368,7 +364,7 @@ void OcctView::handleSelection(int x, int y)
 
 void OcctView::subscribeToEvents()
 {
-    getOcctLogger()->info("Subscribing to events");
+    getOcctViewLogger()->info("Subscribing to events");
 
     // Subscribe to model changed events via MessageBus
     myMessageBus.subscribe(MVVM::MessageBus::MessageType::ModelChanged,
@@ -386,8 +382,8 @@ void OcctView::subscribeToEvents()
             // Get the selection info
             try {
                 const auto& selectionInfo = std::any_cast<MVVM::SelectionInfo>(message.data);
-                getOcctLogger()->info("Selection changed: {} objects selected",
-                                      selectionInfo.selectedObjects.size());
+                getOcctViewLogger()->info("Selection changed: {} objects selected",
+                                          selectionInfo.selectedObjects.size());
 
                 // Highlight selected objects in the view
                 if (!myView.IsNull()) {
@@ -395,7 +391,7 @@ void OcctView::subscribeToEvents()
                 }
             }
             catch (const std::bad_any_cast& e) {
-                getOcctLogger()->error("Failed to cast selection info: {}", e.what());
+                getOcctViewLogger()->error("Failed to cast selection info: {}", e.what());
             }
         });
 
@@ -439,7 +435,7 @@ void OcctView::subscribeToEvents()
 // IView 接口实现
 void OcctView::initialize(GLFWwindow* window)
 {
-    getOcctLogger()->info("OcctView: Initializing with GLFW window");
+    getOcctViewLogger()->info("OcctView: Initializing with GLFW window");
     // 调用原始的初始化方法
     initialize();
 }
@@ -452,7 +448,7 @@ void OcctView::newFrame()
 
 void OcctView::shutdown()
 {
-    getOcctLogger()->info("OcctView: Shutting down");
+    getOcctViewLogger()->info("OcctView: Shutting down");
     cleanup();
 }
 

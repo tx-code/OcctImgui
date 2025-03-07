@@ -13,22 +13,20 @@
 
 // Include manager headers
 #include "view/ViewManager.h"
+#include "viewmodel/UnifiedViewModel.h"
 #include "viewmodel/ViewModelManager.h"
+#include <stdexcept>
 
+
+// 使用宏声明 Application 类的 logger
+DECLARE_LOGGER(Application)
 
 // 声明ModelFactory初始化函数
 void InitializeModelFactory(ModelFactory& factory);
 
-// 创建应用程序日志记录器 - 使用函数确保安全初始化
-std::shared_ptr<Utils::Logger>& getAppLogger()
-{
-    static std::shared_ptr<Utils::Logger> logger = Utils::Logger::getLogger("app");
-    return logger;
-}
-
 Application::Application()
     : myIsRunning(false)
-    , myLogger(getAppLogger())
+    , myLogger(getApplicationLogger())
 {
     myLogger->info("Application instance created");
     myBootstrapper = std::make_unique<ApplicationBootstrapper>();

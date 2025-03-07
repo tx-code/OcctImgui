@@ -2,12 +2,8 @@
 #include "../utils/Logger.h"
 #include <GLFW/glfw3.h>
 
-// Get the input manager logger
-std::shared_ptr<Utils::Logger>& getInputManagerLogger()
-{
-    static std::shared_ptr<Utils::Logger> logger = Utils::Logger::getLogger("input.manager");
-    return logger;
-}
+// 使用宏声明 InputManager 类的 logger
+DECLARE_LOGGER(InputManager)
 
 InputManager::InputManager()
     : myWindow(nullptr)

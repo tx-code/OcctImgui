@@ -16,12 +16,8 @@
 #include <iostream>
 #include <random>
 
-// 创建ViewModel日志记录器
-static std::shared_ptr<Utils::Logger>& getViewModelLogger()
-{
-    static std::shared_ptr<Utils::Logger> logger = Utils::Logger::getLogger("viewmodel");
-    return logger;
-}
+// 使用宏声明 UnifiedViewModel 类的 logger
+DECLARE_LOGGER(UnifiedViewModel)
 
 // Constructor
 UnifiedViewModel::UnifiedViewModel(std::shared_ptr<UnifiedModel> model,
@@ -103,11 +99,11 @@ void UnifiedViewModel::createMesh(/* Mesh creation parameters */)
 
 bool UnifiedViewModel::importModel(const std::string& filePath, const std::string& modelId)
 {
-    LOG_FUNCTION_SCOPE(getViewModelLogger(), "importModel");
-    getViewModelLogger()->info("Importing model from '{}'", filePath);
+    LOG_FUNCTION_SCOPE(getUnifiedViewModelLogger(), "importModel");
+    getUnifiedViewModelLogger()->info("Importing model from '{}'", filePath);
 
     if (!myModelImporter) {
-        getViewModelLogger()->error("ModelImporter is not available");
+        getUnifiedViewModelLogger()->error("ModelImporter is not available");
         return false;
     }
 
@@ -115,10 +111,10 @@ bool UnifiedViewModel::importModel(const std::string& filePath, const std::strin
     bool result = myModelImporter->importModel(filePath, *myModel, modelId);
 
     if (result) {
-        getViewModelLogger()->info("Model imported successfully");
+        getUnifiedViewModelLogger()->info("Model imported successfully");
     }
     else {
-        getViewModelLogger()->error("Failed to import model");
+        getUnifiedViewModelLogger()->error("Failed to import model");
     }
 
     return result;

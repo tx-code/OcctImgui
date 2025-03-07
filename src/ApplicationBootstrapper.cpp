@@ -10,12 +10,8 @@
 #include <OpenGl_GraphicDriver.hxx>
 #include <V3d_Viewer.hxx>
 
-// Get the bootstrapper logger
-std::shared_ptr<Utils::Logger>& getBootstrapperLogger()
-{
-    static std::shared_ptr<Utils::Logger> logger = Utils::Logger::getLogger("bootstrapper");
-    return logger;
-}
+// 使用宏声明 ApplicationBootstrapper 类的 logger
+DECLARE_LOGGER(ApplicationBootstrapper)
 
 // Declare ModelFactory initialization function
 void InitializeModelFactory(ModelFactory& factory);
@@ -25,7 +21,7 @@ ApplicationBootstrapper::ApplicationBootstrapper()
     , myViewModelId("MainViewModel")
     , myImGuiViewId("ImGuiView")
     , myOcctViewId("OcctView")
-    , myLogger(getBootstrapperLogger())
+    , myLogger(getApplicationBootstrapperLogger())
 {
     myLogger->info("ApplicationBootstrapper created");
 
