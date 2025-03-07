@@ -200,11 +200,12 @@ void SelectionManager::setSelectionType(SelectionInfo::SelectionType type)
 
 const SelectionInfo& SelectionManager::getCurrentSelection() const
 {
-    auto logger = getSelectionManagerLogger();
-    logger->debug("Getting current selection: {} objects, {} subfeature entries",
-                  mySelectionInfo.selectedObjects.size(),
-                  mySelectionInfo.subFeatures.size());
     return mySelectionInfo;
+}
+
+bool SelectionManager::hasSelection() const
+{
+    return !mySelectionInfo.selectedObjects.empty();
 }
 
 void SelectionManager::notifySelectionChanged()

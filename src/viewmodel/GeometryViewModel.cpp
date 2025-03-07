@@ -124,61 +124,53 @@ bool GeometryViewModel::importModel(const std::string& filePath, const std::stri
 // IViewModel interface implementation
 void GeometryViewModel::deleteSelectedObjects()
 {
-    std::vector<std::string> objectsToDelete(mySelectedObjects.begin(), mySelectedObjects.end());
+    // Get selected objects from SelectionManager
+    const auto& selectionInfo = MVVM::SelectionManager::getInstance().getCurrentSelection();
+    std::vector<std::string> objectsToDelete;
 
+    // Extract object IDs from the selection
+    for (const auto& obj : selectionInfo.selectedObjects) {
+        auto it = myObjectToIdMap.find(obj);
+        if (it != myObjectToIdMap.end()) {
+            objectsToDelete.push_back(it->second);
+        }
+    }
+
+    // Delete the objects
     for (const std::string& id : objectsToDelete) {
         myModel->removeEntity(id);
     }
 
-    mySelectedObjects.clear();
-}
-
-bool GeometryViewModel::hasSelection() const
-{
-    return !mySelectedObjects.empty();
-}
-
-std::vector<std::string> GeometryViewModel::getSelectedObjects() const
-{
-    return std::vector<std::string>(mySelectedObjects.begin(), mySelectedObjects.end());
-}
-
-void GeometryViewModel::processSelection(const Handle(AIS_InteractiveObject) & obj, bool isSelected)
-{
-    auto it = myObjectToIdMap.find(obj);
-    if (it != myObjectToIdMap.end()) {
-        if (isSelected) {
-            mySelectedObjects.insert(it->second);
-        }
-        else {
-            mySelectedObjects.erase(it->second);
-        }
-    }
-}
-
-void GeometryViewModel::clearSelection()
-{
-    mySelectedObjects.clear();
-    myContext->ClearSelected(Standard_True);
-    // 不再需要更新选择属性
+    // Clear the selection
+    MVVM::SelectionManager::getInstance().clearSelection();
 }
 
 // Attribute access and modification
 void GeometryViewModel::setSelectedColor(const Quantity_Color& color)
 {
-    for (const std::string& id : mySelectedObjects) {
-        myModel->setColor(id, color);
+    // Get selected objects from SelectionManager
+    auto selectedObjects =
+        MVVM::SelectionManager::getInstance().getCurrentSelection().selectedObjects;
+
+    for (const auto& obj : selectedObjects) {
+        auto it = myObjectToIdMap.find(obj);
+        if (it != myObjectToIdMap.end()) {
+            myModel->setColor(it->second, color);
+        }
     }
 }
 
 Quantity_Color GeometryViewModel::getSelectedColor() const
 {
-    if (mySelectedObjects.empty()) {
+    auto selectedObjects =
+        MVVM::SelectionManager::getInstance().getCurrentSelection().selectedObjects;
+
+    if (selectedObjects.empty()) {
         return Quantity_Color(0.8, 0.8, 0.8, Quantity_TOC_RGB);  // Default gray
     }
 
     // Return color of the first selected object
-    return myModel->getColor(*mySelectedObjects.begin());
+    return myModel->getColor(myObjectToIdMap.at(selectedObjects[0]));
 }
 
 // Private methods

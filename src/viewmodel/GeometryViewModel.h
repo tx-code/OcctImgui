@@ -12,7 +12,7 @@
 #include "model/ModelImporter.h"
 #include "mvvm/GlobalSettings.h"
 #include "mvvm/Property.h"
-
+#include "mvvm/SelectionManager.h"
 
 #include <AIS_InteractiveContext.hxx>
 #include <AIS_InteractiveObject.hxx>
@@ -87,30 +87,6 @@ public:
      * @brief Deletes the currently selected objects
      */
     void deleteSelectedObjects() override;
-
-    /**
-     * @brief Checks if there are any selected objects
-     * @return True if there are selected objects, false otherwise
-     */
-    bool hasSelection() const override;
-
-    /**
-     * @brief Gets the IDs of the currently selected objects
-     * @return Vector of selected object IDs
-     */
-    std::vector<std::string> getSelectedObjects() const override;
-
-    /**
-     * @brief Processes selection/deselection of an interactive object
-     * @param obj The interactive object that was selected or deselected
-     * @param isSelected True if the object was selected, false if deselected
-     */
-    void processSelection(const Handle(AIS_InteractiveObject) & obj, bool isSelected) override;
-
-    /**
-     * @brief Clears the current selection
-     */
-    void clearSelection() override;
 
     /**
      * @brief Gets the OCCT interactive context
@@ -191,9 +167,6 @@ private:
 
     /** The OCCT interactive context */
     Handle(AIS_InteractiveContext) myContext;
-
-    /** Set of selected object IDs */
-    std::set<std::string> mySelectedObjects;
 
     /** Reference to the global settings */
     MVVM::GlobalSettings& myGlobalSettings;

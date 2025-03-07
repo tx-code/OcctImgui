@@ -158,7 +158,10 @@ void ImGuiView::renderMainMenu()
         }
 
         if (ImGui::BeginMenu("Edit")) {
-            if (ImGui::MenuItem("Delete Selected", "Delete", false, myViewModel->hasSelection())) {
+            if (ImGui::MenuItem("Delete Selected",
+                                "Delete",
+                                false,
+                                MVVM::SelectionManager::getInstance().hasSelection())) {
                 executeDeleteSelected();
             }
             ImGui::EndMenu();
@@ -251,9 +254,7 @@ void ImGuiView::renderGeometryProperties()
     if (!GeometryViewModel)
         return;
 
-    if (GeometryViewModel->hasSelection()) {
-        ImGui::Text("Selected objects: %zu", GeometryViewModel->getSelectedObjects().size());
-
+    if (MVVM::SelectionManager::getInstance().hasSelection()) {
         // 显示颜色选择器
         Quantity_Color currentColor = GeometryViewModel->getSelectedColor();
         float color[3] = {static_cast<float>(currentColor.Red()),
@@ -416,7 +417,7 @@ void ImGuiView::executeCreateMesh()
 
 void ImGuiView::executeDeleteSelected()
 {
-    if (myViewModel->hasSelection()) {
+    if (MVVM::SelectionManager::getInstance().hasSelection()) {
         // 使用命令模式删除选中对象
         Commands::DeleteSelectedCommand deleteCmd(myViewModel);
         deleteCmd.execute();

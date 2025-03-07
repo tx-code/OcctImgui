@@ -351,9 +351,6 @@ void OcctView::handleSelection(int x, int y)
 
         // Add to selection manager
         MVVM::SelectionManager::getInstance().addToSelection(obj, objectId);
-
-        // Also process in view model if needed
-        myViewModel->processSelection(obj, true);
     }
 }
 

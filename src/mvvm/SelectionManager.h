@@ -41,6 +41,9 @@ public:
     // Get current selection
     const SelectionInfo& getCurrentSelection() const;
 
+    // Check if there is any selection
+    bool hasSelection() const;
+
 private:
     // 私有构造函数
     SelectionManager();
