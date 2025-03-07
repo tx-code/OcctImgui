@@ -107,17 +107,6 @@ public:
     }
 
     /**
-     * @brief Property for the display mode
-     *
-     * Values:
-     * - 0: Shaded
-     * - 1: Wireframe
-     * - 2: Vertices
-     * - etc.
-     */
-    MVVM::Property<int> displayMode {0};
-
-    /**
      * @brief Sets the color of the selected objects
      * @param color The color to set
      */

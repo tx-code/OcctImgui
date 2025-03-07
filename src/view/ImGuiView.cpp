@@ -97,6 +97,8 @@ void ImGuiView::render()
     // 渲染工具栏
     renderToolbar();
 
+    popupContextMenu();
+
     // 渲染对象属性面板
     if (showObjectProperties) {
         renderObjectProperties();
@@ -248,11 +250,29 @@ void ImGuiView::renderObjectProperties()
     ImGui::End();
 }
 
+void ImGuiView::popupContextMenu()
+{
+    if (!wantCaptureMouse() && ImGui::IsMouseClicked(ImGuiMouseButton_Right)) {
+        ImGui::OpenPopup("OcctView Context Menu");
+    }
+
+    // FIXME handle the mouse event
+    if (ImGui::BeginPopup("OcctView Context Menu")) {
+        // TODO more globalSettings related items
+        if (ImGui::MenuItem("Clear Selection")) {}
+
+        ImGui::EndPopup();
+    }
+}
+
 void ImGuiView::renderGeometryProperties()
 {
     auto GeometryViewModel = getGeometryViewModel();
     if (!GeometryViewModel)
         return;
+
+    // 显示全局设置
+    auto& globalSettings = GeometryViewModel->getGlobalSettings();
 
     if (MVVM::SelectionManager::getInstance().hasSelection()) {
         // 显示颜色选择器
@@ -268,19 +288,16 @@ void ImGuiView::renderGeometryProperties()
         }
 
         // 显示显示模式选择
-        int displayMode = GeometryViewModel->displayMode.get();
+        int displayMode = globalSettings.displayMode.get();
         const char* displayModes[] = {"Shaded", "Wireframe", "Vertices"};
 
         if (ImGui::Combo("Display Mode", &displayMode, displayModes, IM_ARRAYSIZE(displayModes))) {
-            GeometryViewModel->displayMode = displayMode;
+            globalSettings.displayMode = displayMode;
         }
     }
     else {
         ImGui::Text("No objects selected");
     }
-
-    // 显示全局设置
-    auto& globalSettings = GeometryViewModel->getGlobalSettings();
 
     bool isGridVisible = globalSettings.isGridVisible.get();
     if (ImGui::Checkbox("Show Grid", &isGridVisible)) {

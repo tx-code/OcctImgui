@@ -210,6 +210,7 @@ void OcctView::onMouseButton(int button, int action, int mods)
         }
         // Right click to clear selection
         else if (button == GLFW_MOUSE_BUTTON_RIGHT && (mods & GLFW_MOD_CONTROL) == 0) {
+            // Popup a context menu
             getOcctViewLogger()->info("Clearing selection");
             MVVM::SelectionManager::getInstance().clearSelection();
             myViewModel->getContext()->ClearSelected(Standard_True);
@@ -294,18 +295,8 @@ void OcctView::updateVisibility()
     }
 
     // 更新显示模式
-    int displayMode = myViewModel->displayMode.get();
-    switch (displayMode) {
-        case 0:  // Shaded
-            myViewModel->getContext()->SetDisplayMode(AIS_Shaded, Standard_True);
-            break;
-        case 1:  // Wireframe
-            myViewModel->getContext()->SetDisplayMode(AIS_WireFrame, Standard_True);
-            break;
-        case 2:  // Points
-            // 需要其他处理...
-            break;
-    }
+    int displayMode = globalSettings.displayMode.get();
+    myViewModel->getContext()->SetDisplayMode(displayMode, Standard_True);
 
     myViewModel->getContext()->UpdateCurrentViewer();
 
@@ -419,7 +410,7 @@ void OcctView::subscribeToEvents()
 
     // Connect to display mode property
     auto displayConn =
-        myViewModel->displayMode.valueChanged.connect([this](const int&, const int& mode) {
+        globalSettings.displayMode.valueChanged.connect([this](const int&, const int& mode) {
             // Update display mode
             if (!myView.IsNull()) {
                 myView->Invalidate();

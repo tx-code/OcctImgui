@@ -55,6 +55,7 @@ private:
     void renderObjectProperties();
     void renderObjectTree();
     void renderStatusBar();
+    void popupContextMenu();
 
     // 特定类型视图模型的UI渲染
     void renderGeometryProperties();

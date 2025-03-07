@@ -40,11 +40,6 @@ GeometryViewModel::GeometryViewModel(std::shared_ptr<GeometryModel> model,
     for (const std::string& id : model->getAllEntityIds()) {
         updatePresentation(id);
     }
-
-    // Bind display mode property to global settings
-    // Create a scoped connection and track it
-    auto connection = displayMode.bindTo(globalSettings.displayMode);
-    connections.track(connection);
 }
 
 // Command - CAD geometry operations
@@ -223,7 +218,7 @@ Handle(AIS_InteractiveObject)
         aisShape->SetColor(data->color);
 
         // Set display mode based on displayMode
-        switch (displayMode.get()) {
+        switch (myGlobalSettings.displayMode.get()) {
             case 0:  // Shaded
                 aisShape->SetDisplayMode(AIS_Shaded);
                 break;

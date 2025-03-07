@@ -31,6 +31,8 @@ public:
     Property<bool> isViewCubeVisible {true};
 
     // Display settings
+    // The Current default global display mode,
+    // Every object can override this default display mode
     Property<int> displayMode {0};  // 0: Shaded, 1: Wireframe, 2: Vertices, etc.
 
     // View settings
