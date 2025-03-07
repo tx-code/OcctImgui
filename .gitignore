@@ -16,3 +16,6 @@ tags
 *.slo
 *.lo
 *.o
+
+# CMake
+CMakeUserPresets.json
