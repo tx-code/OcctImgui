@@ -1,9 +1,9 @@
 #include "ApplicationBootstrapper.h"
-#include "model/UnifiedModel.h"
+#include "model/GeometryModel.h"
 #include "utils/Logger.h"
 #include "view/ImGuiView.h"
 #include "view/OcctView.h"
-#include "viewmodel/UnifiedViewModel.h"
+#include "viewmodel/GeometryViewModel.h"
 
 
 #include <AIS_InteractiveContext.hxx>
@@ -138,7 +138,7 @@ bool ApplicationBootstrapper::initializeModel()
 
     try {
         // Create the main model
-        auto model = myModelManager->createModel<UnifiedModel>(myModelId);
+        auto model = myModelManager->createModel<GeometryModel>(myModelId);
         if (!model) {
             myLogger->error("Failed to create model");
             return false;
@@ -181,9 +181,9 @@ bool ApplicationBootstrapper::initializeViewModel()
 
         // Create the main viewmodel
         auto viewModel =
-            myViewModelManager->createViewModel<UnifiedViewModel, UnifiedModel>(myViewModelId,
-                                                                                myModelId,
-                                                                                aContext);
+            myViewModelManager->createViewModel<GeometryViewModel, GeometryModel>(myViewModelId,
+                                                                                  myModelId,
+                                                                                  aContext);
 
         if (!viewModel) {
             myLogger->error("Failed to create viewmodel");
@@ -217,7 +217,8 @@ bool ApplicationBootstrapper::initializeViews()
         }
 
         // Initialize ImGui view
-        myViewManager->initializeView(myImGuiViewId, myWindowManager->getOcctWindow()->getGlfwWindow());
+        myViewManager->initializeView(myImGuiViewId,
+                                      myWindowManager->getOcctWindow()->getGlfwWindow());
 
         // Create OCCT view
         myLogger->info("Creating OcctView");

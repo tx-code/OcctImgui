@@ -48,11 +48,11 @@ ModelImporter::ModelImporter()
                                           std::placeholders::_3);
 
     getModelImporterLogger()->info("ModelImporter initialized with {} supported formats",
-                              myImportFunctions.size());
+                                   myImportFunctions.size());
 }
 
 bool ModelImporter::importModel(const std::string& filePath,
-                                UnifiedModel& model,
+                                GeometryModel& model,
                                 const std::string& modelId)
 {
     // 获取文件扩展名（转为小写）
@@ -61,7 +61,9 @@ bool ModelImporter::importModel(const std::string& filePath,
     // 如果未指定模型ID，则使用文件名作为ID
     std::string effectiveModelId = modelId.empty() ? getFileName(filePath) : modelId;
 
-    getModelImporterLogger()->info("Importing model from '{}' with ID '{}'", filePath, effectiveModelId);
+    getModelImporterLogger()->info("Importing model from '{}' with ID '{}'",
+                                   filePath,
+                                   effectiveModelId);
 
     // 查找对应的导入函数
     auto it = myImportFunctions.find(extension);
@@ -87,7 +89,7 @@ std::vector<std::string> ModelImporter::getSupportedExtensions() const
 }
 
 bool ModelImporter::importStepFile(const std::string& filePath,
-                                   UnifiedModel& model,
+                                   GeometryModel& model,
                                    const std::string& modelId)
 {
     getModelImporterLogger()->info("Importing STEP file: {}", filePath);
@@ -118,7 +120,7 @@ bool ModelImporter::importStepFile(const std::string& filePath,
 }
 
 bool ModelImporter::importStlFile(const std::string& filePath,
-                                  UnifiedModel& model,
+                                  GeometryModel& model,
                                   const std::string& modelId)
 {
     getModelImporterLogger()->info("Importing STL file: {}", filePath);
@@ -138,16 +140,17 @@ bool ModelImporter::importStlFile(const std::string& filePath,
 
     // 添加网格到模型
     model.addMesh(modelId, vertices, faces, normals);
-    getModelImporterLogger()->info("Successfully imported STL model with ID: {} ({} vertices, {} faces)",
-                              modelId,
-                              vertices.rows(),
-                              faces.rows());
+    getModelImporterLogger()->info(
+        "Successfully imported STL model with ID: {} ({} vertices, {} faces)",
+        modelId,
+        vertices.rows(),
+        faces.rows());
 
     return true;
 }
 
 bool ModelImporter::importObjFile(const std::string& filePath,
-                                  UnifiedModel& model,
+                                  GeometryModel& model,
                                   const std::string& modelId)
 {
     getModelImporterLogger()->info("Importing OBJ file: {}", filePath);
@@ -167,10 +170,11 @@ bool ModelImporter::importObjFile(const std::string& filePath,
 
     // 添加网格到模型
     model.addMesh(modelId, vertices, faces, normals);
-    getModelImporterLogger()->info("Successfully imported OBJ model with ID: {} ({} vertices, {} faces)",
-                              modelId,
-                              vertices.rows(),
-                              faces.rows());
+    getModelImporterLogger()->info(
+        "Successfully imported OBJ model with ID: {} ({} vertices, {} faces)",
+        modelId,
+        vertices.rows(),
+        faces.rows());
 
     return true;
 }

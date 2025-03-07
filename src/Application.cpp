@@ -13,7 +13,7 @@
 
 // Include manager headers
 #include "view/ViewManager.h"
-#include "viewmodel/UnifiedViewModel.h"
+#include "viewmodel/GeometryViewModel.h"
 #include "viewmodel/ViewModelManager.h"
 #include <stdexcept>
 

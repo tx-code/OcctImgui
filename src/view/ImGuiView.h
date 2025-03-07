@@ -2,13 +2,14 @@
 
 #include "IView.h"
 #include "mvvm/MessageBus.h"
+#include "viewmodel/GeometryViewModel.h"
 #include "viewmodel/IViewModel.h"
-#include "viewmodel/UnifiedViewModel.h"
 #include <functional>
 #include <imgui.h>
 #include <map>
 #include <memory>
 #include <string>
+
 
 
 struct GLFWwindow;
@@ -46,8 +47,8 @@ private:
     bool showDemoWindow = false;
     std::string mySelectionMessage;
 
-    // 获取UnifiedViewModel的辅助方法
-    std::shared_ptr<UnifiedViewModel> getUnifiedViewModel() const;
+    // 获取GeometryViewModel的辅助方法
+    std::shared_ptr<GeometryViewModel> getGeometryViewModel() const;
 
     // 各UI组件的渲染方法
     void renderMainMenu();

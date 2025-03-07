@@ -26,9 +26,9 @@ ImGuiView::~ImGuiView()
     myConnections.disconnectAll();
 }
 
-std::shared_ptr<UnifiedViewModel> ImGuiView::getUnifiedViewModel() const
+std::shared_ptr<GeometryViewModel> ImGuiView::getGeometryViewModel() const
 {
-    return std::dynamic_pointer_cast<UnifiedViewModel>(myViewModel);
+    return std::dynamic_pointer_cast<GeometryViewModel>(myViewModel);
 }
 
 void ImGuiView::initialize(GLFWwindow* window)
@@ -174,9 +174,9 @@ void ImGuiView::renderMainMenu()
         }
 
         if (ImGui::BeginMenu("Create")) {
-            auto unifiedViewModel = getUnifiedViewModel();
+            auto GeometryViewModel = getGeometryViewModel();
 
-            if (unifiedViewModel) {
+            if (GeometryViewModel) {
                 if (ImGui::MenuItem("Box")) {
                     executeCreateBox();
                 }
@@ -202,9 +202,9 @@ void ImGuiView::renderToolbar()
                  ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove
                      | ImGuiWindowFlags_NoScrollbar);
 
-    auto unifiedViewModel = getUnifiedViewModel();
+    auto GeometryViewModel = getGeometryViewModel();
 
-    if (unifiedViewModel) {
+    if (GeometryViewModel) {
         if (ImGui::Button("Import")) {
             executeImportModel();
         }
@@ -234,9 +234,9 @@ void ImGuiView::renderObjectProperties()
 {
     ImGui::Begin("Object Properties", &showObjectProperties);
 
-    auto unifiedViewModel = getUnifiedViewModel();
+    auto GeometryViewModel = getGeometryViewModel();
 
-    if (unifiedViewModel) {
+    if (GeometryViewModel) {
         renderGeometryProperties();
     }
     else {
@@ -248,15 +248,15 @@ void ImGuiView::renderObjectProperties()
 
 void ImGuiView::renderGeometryProperties()
 {
-    auto unifiedViewModel = getUnifiedViewModel();
-    if (!unifiedViewModel)
+    auto GeometryViewModel = getGeometryViewModel();
+    if (!GeometryViewModel)
         return;
 
-    if (unifiedViewModel->hasSelection()) {
-        ImGui::Text("Selected objects: %zu", unifiedViewModel->getSelectedObjects().size());
+    if (GeometryViewModel->hasSelection()) {
+        ImGui::Text("Selected objects: %zu", GeometryViewModel->getSelectedObjects().size());
 
         // 显示颜色选择器
-        Quantity_Color currentColor = unifiedViewModel->getSelectedColor();
+        Quantity_Color currentColor = GeometryViewModel->getSelectedColor();
         float color[3] = {static_cast<float>(currentColor.Red()),
                           static_cast<float>(currentColor.Green()),
                           static_cast<float>(currentColor.Blue())};
@@ -264,15 +264,15 @@ void ImGuiView::renderGeometryProperties()
         if (ImGui::ColorEdit3("Color", color)) {
             // 更新颜色
             Quantity_Color newColor(color[0], color[1], color[2], Quantity_TOC_RGB);
-            unifiedViewModel->setSelectedColor(newColor);
+            GeometryViewModel->setSelectedColor(newColor);
         }
 
         // 显示显示模式选择
-        int displayMode = unifiedViewModel->displayMode.get();
+        int displayMode = GeometryViewModel->displayMode.get();
         const char* displayModes[] = {"Shaded", "Wireframe", "Vertices"};
 
         if (ImGui::Combo("Display Mode", &displayMode, displayModes, IM_ARRAYSIZE(displayModes))) {
-            unifiedViewModel->displayMode = displayMode;
+            GeometryViewModel->displayMode = displayMode;
         }
     }
     else {
@@ -280,7 +280,7 @@ void ImGuiView::renderGeometryProperties()
     }
 
     // 显示全局设置
-    auto& globalSettings = unifiedViewModel->getGlobalSettings();
+    auto& globalSettings = GeometryViewModel->getGlobalSettings();
 
     bool isGridVisible = globalSettings.isGridVisible.get();
     if (ImGui::Checkbox("Show Grid", &isGridVisible)) {
@@ -297,9 +297,9 @@ void ImGuiView::renderObjectTree()
 {
     ImGui::Begin("Objects", &showObjectTree);
 
-    auto unifiedViewModel = getUnifiedViewModel();
+    auto GeometryViewModel = getGeometryViewModel();
 
-    if (unifiedViewModel) {
+    if (GeometryViewModel) {
         renderGeometryTree();
     }
     else {
@@ -311,11 +311,11 @@ void ImGuiView::renderObjectTree()
 
 void ImGuiView::renderGeometryTree()
 {
-    auto unifiedViewModel = getUnifiedViewModel();
-    if (!unifiedViewModel)
+    auto GeometryViewModel = getGeometryViewModel();
+    if (!GeometryViewModel)
         return;
 
-    auto model = unifiedViewModel->getUnifiedModel();
+    auto model = GeometryViewModel->getGeometryModel();
     if (!model) {
         ImGui::Text("No model available");
         return;
@@ -330,14 +330,14 @@ void ImGuiView::renderGeometryTree()
 #if 0
     for (const auto& id : entityIds) {
         try {
-            UnifiedModel::GeometryType type = model->getGeometryType(id);
+            GeometryModel::GeometryType type = model->getGeometryType(id);
             std::string typeStr;
 
             switch (type) {
-                case UnifiedModel::GeometryType::SHAPE:
+                case GeometryModel::GeometryType::SHAPE:
                     typeStr = "CAD";
                     break;
-                case UnifiedModel::GeometryType::MESH:
+                case GeometryModel::GeometryType::MESH:
                     typeStr = "Mesh";
                     break;
                 default:
@@ -345,10 +345,10 @@ void ImGuiView::renderGeometryTree()
             }
 
             std::string label = id + " [" + typeStr + "]";
-            bool isSelected = std::find(unifiedViewModel->getSelectedObjects().begin(),
-                                        unifiedViewModel->getSelectedObjects().end(),
+            bool isSelected = std::find(GeometryViewModel->getSelectedObjects().begin(),
+                                        GeometryViewModel->getSelectedObjects().end(),
                                         id)
-                != unifiedViewModel->getSelectedObjects().end();
+                != GeometryViewModel->getSelectedObjects().end();
 
             if (ImGui::Selectable(label.c_str(), isSelected)) {
                 // TODO: 处理选择
@@ -384,35 +384,35 @@ void ImGuiView::renderStatusBar()
 
 void ImGuiView::executeCreateBox()
 {
-    auto unifiedViewModel = getUnifiedViewModel();
-    if (!unifiedViewModel)
+    auto GeometryViewModel = getGeometryViewModel();
+    if (!GeometryViewModel)
         return;
 
     // 使用命令模式创建盒子
-    Commands::CreateBoxCommand boxCmd(unifiedViewModel, gp_Pnt(0, 0, 0), 10, 10, 10);
+    Commands::CreateBoxCommand boxCmd(GeometryViewModel, gp_Pnt(0, 0, 0), 10, 10, 10);
     boxCmd.execute();
 }
 
 void ImGuiView::executeCreateCone()
 {
-    auto unifiedViewModel = getUnifiedViewModel();
-    if (!unifiedViewModel)
+    auto GeometryViewModel = getGeometryViewModel();
+    if (!GeometryViewModel)
         return;
 
     // 使用命令模式创建圆锥
-    Commands::CreateConeCommand coneCmd(unifiedViewModel, gp_Pnt(0, 0, 0), 5, 10);
+    Commands::CreateConeCommand coneCmd(GeometryViewModel, gp_Pnt(0, 0, 0), 5, 10);
     coneCmd.execute();
 }
 
 void ImGuiView::executeCreateMesh()
 {
-    auto unifiedViewModel = getUnifiedViewModel();
-    if (!unifiedViewModel)
+    auto GeometryViewModel = getGeometryViewModel();
+    if (!GeometryViewModel)
         return;
 
     // 创建一个示例网格
-    // 注意：这个方法需要在UnifiedViewModel中实现
-    unifiedViewModel->createMesh();
+    // 注意：这个方法需要在GeometryViewModel中实现
+    GeometryViewModel->createMesh();
 }
 
 void ImGuiView::executeDeleteSelected()
@@ -443,17 +443,17 @@ void ImGuiView::executeImportModel()
     if (result == NFD_OKAY) {
         getImGuiViewLogger()->info("Selected file: {}", outPath);
 
-        // 获取UnifiedViewModel
-        auto unifiedViewModel = getUnifiedViewModel();
-        if (!unifiedViewModel) {
-            getImGuiViewLogger()->error("Failed to get UnifiedViewModel");
+        // 获取GeometryViewModel
+        auto GeometryViewModel = getGeometryViewModel();
+        if (!GeometryViewModel) {
+            getImGuiViewLogger()->error("Failed to get GeometryViewModel");
             NFD_FreePath(outPath);
             NFD_Quit();
             return;
         }
 
         // 创建并执行导入模型命令
-        Commands::ImportModelCommand importCmd(unifiedViewModel, outPath);
+        Commands::ImportModelCommand importCmd(GeometryViewModel, outPath);
         importCmd.execute();
 
         // 释放路径内存

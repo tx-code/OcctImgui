@@ -3,7 +3,7 @@
 
 // Include your model headers here
 // #include "model/IModel.cpp"
-// #include "model/UnifiedModel.cpp"
+// #include "model/GeometryModel.cpp"
 
 // Simple test case
 BOOST_AUTO_TEST_CASE(simple_test)

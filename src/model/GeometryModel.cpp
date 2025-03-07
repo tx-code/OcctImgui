@@ -1,9 +1,9 @@
-#include "UnifiedModel.h"
+#include "GeometryModel.h"
 #include <algorithm>
 #include <stdexcept>
 
 // IModel接口实现
-std::vector<std::string> UnifiedModel::getAllEntityIds() const
+std::vector<std::string> GeometryModel::getAllEntityIds() const
 {
     std::vector<std::string> ids;
     ids.reserve(myGeometries.size());
@@ -15,13 +15,13 @@ std::vector<std::string> UnifiedModel::getAllEntityIds() const
     return ids;
 }
 
-void UnifiedModel::removeEntity(const std::string& id)
+void GeometryModel::removeEntity(const std::string& id)
 {
     removeGeometry(id);
 }
 
 // 几何数据管理 - CAD形体
-TopoDS_Shape UnifiedModel::getShape(const std::string& id) const
+TopoDS_Shape GeometryModel::getShape(const std::string& id) const
 {
     auto it = myGeometries.find(id);
     if (it != myGeometries.end() && it->second.type == GeometryType::SHAPE) {
@@ -30,14 +30,14 @@ TopoDS_Shape UnifiedModel::getShape(const std::string& id) const
     return TopoDS_Shape();
 }
 
-void UnifiedModel::addShape(const std::string& id, const TopoDS_Shape& shape)
+void GeometryModel::addShape(const std::string& id, const TopoDS_Shape& shape)
 {
     myGeometries.emplace(id, GeometryData(shape));
     notifyChange(id);
 }
 
 // 几何数据管理 - 多边形网格
-const UnifiedModel::MeshData* UnifiedModel::getMesh(const std::string& id) const
+const GeometryModel::MeshData* GeometryModel::getMesh(const std::string& id) const
 {
     auto it = myGeometries.find(id);
     if (it != myGeometries.end() && it->second.type == GeometryType::MESH) {
@@ -46,31 +46,31 @@ const UnifiedModel::MeshData* UnifiedModel::getMesh(const std::string& id) const
     return nullptr;
 }
 
-void UnifiedModel::addMesh(const std::string& id,
-                           const Eigen::MatrixXd& vertices,
-                           const Eigen::MatrixXi& faces)
+void GeometryModel::addMesh(const std::string& id,
+                            const Eigen::MatrixXd& vertices,
+                            const Eigen::MatrixXi& faces)
 {
     myGeometries.emplace(id, GeometryData(vertices, faces));
     notifyChange(id);
 }
 
-void UnifiedModel::addMesh(const std::string& id,
-                           const Eigen::MatrixXd& vertices,
-                           const Eigen::MatrixXi& faces,
-                           const Eigen::MatrixXd& normals)
+void GeometryModel::addMesh(const std::string& id,
+                            const Eigen::MatrixXd& vertices,
+                            const Eigen::MatrixXi& faces,
+                            const Eigen::MatrixXd& normals)
 {
     myGeometries.emplace(id, GeometryData(vertices, faces, normals));
     notifyChange(id);
 }
 
 // 通用几何数据管理
-void UnifiedModel::removeGeometry(const std::string& id)
+void GeometryModel::removeGeometry(const std::string& id)
 {
     myGeometries.erase(id);
     notifyChange(id);
 }
 
-UnifiedModel::GeometryType UnifiedModel::getGeometryType(const std::string& id) const
+GeometryModel::GeometryType GeometryModel::getGeometryType(const std::string& id) const
 {
     auto it = myGeometries.find(id);
     if (it != myGeometries.end()) {
@@ -79,7 +79,7 @@ UnifiedModel::GeometryType UnifiedModel::getGeometryType(const std::string& id) 
     throw std::runtime_error("Geometry ID not found: " + id);
 }
 
-const UnifiedModel::GeometryData* UnifiedModel::getGeometryData(const std::string& id) const
+const GeometryModel::GeometryData* GeometryModel::getGeometryData(const std::string& id) const
 {
     auto it = myGeometries.find(id);
     if (it != myGeometries.end()) {
@@ -88,7 +88,7 @@ const UnifiedModel::GeometryData* UnifiedModel::getGeometryData(const std::strin
     return nullptr;
 }
 
-std::vector<std::string> UnifiedModel::getGeometryIdsByType(GeometryType type) const
+std::vector<std::string> GeometryModel::getGeometryIdsByType(GeometryType type) const
 {
     std::vector<std::string> ids;
 
@@ -102,7 +102,7 @@ std::vector<std::string> UnifiedModel::getGeometryIdsByType(GeometryType type) c
 }
 
 // 颜色属性
-void UnifiedModel::setColor(const std::string& id, const Quantity_Color& color)
+void GeometryModel::setColor(const std::string& id, const Quantity_Color& color)
 {
     auto it = myGeometries.find(id);
     if (it != myGeometries.end()) {
@@ -111,7 +111,7 @@ void UnifiedModel::setColor(const std::string& id, const Quantity_Color& color)
     }
 }
 
-Quantity_Color UnifiedModel::getColor(const std::string& id) const
+Quantity_Color GeometryModel::getColor(const std::string& id) const
 {
     auto it = myGeometries.find(id);
     if (it != myGeometries.end()) {
@@ -121,7 +121,7 @@ Quantity_Color UnifiedModel::getColor(const std::string& id) const
 }
 
 // 几何变换 - 通用接口
-void UnifiedModel::transform(const std::string& id, const gp_Trsf& transformation)
+void GeometryModel::transform(const std::string& id, const gp_Trsf& transformation)
 {
     // 此处需要根据几何类型实现不同的变换逻辑
     auto it = myGeometries.find(id);

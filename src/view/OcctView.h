@@ -9,13 +9,14 @@
 #pragma once
 
 #include "GlfwOcctWindow.h"
+#include "IView.h"
 #include "mvvm/MessageBus.h"
 #include "mvvm/SelectionManager.h"
 #include "mvvm/Signal.h"
-#include "viewmodel/UnifiedViewModel.h"
-#include "IView.h"
+#include "viewmodel/GeometryViewModel.h"
 #include <AIS_ViewController.hxx>
 #include <memory>
+
 
 class AIS_ViewCube;
 
@@ -24,7 +25,7 @@ class AIS_ViewCube;
  * @brief View component for 3D visualization using OpenCASCADE.
  *
  * This class implements the IView interface and extends AIS_ViewController to provide
- * 3D visualization capabilities. It renders the geometric data from the UnifiedViewModel
+ * 3D visualization capabilities. It renders the geometric data from the GeometryViewModel
  * and handles user interactions with the 3D view.
  */
 class OcctView: public IView, protected AIS_ViewController
@@ -32,12 +33,12 @@ class OcctView: public IView, protected AIS_ViewController
 public:
     /**
      * @brief Constructor
-     * @param viewModel The UnifiedViewModel to connect with
+     * @param viewModel The GeometryViewModel to connect with
      * @param window The GLFW OCCT window for rendering
      * @param messageBus Reference to the message bus for event communication
      * @param selectionManager Reference to the selection manager for handling selection
      */
-    OcctView(std::shared_ptr<UnifiedViewModel> viewModel,
+    OcctView(std::shared_ptr<GeometryViewModel> viewModel,
              Handle(GlfwOcctWindow) window,
              MVVM::MessageBus& messageBus,
              MVVM::SelectionManager& selectionManager);
@@ -148,7 +149,7 @@ protected:
 
 private:
     /** The view model */
-    std::shared_ptr<UnifiedViewModel> myViewModel;
+    std::shared_ptr<GeometryViewModel> myViewModel;
 
     /** The GLFW OCCT window */
     Handle(GlfwOcctWindow) myWindow;

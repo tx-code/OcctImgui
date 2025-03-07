@@ -1,10 +1,11 @@
 #pragma once
 
+#include "GeometryViewModel.h"
 #include "IViewModel.h"
-#include "UnifiedViewModel.h"
 #include <Quantity_Color.hxx>
 #include <gp_Pnt.hxx>
 #include <memory>
+
 
 namespace Commands
 {
@@ -47,9 +48,9 @@ public:
 
     void execute() override
     {
-        auto unifiedViewModel = std::dynamic_pointer_cast<UnifiedViewModel>(myViewModel);
-        if (unifiedViewModel) {
-            unifiedViewModel->setSelectedColor(myColor);
+        auto geometryViewModel = std::dynamic_pointer_cast<GeometryViewModel>(myViewModel);
+        if (geometryViewModel) {
+            geometryViewModel->setSelectedColor(myColor);
             return;
         }
     }
@@ -65,7 +66,7 @@ private:
 class CreateBoxCommand: public Command
 {
 public:
-    CreateBoxCommand(std::shared_ptr<UnifiedViewModel> viewModel,
+    CreateBoxCommand(std::shared_ptr<GeometryViewModel> viewModel,
                      const gp_Pnt& location,
                      double sizeX,
                      double sizeY,
@@ -83,7 +84,7 @@ public:
     }
 
 private:
-    std::shared_ptr<UnifiedViewModel> myViewModel;
+    std::shared_ptr<GeometryViewModel> myViewModel;
     gp_Pnt myLocation;
     double mySizeX, mySizeY, mySizeZ;
 };
@@ -92,7 +93,7 @@ private:
 class CreateConeCommand: public Command
 {
 public:
-    CreateConeCommand(std::shared_ptr<UnifiedViewModel> viewModel,
+    CreateConeCommand(std::shared_ptr<GeometryViewModel> viewModel,
                       const gp_Pnt& location,
                       double radius,
                       double height)
@@ -108,7 +109,7 @@ public:
     }
 
 private:
-    std::shared_ptr<UnifiedViewModel> myViewModel;
+    std::shared_ptr<GeometryViewModel> myViewModel;
     gp_Pnt myLocation;
     double myRadius, myHeight;
 };
@@ -117,7 +118,7 @@ private:
 class ImportModelCommand: public Command
 {
 public:
-    ImportModelCommand(std::shared_ptr<UnifiedViewModel> viewModel,
+    ImportModelCommand(std::shared_ptr<GeometryViewModel> viewModel,
                        const std::string& filePath,
                        const std::string& modelId = "")
         : myViewModel(viewModel)
@@ -131,7 +132,7 @@ public:
     }
 
 private:
-    std::shared_ptr<UnifiedViewModel> myViewModel;
+    std::shared_ptr<GeometryViewModel> myViewModel;
     std::string myFilePath;
     std::string myModelId;
 };

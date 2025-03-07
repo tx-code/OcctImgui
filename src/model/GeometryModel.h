@@ -1,8 +1,8 @@
 /**
- * @file UnifiedModel.h
- * @brief Defines the UnifiedModel class which manages both CAD shapes and mesh data.
+ * @file GeometryModel.h
+ * @brief Defines the GeometryModel class which manages both CAD shapes and mesh data.
  *
- * The UnifiedModel provides a unified interface for managing different types of
+ * The GeometryModel provides a unified interface for managing different types of
  * geometric data, including CAD shapes (TopoDS_Shape) and polygon meshes (using libigl
  * representation).
  */
@@ -21,7 +21,7 @@
 #include <gp_Trsf.hxx>
 
 /**
- * @class UnifiedModel
+ * @class GeometryModel
  * @brief A model that manages both CAD shapes and mesh data with a unified interface.
  *
  * This class implements the IModel interface and provides methods for adding, retrieving,
@@ -29,7 +29,7 @@
  * Each geometry is identified by a unique string ID and can have associated properties
  * such as color.
  */
-class UnifiedModel: public IModel
+class GeometryModel: public IModel
 {
 public:
     /**
@@ -147,12 +147,12 @@ public:
     /**
      * @brief Default constructor
      */
-    UnifiedModel() = default;
+    GeometryModel() = default;
 
     /**
      * @brief Virtual destructor
      */
-    ~UnifiedModel() override = default;
+    ~GeometryModel() override = default;
 
     /**
      * @brief Gets the IDs of all entities in the model

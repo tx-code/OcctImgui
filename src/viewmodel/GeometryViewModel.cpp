@@ -1,6 +1,6 @@
-#include "UnifiedViewModel.h"
-#include "utils/Logger.h"
+#include "GeometryViewModel.h"
 #include "ais/Mesh_DataSource.h"
+#include "utils/Logger.h"
 #include <AIS_Shape.hxx>
 #include <AIS_Triangulation.hxx>
 #include <BRepBuilderAPI_Transform.hxx>
@@ -16,14 +16,15 @@
 #include <iostream>
 #include <random>
 
-// 使用宏声明 UnifiedViewModel 类的 logger
-DECLARE_LOGGER(UnifiedViewModel)
+
+// 使用宏声明 GeometryViewModel 类的 logger
+DECLARE_LOGGER(GeometryViewModel)
 
 // Constructor
-UnifiedViewModel::UnifiedViewModel(std::shared_ptr<UnifiedModel> model,
-                                   Handle(AIS_InteractiveContext) context,
-                                   MVVM::GlobalSettings& globalSettings,
-                                   std::shared_ptr<ModelImporter> modelImporter)
+GeometryViewModel::GeometryViewModel(std::shared_ptr<GeometryModel> model,
+                                     Handle(AIS_InteractiveContext) context,
+                                     MVVM::GlobalSettings& globalSettings,
+                                     std::shared_ptr<ModelImporter> modelImporter)
     : myModel(model)
     , myContext(context)
     , myGlobalSettings(globalSettings)
@@ -47,7 +48,7 @@ UnifiedViewModel::UnifiedViewModel(std::shared_ptr<UnifiedModel> model,
 }
 
 // Command - CAD geometry operations
-void UnifiedViewModel::createBox(const gp_Pnt& location, double sizeX, double sizeY, double sizeZ)
+void GeometryViewModel::createBox(const gp_Pnt& location, double sizeX, double sizeY, double sizeZ)
 {
     // Generate unique ID
     static int boxCounter = 0;
@@ -61,7 +62,7 @@ void UnifiedViewModel::createBox(const gp_Pnt& location, double sizeX, double si
     myModel->addShape(id, boxShape);
 }
 
-void UnifiedViewModel::createCone(const gp_Pnt& location, double radius, double height)
+void GeometryViewModel::createCone(const gp_Pnt& location, double radius, double height)
 {
     // Generate unique ID
     static int coneCounter = 0;
@@ -76,7 +77,7 @@ void UnifiedViewModel::createCone(const gp_Pnt& location, double radius, double 
     myModel->addShape(id, coneShape);
 }
 
-void UnifiedViewModel::createMesh(/* Mesh creation parameters */)
+void GeometryViewModel::createMesh(/* Mesh creation parameters */)
 {
     // This method needs to be implemented based on the actual mesh creation requirements
     // Below is example code, should be modified based on actual situation
@@ -97,13 +98,13 @@ void UnifiedViewModel::createMesh(/* Mesh creation parameters */)
     */
 }
 
-bool UnifiedViewModel::importModel(const std::string& filePath, const std::string& modelId)
+bool GeometryViewModel::importModel(const std::string& filePath, const std::string& modelId)
 {
-    LOG_FUNCTION_SCOPE(getUnifiedViewModelLogger(), "importModel");
-    getUnifiedViewModelLogger()->info("Importing model from '{}'", filePath);
+    LOG_FUNCTION_SCOPE(getGeometryViewModelLogger(), "importModel");
+    getGeometryViewModelLogger()->info("Importing model from '{}'", filePath);
 
     if (!myModelImporter) {
-        getUnifiedViewModelLogger()->error("ModelImporter is not available");
+        getGeometryViewModelLogger()->error("ModelImporter is not available");
         return false;
     }
 
@@ -111,17 +112,17 @@ bool UnifiedViewModel::importModel(const std::string& filePath, const std::strin
     bool result = myModelImporter->importModel(filePath, *myModel, modelId);
 
     if (result) {
-        getUnifiedViewModelLogger()->info("Model imported successfully");
+        getGeometryViewModelLogger()->info("Model imported successfully");
     }
     else {
-        getUnifiedViewModelLogger()->error("Failed to import model");
+        getGeometryViewModelLogger()->error("Failed to import model");
     }
 
     return result;
 }
 
 // IViewModel interface implementation
-void UnifiedViewModel::deleteSelectedObjects()
+void GeometryViewModel::deleteSelectedObjects()
 {
     std::vector<std::string> objectsToDelete(mySelectedObjects.begin(), mySelectedObjects.end());
 
@@ -132,17 +133,17 @@ void UnifiedViewModel::deleteSelectedObjects()
     mySelectedObjects.clear();
 }
 
-bool UnifiedViewModel::hasSelection() const
+bool GeometryViewModel::hasSelection() const
 {
     return !mySelectedObjects.empty();
 }
 
-std::vector<std::string> UnifiedViewModel::getSelectedObjects() const
+std::vector<std::string> GeometryViewModel::getSelectedObjects() const
 {
     return std::vector<std::string>(mySelectedObjects.begin(), mySelectedObjects.end());
 }
 
-void UnifiedViewModel::processSelection(const Handle(AIS_InteractiveObject) & obj, bool isSelected)
+void GeometryViewModel::processSelection(const Handle(AIS_InteractiveObject) & obj, bool isSelected)
 {
     auto it = myObjectToIdMap.find(obj);
     if (it != myObjectToIdMap.end()) {
@@ -155,7 +156,7 @@ void UnifiedViewModel::processSelection(const Handle(AIS_InteractiveObject) & ob
     }
 }
 
-void UnifiedViewModel::clearSelection()
+void GeometryViewModel::clearSelection()
 {
     mySelectedObjects.clear();
     myContext->ClearSelected(Standard_True);
@@ -163,14 +164,14 @@ void UnifiedViewModel::clearSelection()
 }
 
 // Attribute access and modification
-void UnifiedViewModel::setSelectedColor(const Quantity_Color& color)
+void GeometryViewModel::setSelectedColor(const Quantity_Color& color)
 {
     for (const std::string& id : mySelectedObjects) {
         myModel->setColor(id, color);
     }
 }
 
-Quantity_Color UnifiedViewModel::getSelectedColor() const
+Quantity_Color GeometryViewModel::getSelectedColor() const
 {
     if (mySelectedObjects.empty()) {
         return Quantity_Color(0.8, 0.8, 0.8, Quantity_TOC_RGB);  // Default gray
@@ -181,7 +182,7 @@ Quantity_Color UnifiedViewModel::getSelectedColor() const
 }
 
 // Private methods
-void UnifiedViewModel::updatePresentation(const std::string& id)
+void GeometryViewModel::updatePresentation(const std::string& id)
 {
     // Delete existing representation
     auto it = myIdToObjectMap.find(id);
@@ -192,7 +193,7 @@ void UnifiedViewModel::updatePresentation(const std::string& id)
     }
 
     // Get geometry data
-    const UnifiedModel::GeometryData* data = myModel->getGeometryData(id);
+    const GeometryModel::GeometryData* data = myModel->getGeometryData(id);
     if (!data) {
         return;
     }
@@ -212,8 +213,8 @@ void UnifiedViewModel::updatePresentation(const std::string& id)
 }
 
 Handle(AIS_InteractiveObject)
-    UnifiedViewModel::createPresentationForGeometry(const std::string& id,
-                                                    const UnifiedModel::GeometryData* data)
+    GeometryViewModel::createPresentationForGeometry(const std::string& id,
+                                                     const GeometryModel::GeometryData* data)
 {
 
     if (!data) {
@@ -223,7 +224,7 @@ Handle(AIS_InteractiveObject)
     Handle(AIS_InteractiveObject) aisObj;
 
     // Create appropriate AIS object based on geometry type
-    if (data->type == UnifiedModel::GeometryType::SHAPE) {
+    if (data->type == GeometryModel::GeometryType::SHAPE) {
         // Create AIS_Shape for CAD shape
         const TopoDS_Shape& shape = std::get<TopoDS_Shape>(data->geometry);
         Handle(AIS_Shape) aisShape = new AIS_Shape(shape);
@@ -242,9 +243,9 @@ Handle(AIS_InteractiveObject)
 
         aisObj = aisShape;
     }
-    else if (data->type == UnifiedModel::GeometryType::MESH) {
+    else if (data->type == GeometryModel::GeometryType::MESH) {
         // Get the mesh data from the geometry
-        const UnifiedModel::MeshData& meshData = std::get<UnifiedModel::MeshData>(data->geometry);
+        const GeometryModel::MeshData& meshData = std::get<GeometryModel::MeshData>(data->geometry);
         Handle(Mesh_DataSource) meshDataSource =
             new Mesh_DataSource(meshData.vertices, meshData.faces, meshData.normals);
 
@@ -269,7 +270,7 @@ Handle(AIS_InteractiveObject)
     return aisObj;
 }
 
-void UnifiedViewModel::onModelChanged(const std::string& id)
+void GeometryViewModel::onModelChanged(const std::string& id)
 {
     updatePresentation(id);
 }

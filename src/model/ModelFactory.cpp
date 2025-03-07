@@ -1,9 +1,9 @@
 #include "ModelFactory.h"
-#include "UnifiedModel.h"
+#include "GeometryModel.h"
 
 // 初始化工厂
 void InitializeModelFactory(ModelFactory& factory)
 {
     // 注册统一模型
-    factory.registerModelType<UnifiedModel>("UnifiedModel");
+    factory.registerModelType<GeometryModel>("GeometryModel");
 }

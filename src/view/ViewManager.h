@@ -93,7 +93,7 @@ public:
                                              MVVM::SelectionManager& selectionManager)
     {
         // Get the ViewModel
-        auto viewModel = myViewModelManager.getViewModel<UnifiedViewModel>(viewModelId);
+        auto viewModel = myViewModelManager.getViewModel<GeometryViewModel>(viewModelId);
 
         if (!viewModel) {
             getViewManagerLogger()->error("Failed to get ViewModel with ID: {}", viewModelId);

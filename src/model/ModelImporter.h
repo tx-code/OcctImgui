@@ -7,7 +7,7 @@
  */
 #pragma once
 
-#include "UnifiedModel.h"
+#include "GeometryModel.h"
 #include <functional>
 #include <map>
 #include <memory>
@@ -34,15 +34,15 @@ public:
     ~ModelImporter() = default;
 
     /**
-     * @brief Imports a model from a file and adds it to the given UnifiedModel
+     * @brief Imports a model from a file and adds it to the given GeometryModel
      *
      * @param filePath The path to the model file
-     * @param model The UnifiedModel to add the imported model to
+     * @param model The GeometryModel to add the imported model to
      * @param modelId The ID to assign to the imported model (if empty, the filename will be used)
      * @return bool True if import was successful, false otherwise
      */
     bool
-    importModel(const std::string& filePath, UnifiedModel& model, const std::string& modelId = "");
+    importModel(const std::string& filePath, GeometryModel& model, const std::string& modelId = "");
 
     /**
      * @brief Gets the supported file extensions
@@ -57,34 +57,34 @@ private:
      * @brief Imports a STEP file using OpenCASCADE
      *
      * @param filePath The path to the STEP file
-     * @param model The UnifiedModel to add the imported model to
+     * @param model The GeometryModel to add the imported model to
      * @param modelId The ID to assign to the imported model
      * @return bool True if import was successful, false otherwise
      */
     bool
-    importStepFile(const std::string& filePath, UnifiedModel& model, const std::string& modelId);
+    importStepFile(const std::string& filePath, GeometryModel& model, const std::string& modelId);
 
     /**
      * @brief Imports an STL file using libigl
      *
      * @param filePath The path to the STL file
-     * @param model The UnifiedModel to add the imported model to
+     * @param model The GeometryModel to add the imported model to
      * @param modelId The ID to assign to the imported model
      * @return bool True if import was successful, false otherwise
      */
     bool
-    importStlFile(const std::string& filePath, UnifiedModel& model, const std::string& modelId);
+    importStlFile(const std::string& filePath, GeometryModel& model, const std::string& modelId);
 
     /**
      * @brief Imports an OBJ file using libigl
      *
      * @param filePath The path to the OBJ file
-     * @param model The UnifiedModel to add the imported model to
+     * @param model The GeometryModel to add the imported model to
      * @param modelId The ID to assign to the imported model
      * @return bool True if import was successful, false otherwise
      */
     bool
-    importObjFile(const std::string& filePath, UnifiedModel& model, const std::string& modelId);
+    importObjFile(const std::string& filePath, GeometryModel& model, const std::string& modelId);
 
     /**
      * @brief Gets the file extension from a file path
@@ -104,7 +104,7 @@ private:
 
     // 定义成员函数指针类型
     using ImportFunction =
-        std::function<bool(const std::string&, UnifiedModel&, const std::string&)>;
+        std::function<bool(const std::string&, GeometryModel&, const std::string&)>;
 
     // Map of file extensions to import functions
     std::map<std::string, ImportFunction> myImportFunctions;

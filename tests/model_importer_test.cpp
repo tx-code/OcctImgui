@@ -1,8 +1,9 @@
 #define BOOST_TEST_MODULE ModelImporter Tests
 #include <boost/test/unit_test.hpp>
 
+#include "model/GeometryModel.h"
 #include "model/ModelImporter.h"
-#include "model/UnifiedModel.h"
+
 
 #include <filesystem>
 #include <memory>
@@ -27,7 +28,7 @@ BOOST_AUTO_TEST_CASE(supported_extensions_test)
 BOOST_AUTO_TEST_CASE(import_step_file_test)
 {
     // 创建模型和导入器
-    auto model = std::make_shared<UnifiedModel>();
+    auto model = std::make_shared<GeometryModel>();
     ModelImporter importer;
 
     // 导入STEP文件
@@ -49,7 +50,7 @@ BOOST_AUTO_TEST_CASE(import_step_file_test)
 
     // 验证导入的模型类型
     std::string modelId = model->getAllEntityIds()[0];
-    BOOST_CHECK(model->getGeometryType(modelId) == UnifiedModel::GeometryType::SHAPE);
+    BOOST_CHECK(model->getGeometryType(modelId) == GeometryModel::GeometryType::SHAPE);
 
     // 验证导入的模型ID是文件名
     BOOST_CHECK_EQUAL(modelId, "ANC101");
@@ -58,7 +59,7 @@ BOOST_AUTO_TEST_CASE(import_step_file_test)
 BOOST_AUTO_TEST_CASE(import_stl_file_test)
 {
     // 创建模型和导入器
-    auto model = std::make_shared<UnifiedModel>();
+    auto model = std::make_shared<GeometryModel>();
     ModelImporter importer;
 
     // 导入STL文件
@@ -80,13 +81,13 @@ BOOST_AUTO_TEST_CASE(import_stl_file_test)
 
     // 验证导入的模型类型
     std::string modelId = model->getAllEntityIds()[0];
-    BOOST_CHECK(model->getGeometryType(modelId) == UnifiedModel::GeometryType::MESH);
+    BOOST_CHECK(model->getGeometryType(modelId) == GeometryModel::GeometryType::MESH);
 
     // 验证导入的模型ID是文件名
     BOOST_CHECK_EQUAL(modelId, "cube");
 
     // 验证导入的网格数据
-    const UnifiedModel::MeshData* mesh = model->getMesh(modelId);
+    const GeometryModel::MeshData* mesh = model->getMesh(modelId);
     BOOST_CHECK(mesh != nullptr);
     BOOST_CHECK(mesh->vertices.rows() > 0);
     BOOST_CHECK(mesh->faces.rows() > 0);
@@ -96,7 +97,7 @@ BOOST_AUTO_TEST_CASE(import_stl_file_test)
 BOOST_AUTO_TEST_CASE(import_obj_file_test)
 {
     // 创建模型和导入器
-    auto model = std::make_shared<UnifiedModel>();
+    auto model = std::make_shared<GeometryModel>();
     ModelImporter importer;
 
     // 导入OBJ文件
@@ -118,13 +119,13 @@ BOOST_AUTO_TEST_CASE(import_obj_file_test)
 
     // 验证导入的模型类型
     std::string modelId = model->getAllEntityIds()[0];
-    BOOST_CHECK(model->getGeometryType(modelId) == UnifiedModel::GeometryType::MESH);
+    BOOST_CHECK(model->getGeometryType(modelId) == GeometryModel::GeometryType::MESH);
 
     // 验证导入的模型ID是文件名
     BOOST_CHECK_EQUAL(modelId, "bunny");
 
     // 验证导入的网格数据
-    const UnifiedModel::MeshData* mesh = model->getMesh(modelId);
+    const GeometryModel::MeshData* mesh = model->getMesh(modelId);
     BOOST_CHECK(mesh != nullptr);
     BOOST_CHECK(mesh->vertices.rows() > 0);
     BOOST_CHECK(mesh->faces.rows() > 0);
@@ -134,7 +135,7 @@ BOOST_AUTO_TEST_CASE(import_obj_file_test)
 BOOST_AUTO_TEST_CASE(import_with_custom_id_test)
 {
     // 创建模型和导入器
-    auto model = std::make_shared<UnifiedModel>();
+    auto model = std::make_shared<GeometryModel>();
     ModelImporter importer;
 
     // 导入STEP文件，指定自定义ID
@@ -161,7 +162,7 @@ BOOST_AUTO_TEST_CASE(import_with_custom_id_test)
 BOOST_AUTO_TEST_CASE(import_unsupported_format_test)
 {
     // 创建模型和导入器
-    auto model = std::make_shared<UnifiedModel>();
+    auto model = std::make_shared<GeometryModel>();
     ModelImporter importer;
 
     // 尝试导入不支持的格式

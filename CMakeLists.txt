@@ -33,13 +33,13 @@ add_library(OcctImguiLib STATIC
     src/ais/Mesh_DataSource.cpp
     src/mvvm/SelectionManager.cpp
     src/model/IModel.cpp
-    src/model/UnifiedModel.cpp
+    src/model/GeometryModel.cpp
     src/model/ModelFactory.cpp
     src/model/ModelManager.cpp
     src/model/ModelImporter.cpp
     src/view/ImGuiView.cpp
     src/view/OcctView.cpp
-    src/viewmodel/UnifiedViewModel.cpp
+    src/viewmodel/GeometryViewModel.cpp
     src/viewmodel/ViewModelManager.cpp
     src/window/WindowManager.cpp
     src/input/InputManager.cpp
@@ -135,7 +135,7 @@ if(OCCTIMGUI_BUILD_TESTING)
     add_boost_test(model_test tests/model_test.cpp)
     add_boost_test(model_manager_test tests/model_manager_test.cpp)
     add_boost_test(mesh_datasource_test tests/mesh_datasource_test.cpp)
-    add_boost_test(unified_model_test tests/unified_model_test.cpp)
+    add_boost_test(geometry_model_test tests/geometry_model_test.cpp)
     add_boost_test(model_importer_test tests/model_importer_test.cpp)
     add_boost_test(signal_test tests/signal_test.cpp)
     add_boost_test(message_bus_test tests/message_bus_test.cpp)

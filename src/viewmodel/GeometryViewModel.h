@@ -1,15 +1,15 @@
 /**
- * @file UnifiedViewModel.h
- * @brief Defines the UnifiedViewModel class which connects the UnifiedModel with the view layer.
+ * @file GeometryViewModel.h
+ * @brief Defines the GeometryViewModel class which connects the GeometryModel with the view layer.
  *
- * The UnifiedViewModel provides a unified interface for interacting with the UnifiedModel,
+ * The GeometryViewModel provides a unified interface for interacting with the GeometryModel,
  * handling the presentation of model data in the view, and processing user interactions.
  */
 #pragma once
 
 #include "IViewModel.h"
+#include "model/GeometryModel.h"
 #include "model/ModelImporter.h"
-#include "model/UnifiedModel.h"
 #include "mvvm/GlobalSettings.h"
 #include "mvvm/Property.h"
 
@@ -25,32 +25,32 @@
 #include <string>
 
 /**
- * @class UnifiedViewModel
- * @brief ViewModel that connects the UnifiedModel with the view layer.
+ * @class GeometryViewModel
+ * @brief ViewModel that connects the GeometryModel with the view layer.
  *
  * This class implements the IViewModel interface and provides methods for creating,
  * manipulating, and visualizing geometric objects. It maintains the connection between
  * the model data and its visual representation in the OCCT context.
  */
-class UnifiedViewModel: public IViewModel
+class GeometryViewModel: public IViewModel
 {
 public:
     /**
      * @brief Constructor
-     * @param model The UnifiedModel to connect with
+     * @param model The GeometryModel to connect with
      * @param context The OCCT interactive context for visualization
      * @param globalSettings Reference to the application's global settings
      * @param modelImporter The ModelImporter to use for importing models
      */
-    UnifiedViewModel(std::shared_ptr<UnifiedModel> model,
-                     Handle(AIS_InteractiveContext) context,
-                     MVVM::GlobalSettings& globalSettings,
-                     std::shared_ptr<ModelImporter> modelImporter);
+    GeometryViewModel(std::shared_ptr<GeometryModel> model,
+                      Handle(AIS_InteractiveContext) context,
+                      MVVM::GlobalSettings& globalSettings,
+                      std::shared_ptr<ModelImporter> modelImporter);
 
     /**
      * @brief Virtual destructor
      */
-    ~UnifiedViewModel() override = default;
+    ~GeometryViewModel() override = default;
 
     /**
      * @brief Creates a box shape at the specified location with the given dimensions
@@ -154,10 +154,10 @@ public:
     Quantity_Color getSelectedColor() const;
 
     /**
-     * @brief Gets the UnifiedModel with type information preserved
-     * @return Shared pointer to the UnifiedModel
+     * @brief Gets the GeometryModel with type information preserved
+     * @return Shared pointer to the GeometryModel
      */
-    std::shared_ptr<UnifiedModel> getUnifiedModel() const
+    std::shared_ptr<GeometryModel> getGeometryModel() const
     {
         return myModel;
     }
@@ -187,7 +187,7 @@ public:
 
 private:
     /** The model */
-    std::shared_ptr<UnifiedModel> myModel;
+    std::shared_ptr<GeometryModel> myModel;
 
     /** The OCCT interactive context */
     Handle(AIS_InteractiveContext) myContext;
@@ -221,7 +221,7 @@ private:
      */
     Handle(AIS_InteractiveObject)
         createPresentationForGeometry(const std::string& id,
-                                      const UnifiedModel::GeometryData* data);
+                                      const GeometryModel::GeometryData* data);
 
     /**
      * @brief Callback for model changes
