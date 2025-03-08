@@ -307,8 +307,11 @@ void OcctView::updateVisibility()
 
     // 更新显示模式
     int displayMode = globalSettings.displayMode.get();
-    myViewModel->getContext()->SetDisplayMode(displayMode, Standard_True);
-
+    int oldDisplayMode = myViewModel->getContext()->DisplayMode();
+    if (displayMode != oldDisplayMode) {
+        getOcctViewLogger()->info("Updating display mode to {}", displayMode);
+        myViewModel->getContext()->SetDisplayMode(displayMode, Standard_True);
+    }
     myViewModel->getContext()->UpdateCurrentViewer();
 
     // 强制重绘视图
@@ -391,7 +394,7 @@ void OcctView::subscribeToEvents()
                         getOcctViewLogger()->error("Failed to cast selection info: {}", e.what());
                     }
                     break;
-                    
+
                 case MVVM::MessageBus::MessageType::ViewChanged:
                     // 处理视图变更消息
                     try {
@@ -415,9 +418,6 @@ void OcctView::subscribeToEvents()
     auto gridConn = globalSettings.isGridVisible.valueChanged.connect(
         [this](const bool&, const bool& isVisible) {
             updateVisibility();
-            if (!myView.IsNull()) {
-                myView->Invalidate();
-            }
         });
     myConnections.track(gridConn);
 
@@ -425,19 +425,13 @@ void OcctView::subscribeToEvents()
     auto cubeConn = globalSettings.isViewCubeVisible.valueChanged.connect(
         [this](const bool&, const bool& isVisible) {
             updateVisibility();
-            if (!myView.IsNull()) {
-                myView->Invalidate();
-            }
         });
     myConnections.track(cubeConn);
 
     // Connect to display mode property
     auto displayConn =
         globalSettings.displayMode.valueChanged.connect([this](const int&, const int& mode) {
-            // Update display mode
-            if (!myView.IsNull()) {
-                myView->Invalidate();
-            }
+            updateVisibility();
         });
     myConnections.track(displayConn);
 

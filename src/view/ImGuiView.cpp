@@ -259,11 +259,39 @@ void ImGuiView::popupContextMenu()
         ImGui::OpenPopup("OcctView Context Menu");
     }
 
-    // FIXME handle the mouse event
     if (ImGui::BeginPopup("OcctView Context Menu")) {
         isPopupOpen = true;
-        // TODO more globalSettings related items
-        if (ImGui::MenuItem("Clear Selection")) {}
+        
+        auto GeometryViewModel = getGeometryViewModel();
+        if (GeometryViewModel) {
+            auto& globalSettings = GeometryViewModel->getGlobalSettings();
+            
+            // 显示模式选择
+            if (ImGui::BeginMenu("Display Mode")) {
+                int displayMode = globalSettings.displayMode.get();
+                const char* displayModes[] = {"Shaded", "Wireframe", "Vertices"};
+                
+                for (int i = 0; i < IM_ARRAYSIZE(displayModes); i++) {
+                    bool isSelected = (displayMode == i);
+                    if (ImGui::MenuItem(displayModes[i], NULL, isSelected)) {
+                        globalSettings.displayMode = i;
+                    }
+                }
+                
+                ImGui::EndMenu();
+            }
+            
+            // Grid和ViewCube显示切换
+            bool isGridVisible = globalSettings.isGridVisible.get();
+            if (ImGui::MenuItem("Show Grid", NULL, isGridVisible)) {
+                globalSettings.isGridVisible = !isGridVisible;
+            }
+            
+            bool isViewCubeVisible = globalSettings.isViewCubeVisible.get();
+            if (ImGui::MenuItem("Show View Cube", NULL, isViewCubeVisible)) {
+                globalSettings.isViewCubeVisible = !isViewCubeVisible;
+            }
+        }
 
         ImGui::EndPopup();
     }
@@ -302,27 +330,9 @@ void ImGuiView::renderGeometryProperties()
             Quantity_Color newColor(color[0], color[1], color[2], Quantity_TOC_RGB);
             GeometryViewModel->setSelectedColor(newColor);
         }
-
-        // 显示显示模式选择
-        int displayMode = globalSettings.displayMode.get();
-        const char* displayModes[] = {"Shaded", "Wireframe", "Vertices"};
-
-        if (ImGui::Combo("Display Mode", &displayMode, displayModes, IM_ARRAYSIZE(displayModes))) {
-            globalSettings.displayMode = displayMode;
-        }
     }
     else {
         ImGui::Text("No objects selected");
-    }
-
-    bool isGridVisible = globalSettings.isGridVisible.get();
-    if (ImGui::Checkbox("Show Grid", &isGridVisible)) {
-        globalSettings.isGridVisible = isGridVisible;
-    }
-
-    bool isViewCubeVisible = globalSettings.isViewCubeVisible.get();
-    if (ImGui::Checkbox("Show View Cube", &isViewCubeVisible)) {
-        globalSettings.isViewCubeVisible = isViewCubeVisible;
     }
 }
 
