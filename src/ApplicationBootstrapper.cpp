@@ -1,8 +1,6 @@
 #include "ApplicationBootstrapper.h"
 #include "model/GeometryModel.h"
 #include "utils/Logger.h"
-#include "view/ImGuiView.h"
-#include "view/OcctView.h"
 #include "viewmodel/GeometryViewModel.h"
 
 

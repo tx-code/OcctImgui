@@ -72,7 +72,7 @@ bool WindowManager::initialize()
 
 bool WindowManager::shouldClose() const
 {
-    return myGlfwWindow ? glfwWindowShouldClose(myGlfwWindow) : true;
+    return myGlfwWindow == nullptr || glfwWindowShouldClose(myGlfwWindow);
 }
 
 void WindowManager::pollEvents() const
@@ -108,53 +108,11 @@ const Handle(GlfwOcctWindow) & WindowManager::getOcctWindow() const
     return myWindow;
 }
 
-void WindowManager::setUserPointer(void* pointer)
-{
-    if (myGlfwWindow) {
-        glfwSetWindowUserPointer(myGlfwWindow, pointer);
-    }
-}
-
-void WindowManager::setResizeCallback(GLFWwindowsizefun callback)
-{
-    if (myGlfwWindow) {
-        glfwSetWindowSizeCallback(myGlfwWindow, callback);
-    }
-}
-
-void WindowManager::setFramebufferResizeCallback(GLFWframebuffersizefun callback)
-{
-    if (myGlfwWindow) {
-        glfwSetFramebufferSizeCallback(myGlfwWindow, callback);
-    }
-}
-
-void WindowManager::setScrollCallback(GLFWscrollfun callback)
-{
-    if (myGlfwWindow) {
-        glfwSetScrollCallback(myGlfwWindow, callback);
-    }
-}
-
-void WindowManager::setMouseButtonCallback(GLFWmousebuttonfun callback)
-{
-    if (myGlfwWindow) {
-        glfwSetMouseButtonCallback(myGlfwWindow, callback);
-    }
-}
-
-void WindowManager::setCursorPosCallback(GLFWcursorposfun callback)
-{
-    if (myGlfwWindow) {
-        glfwSetCursorPosCallback(myGlfwWindow, callback);
-    }
-}
-
 void WindowManager::setContextHints()
 {
     // Set OpenGL context hints
-    const bool toAskCoreProfile = true;
-    if (toAskCoreProfile) {
+    constexpr bool toAskCoreProfile = true;
+    if constexpr (toAskCoreProfile) {
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 #if defined(__APPLE__)

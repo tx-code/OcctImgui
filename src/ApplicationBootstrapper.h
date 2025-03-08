@@ -57,29 +57,9 @@ public:
      *
      * @return Reference to the window manager
      */
-    WindowManager& getWindowManager() const
+    [[nodiscard]] WindowManager& getWindowManager() const
     {
         return *myWindowManager;
-    }
-
-    /**
-     * @brief Get the input manager
-     *
-     * @return Reference to the input manager
-     */
-    InputManager& getInputManager() const
-    {
-        return *myInputManager;
-    }
-
-    /**
-     * @brief Get the model manager
-     *
-     * @return Reference to the model manager
-     */
-    ModelManager& getModelManager() const
-    {
-        return *myModelManager;
     }
 
     /**
@@ -87,69 +67,9 @@ public:
      *
      * @return Reference to the view manager
      */
-    ViewManager& getViewManager() const
+    [[nodiscard]] ViewManager& getViewManager() const
     {
         return *myViewManager;
-    }
-
-    /**
-     * @brief Get the viewmodel manager
-     *
-     * @return Reference to the viewmodel manager
-     */
-    ViewModelManager& getViewModelManager() const
-    {
-        return *myViewModelManager;
-    }
-
-    /**
-     * @brief Get the message bus
-     *
-     * @return Reference to the message bus
-     */
-    MVVM::MessageBus& getMessageBus() const
-    {
-        return MVVM::MessageBus::getInstance();
-    }
-
-    /**
-     * @brief Get the selection manager
-     *
-     * @return Reference to the selection manager
-     */
-    MVVM::SelectionManager& getSelectionManager() const
-    {
-        return MVVM::SelectionManager::getInstance();
-    }
-
-    /**
-     * @brief Get the global settings
-     *
-     * @return Reference to the global settings
-     */
-    MVVM::GlobalSettings& getGlobalSettings() const
-    {
-        return *myGlobalSettings;
-    }
-
-    /**
-     * @brief Get the model factory
-     *
-     * @return Reference to the model factory
-     */
-    ModelFactory& getModelFactory() const
-    {
-        return *myModelFactory;
-    }
-
-    /**
-     * @brief Get the model importer
-     *
-     * @return Reference to the model importer
-     */
-    ModelImporter& getModelImporter() const
-    {
-        return *myModelImporter;
     }
 
 private:

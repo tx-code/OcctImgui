@@ -78,48 +78,6 @@ public:
      */
     const Handle(GlfwOcctWindow) & getOcctWindow() const;
 
-    /**
-     * @brief Set the window user pointer
-     *
-     * @param pointer Pointer to the user data
-     */
-    void setUserPointer(void* pointer);
-
-    /**
-     * @brief Set the window resize callback
-     *
-     * @param callback The callback function
-     */
-    void setResizeCallback(GLFWwindowsizefun callback);
-
-    /**
-     * @brief Set the framebuffer resize callback
-     *
-     * @param callback The callback function
-     */
-    void setFramebufferResizeCallback(GLFWframebuffersizefun callback);
-
-    /**
-     * @brief Set the mouse scroll callback
-     *
-     * @param callback The callback function
-     */
-    void setScrollCallback(GLFWscrollfun callback);
-
-    /**
-     * @brief Set the mouse button callback
-     *
-     * @param callback The callback function
-     */
-    void setMouseButtonCallback(GLFWmousebuttonfun callback);
-
-    /**
-     * @brief Set the cursor position callback
-     *
-     * @param callback The callback function
-     */
-    void setCursorPosCallback(GLFWcursorposfun callback);
-
 private:
     /**
      * @brief Set OpenGL context hints

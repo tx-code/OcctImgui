@@ -42,7 +42,7 @@
 // Purpose  :
 // ================================================================
 GlfwOcctWindow::GlfwOcctWindow(int theWidth, int theHeight, const TCollection_AsciiString& theTitle)
-    : myGlfwWindow(glfwCreateWindow(theWidth, theHeight, theTitle.ToCString(), NULL, NULL))
+    : myGlfwWindow(glfwCreateWindow(theWidth, theHeight, theTitle.ToCString(), nullptr, nullptr))
     , myXLeft(0)
     , myYTop(0)
     , myXRight(0)
