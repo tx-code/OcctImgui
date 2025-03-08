@@ -66,7 +66,7 @@ void ImGuiView::initialize(GLFWwindow* window)
         }
 
         // 初始化ImGui渲染器后端
-        bool gl3InitSuccess = ImGui_ImplOpenGL3_Init("#version 130");
+        bool gl3InitSuccess = ImGui_ImplOpenGL3_Init("#version 330");
         if (!gl3InitSuccess) {
             getImGuiViewLogger()->error("OpenGL3 backend initialization failed");
             return;
