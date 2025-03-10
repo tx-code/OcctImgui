@@ -3,7 +3,7 @@
 #include <algorithm>
 
 
-using namespace MVVM;
+using namespace Core;
 
 // 使用宏声明 SelectionManager 类的 logger
 DECLARE_LOGGER(SelectionManager)

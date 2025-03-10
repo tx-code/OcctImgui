@@ -1,8 +1,8 @@
-#define BOOST_TEST_MODULE SelectionManager Tests
+#define BOOST_TEST_MODULE Core SelectionManager Tests
 #include <boost/test/unit_test.hpp>
 
-#include "mvvm/MessageBus.h"
-#include "mvvm/SelectionManager.h"
+#include "core/MessageBus.h"
+#include "core/SelectionManager.h"
 #include <AIS_InteractiveObject.hxx>
 #include <AIS_Shape.hxx>
 #include <Standard_Handle.hxx>
@@ -11,7 +11,7 @@
 #include <string>
 #include <vector>
 
-using namespace MVVM;
+using namespace Core;
 
 // 基本功能测试
 BOOST_AUTO_TEST_CASE(selection_manager_basic_test)

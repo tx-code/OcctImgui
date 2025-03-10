@@ -1,11 +1,11 @@
-#define BOOST_TEST_MODULE MessageBus Tests
+#define BOOST_TEST_MODULE Core MessageBus Tests
 #include <boost/test/unit_test.hpp>
 
-#include "mvvm/MessageBus.h"
+#include "core/MessageBus.h"
 #include <string>
 #include <vector>
 
-using namespace MVVM;
+using namespace Core;
 
 // Simple test case for basic MessageBus functionality
 BOOST_AUTO_TEST_CASE(message_bus_basic_test)

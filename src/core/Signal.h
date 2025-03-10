@@ -17,10 +17,10 @@
 #include <functional>
 #include <memory>
 
-namespace MVVM
+namespace Core
 {
 
-// Create MVVM logger - use function to ensure safe initialization
+// Create Core logger - use function to ensure safe initialization
 inline std::shared_ptr<Utils::Logger>& getSignalLogger()
 {
     static std::shared_ptr<Utils::Logger> logger = Utils::Logger::getLogger("signal");
@@ -29,10 +29,10 @@ inline std::shared_ptr<Utils::Logger>& getSignalLogger()
 
 /**
  * @class Signal
- * @brief A wrapper around boost::signals2 that provides a simpler interface for the MVVM pattern
+ * @brief A wrapper around boost::signals2 that provides a simpler interface for the Core pattern
  *
  * This class provides a type-safe signal implementation that can be used to connect
- * components in the MVVM architecture. It supports automatic connection management
+ * components in the Core architecture. It supports automatic connection management
  * and thread safety.
  */
 template<typename... Args>
@@ -219,4 +219,4 @@ private:
     std::vector<boost::signals2::connection> myConnections;
 };
 
-}  // namespace MVVM
+}  // namespace Core

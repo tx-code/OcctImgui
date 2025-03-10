@@ -1,13 +1,13 @@
 #pragma once
 
-#include "mvvm/MessageBus.h"
+#include "MessageBus.h"
 #include <AIS_InteractiveObject.hxx>
 #include <map>
 #include <memory>
 #include <string>
 #include <vector>
 
-namespace MVVM
+namespace Core
 {
 
 class SelectionManager

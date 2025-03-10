@@ -1,14 +1,14 @@
-#define BOOST_TEST_MODULE MVVM Integration Tests
+#define BOOST_TEST_MODULE Core Integration Tests
 #include <boost/test/unit_test.hpp>
 
-#include "mvvm/MessageBus.h"
-#include "mvvm/Signal.h"
+#include "core/MessageBus.h"
+#include "core/Signal.h"
 #include <memory>
 #include <string>
 #include <vector>
 
 
-using namespace MVVM;
+using namespace Core;
 
 // A simple model class that uses both Signal and MessageBus
 class TestModel

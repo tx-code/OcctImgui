@@ -9,7 +9,7 @@
 #include <type_traits>
 
 
-namespace MVVM
+namespace Core
 {
 
 /**
@@ -207,4 +207,4 @@ private:
     boost::property_tree::ptree myProperties;
 };
 
-}  // namespace MVVM
+}  // namespace Core

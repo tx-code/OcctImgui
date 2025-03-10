@@ -6,7 +6,7 @@
 #include <ostream>
 #include <vector>
 
-namespace MVVM
+namespace Core
 {
 
 // 选择信息结构，用于传递选中对象及其子特征
@@ -95,4 +95,4 @@ inline std::ostream& operator<<(std::ostream& os, const SelectionInfo::SubFeatur
     }
 }
 
-}  // namespace MVVM
+}  // namespace Core

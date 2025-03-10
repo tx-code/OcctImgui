@@ -1,13 +1,13 @@
-#define BOOST_TEST_MODULE Property Tests
+#define BOOST_TEST_MODULE Core Property Tests
 #include <boost/test/unit_test.hpp>
 
-#include "mvvm/Property.h"
+#include "core/Property.h"
 #include <memory>
 #include <string>
 #include <vector>
 
 
-using namespace MVVM;
+using namespace Core;
 
 // 测试基本的 Property 功能
 BOOST_AUTO_TEST_CASE(property_basic_test)
