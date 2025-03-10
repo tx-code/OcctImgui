@@ -26,8 +26,8 @@ include(CTest)
 enable_testing()
 
 # Define test data directory
-set(MESH_TEST_DATA_DIR "${CMAKE_CURRENT_SOURCE_DIR}/tests/data")
-file(MAKE_DIRECTORY ${MESH_TEST_DATA_DIR})
+set(TEST_DATA_DIR "${CMAKE_CURRENT_SOURCE_DIR}/tests/data")
+file(MAKE_DIRECTORY ${TEST_DATA_DIR})
 
 # Core Library
 add_library(OcctImguiCore STATIC
@@ -65,6 +65,18 @@ target_link_libraries(OcctImguiCore
     nlohmann_json::nlohmann_json
 )
 
+add_library(OcctImguiModel STATIC
+    src/model/MeshData.cpp
+    src/model/GeometryModel.cpp
+
+    # src/model/GeometryModel.cpp
+)
+
+target_link_libraries(OcctImguiModel
+    PUBLIC
+    OcctImguiCore
+)
+
 #[[
 # Add executable target
 add_executable(OcctImgui
@@ -100,6 +112,7 @@ if(OCCTIMGUI_BUILD_TESTING)
         target_link_libraries(${TEST_NAME}
             PRIVATE
             OcctImguiCore
+            OcctImguiModel
             Boost::unit_test_framework
 
             # Add other dependencies needed by your tests
@@ -111,7 +124,7 @@ if(OCCTIMGUI_BUILD_TESTING)
         # Tell Boost.Test to use dynamic linking
         target_compile_definitions(${TEST_NAME} PRIVATE
             BOOST_TEST_DYN_LINK
-            MESH_TEST_DATA_DIR="${MESH_TEST_DATA_DIR}"
+            TEST_DATA_DIR="${TEST_DATA_DIR}"
         )
     endfunction()
 
@@ -121,4 +134,5 @@ if(OCCTIMGUI_BUILD_TESTING)
     add_boost_test(core_property_test tests/core/property_test.cpp)
     add_boost_test(core_selection_manager_test tests/core/selection_manager_test.cpp)
     add_boost_test(core_integration_test tests/core/integration_test.cpp)
+    add_boost_test(core_serializable_object_test tests/core/serializable_object_test.cpp)
 endif()
