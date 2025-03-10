@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 
+#include <Eigen/Dense>
 
 using namespace Core;
 
@@ -156,77 +157,18 @@ BOOST_AUTO_TEST_CASE(property_computed_binding_test)
     BOOST_CHECK_EQUAL(area.get(), 56);  // 7 * 8 = 56
 }
 
-// 测试 PropertyGroup 基本功能
-BOOST_AUTO_TEST_CASE(property_group_basic_test)
+// 测试 Property 的序列化功能
+BOOST_AUTO_TEST_CASE(property_serialization_test)
 {
-    // 准备
-    PropertyGroup group;
+    Property<int> property(42);
 
-    // 设置属性
-    group.setProperty("app.name", std::string("TestApp"));
-    group.setProperty("app.version", 1.0);
-    group.setProperty("settings.debug", true);
+    // 序列化
+    auto json = property.toJson();
+    BOOST_CHECK(json.is_number_integer());
+    BOOST_CHECK_EQUAL(json.get<int>(), 42);
 
-    // 获取属性
-    auto name = group.getProperty<std::string>("app.name");
-    auto version = group.getProperty<double>("app.version");
-    auto debug = group.getProperty<bool>("settings.debug");
-
-    // 验证
-    BOOST_CHECK(name.has_value());
-    BOOST_CHECK_EQUAL(*name, "TestApp");
-
-    BOOST_CHECK(version.has_value());
-    BOOST_CHECK_EQUAL(*version, 1.0);
-
-    BOOST_CHECK(debug.has_value());
-    BOOST_CHECK_EQUAL(*debug, true);
-
-    // 测试不存在的属性
-    auto nonExistent = group.getProperty<int>("nonexistent");
-    BOOST_CHECK(!nonExistent.has_value());
-}
-
-// 测试 PropertyGroup 的属性变化信号
-BOOST_AUTO_TEST_CASE(property_group_change_signal_test)
-{
-    // 准备
-    PropertyGroup group;
-    int callCount = 0;
-    std::string lastPath;
-
-    // 连接信号
-    auto connection = group.propertyChanged.connect(
-        [&](const std::string& path, const std::any&, const std::any&) {
-            callCount++;
-            lastPath = path;
-        });
-
-    // 设置属性
-    group.setProperty("app.name", std::string("TestApp"));
-
-    // 验证信号被触发
-    BOOST_CHECK_EQUAL(callCount, 1);
-    BOOST_CHECK_EQUAL(lastPath, "app.name");
-
-    // 更改属性
-    group.setProperty("app.name", std::string("NewName"));
-
-    // 验证信号再次被触发
-    BOOST_CHECK_EQUAL(callCount, 2);
-    BOOST_CHECK_EQUAL(lastPath, "app.name");
-}
-
-// 测试 PropertyGroup 的 hasProperty 方法
-BOOST_AUTO_TEST_CASE(property_group_has_property_test)
-{
-    // 准备
-    PropertyGroup group;
-
-    // 设置属性
-    group.setProperty("app.name", std::string("TestApp"));
-
-    // 验证
-    BOOST_CHECK(group.hasProperty("app.name"));
-    BOOST_CHECK(!group.hasProperty("nonexistent"));
+    // 反序列化
+    Property<int> deserializedProperty;
+    BOOST_CHECK(deserializedProperty.fromJson(json));
+    BOOST_CHECK_EQUAL(deserializedProperty.get(), 42);
 }

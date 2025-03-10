@@ -3,8 +3,8 @@
 #include "Signal.h"
 #include <any>
 #include <boost/optional.hpp>
-#include <boost/property_tree/ptree.hpp>
 #include <memory>
+#include <nlohmann/json.hpp>
 #include <string>
 #include <type_traits>
 
@@ -23,6 +23,8 @@ namespace Core
 template<typename T>
 class Property
 {
+    using Json = nlohmann::json;
+
 public:
     // Signal types for property changes
     using ValueChangedSignal = Signal<const T&, const T&>;  // (oldValue, newValue)
@@ -137,74 +139,29 @@ public:
      */
     ValueChangedSignal valueChanged;
 
+public:  //!@ name Serialization and Deserialization
+    Json toJson() const
+    {
+        return myValue;
+    }
+
+    bool fromJson(const Json& json)
+    {
+        if (json.is_null()) {
+            return false;
+        }
+
+        try {
+            T newValue = json.get<T>();
+            return set(newValue);
+        }
+        catch (const std::exception& e) {
+            return false;
+        }
+    }
+
 private:
     T myValue {};
-};
-
-/**
- * @class PropertyGroup
- * @brief A group of properties that can be managed together
- *
- * This class provides a way to group related properties and manage their
- * connections together. It uses boost::property_tree for hierarchical property
- * organization.
- */
-class PropertyGroup
-{
-public:
-    PropertyGroup() = default;
-    virtual ~PropertyGroup() = default;
-
-    /**
-     * @brief Get a property by path
-     * @param path The path to the property
-     * @return The property value or boost::none if not found
-     */
-    template<typename T>
-    boost::optional<T> getProperty(const std::string& path) const
-    {
-        try {
-            return myProperties.get<T>(path);
-        }
-        catch (...) {
-            return boost::none;
-        }
-    }
-
-    /**
-     * @brief Set a property value
-     * @param path The path to the property
-     * @param value The value to set
-     */
-    template<typename T>
-    void setProperty(const std::string& path, const T& value)
-    {
-        T oldValue = myProperties.get<T>(path, T {});
-        if (oldValue != value) {
-            myProperties.put(path, value);
-            propertyChanged.emit(path, oldValue, value);
-        }
-    }
-
-    /**
-     * @brief Check if a property exists
-     * @param path The path to check
-     * @return True if the property exists, false otherwise
-     */
-    bool hasProperty(const std::string& path) const
-    {
-        return myProperties.get_child_optional(path).is_initialized();
-    }
-
-    /**
-     * @brief Signal emitted when any property changes
-     *
-     * The signal provides the path, old value, and new value.
-     */
-    Signal<std::string, std::any, std::any> propertyChanged;
-
-private:
-    boost::property_tree::ptree myProperties;
 };
 
 }  // namespace Core
