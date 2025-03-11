@@ -20,6 +20,7 @@ option(LIBIGL_USE_STATIC_LIBRARY "Use libIGL as static library" ON)
 find_package(libigl REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(nlohmann_json REQUIRED)
+find_package(Microsoft.GSL REQUIRED)
 
 # Enable testing with CTest
 include(CTest)
@@ -63,11 +64,11 @@ target_link_libraries(OcctImguiCore
     Boost::signals2
     Boost::uuid
     nlohmann_json::nlohmann_json
+    Microsoft.GSL::GSL
 )
 
 add_library(OcctImguiModel STATIC
     src/model/MeshData.cpp
-    src/model/GeometryModel.cpp
 
     # src/model/GeometryModel.cpp
 )
@@ -135,4 +136,5 @@ if(OCCTIMGUI_BUILD_TESTING)
     add_boost_test(core_selection_manager_test tests/core/selection_manager_test.cpp)
     add_boost_test(core_integration_test tests/core/integration_test.cpp)
     add_boost_test(core_serializable_object_test tests/core/serializable_object_test.cpp)
+    add_boost_test(model_mesh_data_test tests/model/mesh_data_test.cpp)
 endif()
