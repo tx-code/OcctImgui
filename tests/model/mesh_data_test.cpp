@@ -113,9 +113,7 @@ BOOST_AUTO_TEST_CASE(mesh_data_json_serialization_test)
     MeshData originalMesh(vertices, faces, normals);
 
     // Serialize to JSON
-    nlohmann::json j;
-    // Use the member function directly instead of the free function
-    originalMesh.to_json(j);
+    nlohmann::json j = originalMesh;
 
     // Verify JSON structure
     BOOST_CHECK(j.contains("vertices"));
@@ -131,9 +129,7 @@ BOOST_AUTO_TEST_CASE(mesh_data_json_serialization_test)
     BOOST_CHECK_EQUAL(j["normals"]["data"].size(), 3);   // 1 normal * 3 coordinates
 
     // Deserialize from JSON
-    MeshData deserializedMesh;
-    // Use the member function directly instead of the free function
-    deserializedMesh.from_json(j);
+    MeshData deserializedMesh = j;
 
     // Verify deserialized mesh matches original
     BOOST_CHECK(deserializedMesh == originalMesh);
@@ -176,13 +172,9 @@ BOOST_AUTO_TEST_CASE(mesh_data_json_edge_cases_test)
     MeshData verticesOnlyMesh;
     verticesOnlyMesh.setValue(vertices, emptyFaces, emptyNormals);
 
-    nlohmann::json verticesOnlyJson;
-    // Use the member function directly instead of the free function
-    verticesOnlyMesh.to_json(verticesOnlyJson);
+    nlohmann::json verticesOnlyJson = verticesOnlyMesh;
 
-    MeshData deserializedVerticesOnly;
-    // Use the member function directly instead of the free function
-    deserializedVerticesOnly.from_json(verticesOnlyJson);
+    MeshData deserializedVerticesOnly = verticesOnlyJson;
 
     BOOST_CHECK(verticesOnlyMesh == deserializedVerticesOnly);
 }

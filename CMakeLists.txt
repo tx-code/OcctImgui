@@ -35,6 +35,7 @@ add_library(OcctImguiCore STATIC
     src/core/SelectionManager.cpp
     src/utils/Logger.cpp
     src/utils/LoggerManager.cpp
+    src/utils/base64.cpp
 )
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
@@ -69,8 +70,8 @@ target_link_libraries(OcctImguiCore
 
 add_library(OcctImguiModel STATIC
     src/model/MeshData.cpp
-
-    # src/model/GeometryModel.cpp
+    src/model/TopoShapeSerialization.cpp
+    src/model/GeometryModel.cpp
 )
 
 target_link_libraries(OcctImguiModel
@@ -137,4 +138,5 @@ if(OCCTIMGUI_BUILD_TESTING)
     add_boost_test(core_integration_test tests/core/integration_test.cpp)
     add_boost_test(core_serializable_object_test tests/core/serializable_object_test.cpp)
     add_boost_test(model_mesh_data_test tests/model/mesh_data_test.cpp)
+    add_boost_test(model_topo_shape_serialization_test tests/model/topo_shape_serialization_test.cpp)
 endif()
